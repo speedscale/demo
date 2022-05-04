@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  selector:
+    matchLabels:
+      app: gateway
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+      - name: gateway
+        image: nginx:1.14.2
+        resources:
+          requests:
+            cpu: 100m
+            memory: 56k
+          limits:
+            cpu: "1"
+            memory: 512M
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d/ # mount nginx-conf volumn to /etc/nginx
+          readOnly: true
+          name: nginx-conf
+        ports:
+        - containerPort: 80
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: gateway-conf
+          items:
+            - key: custom.conf
+              path: custom.conf
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-conf
+data:
+  custom.conf: |
+    server {
+      location /payment {
+        proxy_pass http://payment/;
+      }
+      location /user {
+        proxy_pass http://user/;
+      }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    app: gateway

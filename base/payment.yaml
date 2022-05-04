@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment
+spec:
+  selector:
+    matchLabels:
+      app: payment
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+      - name: payment
+        image: nginx:1.14.2
+        resources:
+          requests:
+            cpu: 100m
+            memory: 56k
+          limits:
+            cpu: "1"
+            memory: 512M
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d/ # mount nginx-conf volumn to /etc/nginx
+          readOnly: true
+          name: nginx-conf
+        ports:
+        - containerPort: 80
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: payment-conf
+          items:
+            - key: custom.conf
+              path: custom.conf
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-conf
+data:
+  custom.conf: |
+    server {
+      location / {
+        proxy_pass https://httpbin.org/get;
+      }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    app: payment

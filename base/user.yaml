@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user
+spec:
+  selector:
+    matchLabels:
+      app: user
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: user
+    spec:
+      containers:
+      - name: user
+        image: nginx:1.14.2
+        resources:
+          requests:
+            cpu: 100m
+            memory: 56k
+          limits:
+            cpu: "1"
+            memory: 512M
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d/ # mount nginx-conf volumn to /etc/nginx
+          readOnly: true
+          name: nginx-conf
+        ports:
+        - containerPort: 80
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: user-conf
+          items:
+            - key: custom.conf
+              path: custom.conf
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-conf
+data:
+  custom.conf: |
+    server {
+      location / {
+        default_type application/json;
+        return 200 '{"user": {"name": "Matt"}}\n';
+      }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    app: user

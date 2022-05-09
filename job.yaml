@@ -15,14 +15,15 @@ spec:
         - bash
         - -c
         - |
+          set -eou pipefail
           echo "running script"
           function gen() {
             for i in {1..10}; do
-              curl $1/
+              curl --fail $1/
               sleep 0.5
             done
           }
-          gen gateway/user \
-            & gen gateway/payment \
+          gen gateway/user
+          gen gateway/payment
       restartPolicy: Never
-  backoffLimit: 3
+  backoffLimit: 0

@@ -1,0 +1,43 @@
+name: Kube Test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+# These are specific to AWS/our kubernetes setup
+  AWS_DEFAULT_REGION: us-east-1
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  CLUSTER_NAME: dev-decoy
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v2.0
+      with:
+        version: v1.20.15
+      id: install
+    - name: Deploy
+      run: |
+        aws eks update-kubeconfig --name $CLUSTER_NAME
+        kubectl apply -k ./
+    - name: Test
+      run: |
+        kubectl apply -f job.yaml
+        kubectl -n demo wait --for=condition=available deploy/gateway
+        kubectl -n demo wait --for=condition=complete job/traffic
+        if [ ! $(kubectl -n demo get job traffic -o jsonpath={.status.succeeded}) -eq 1 ]; then
+          echo "Job failed"
+          exit 1
+        fi
+    - name: Cleanup
+      if: always()
+      run: kubectl delete -k ./

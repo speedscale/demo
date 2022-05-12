@@ -49,7 +49,7 @@ data:
       }
       location /profile {
         default_type application/json;
-        return 500 '{"reviews": {"summary": "One star. Very bad, would not recommend."}}\n';
+        return 200 '{"reviews": {"summary": "One star. Very bad, would not recommend."}}\n';
       }
     }
 ---

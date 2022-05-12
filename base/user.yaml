@@ -47,6 +47,10 @@ data:
         default_type application/json;
         return 200 '{"user": {"name": "Matt"}}\n';
       }
+      location /profile {
+        default_type application/json;
+        return 200 '{"reviews": {"summary": "One star. Very bad, would not recommend."}}\n';
+      }
     }
 ---
 apiVersion: v1

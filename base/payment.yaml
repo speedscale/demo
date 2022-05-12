@@ -46,6 +46,10 @@ data:
       location / {
         proxy_pass https://httpbin.org/get;
       }
+      location /lookup {
+        default_type application/json;
+        return 200 '{"processing": {"errors": "none"}}\n';
+      }
     }
 ---
 apiVersion: v1

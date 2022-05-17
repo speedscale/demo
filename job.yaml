@@ -419,4 +419,3 @@ spec:
           curl -X'GET' -H 'Accept: */*' -H 'Host: gateway' -H 'User-Agent: curl/7.74.0' 'http://gateway/payment/lookup/4809'  --fail
       restartPolicy: Never
   backoffLimit: 0
-  parallelism: 10

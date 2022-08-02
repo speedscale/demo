@@ -6,3 +6,5 @@ resources:
 - base/payment.yaml
 - base/user.yaml
 - ns.yaml
+#patchesStrategicMerge:
+#- patch/inject.yaml

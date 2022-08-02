@@ -1,0 +1,9 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  annotations:
+    sidecar.speedscale.com/inject: "true"
+    sidecar.speedscale.com/tls-out: "true"
+    sidecar.speedscale.com/capture-mode: "proxy"
+    sidecar.speedscale.com/proxy-type: "transparent"

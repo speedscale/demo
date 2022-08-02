@@ -49,6 +49,9 @@ data:
       location /user {
         proxy_pass http://user/;
       }
+      location /login {
+        return 200 '{"Bearer accepted"}\n';
+      }
     }
 ---
 apiVersion: v1

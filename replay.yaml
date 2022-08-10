@@ -1,5 +1,5 @@
     replay.speedscale.com/snapshot-id: "a125995c-e8d8-4c8b-ae31-b70a48e78052"
     replay.speedscale.com/testconfig-id: "standard"
     replay.speedscale.com/cleanup: "inventory"
-    sidecar.speedscale.com/inject: "true"
+    sidecar.speedscale.com/inject: "false"
     replay.speedscale.com/secrets: "mariadb-root-password"

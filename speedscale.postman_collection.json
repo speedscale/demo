@@ -1,0 +1,328 @@
+{
+	"info": {
+		"_postman_id": "98d1ea9f-6479-4f9c-9843-98ab248cf9d0",
+		"name": "Speedscale Demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "User",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "username",
+						"value": "John Doe",
+						"type": "default"
+					},
+					{
+						"key": "password",
+						"value": "super_secret",
+						"type": "default"
+					}
+				],
+				"url": {
+					"raw": "http://gateway/user",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Profile 1",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://gateway/user/profile/17853",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"user",
+						"profile",
+						"17853"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Payment",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"operation\":\"validate\",\n    \"ref_id\":\"sku4100024\",\n    \"amount\": 1000,\n}"
+				},
+				"url": {
+					"raw": "http://gateway/payment",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"payment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Profile 2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://gateway/user/profile/27422",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"user",
+						"profile",
+						"27422"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Product Lookup 1",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://gateway/payment/lookup/18653",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"payment",
+						"lookup",
+						"18653"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Product Lookup 2",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://gateway/payment/lookup/23586",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"payment",
+						"lookup",
+						"23586"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Product Lookup 3 (Bearer Auth)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://gateway/payment/lookup/12569",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"payment",
+						"lookup",
+						"12569"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Product Lookup 4 (Basic Auth)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://gateway/payment/lookup/12548",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"payment",
+						"lookup",
+						"12548"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Product Lookup 4 (API Key Header)",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "api_key_value",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "super_secret_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://gateway/payment/lookup/12548",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"payment",
+						"lookup",
+						"12548"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Product Lookup 4 (API Key QP)",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "in",
+							"value": "query",
+							"type": "string"
+						},
+						{
+							"key": "value",
+							"value": "api_key_value",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "super_secret_key",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://gateway/payment/lookup/12548",
+					"protocol": "http",
+					"host": [
+						"gateway"
+					],
+					"path": [
+						"payment",
+						"lookup",
+						"12548"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

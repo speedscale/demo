@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,7 +48,17 @@ public class Controller {
     @GetMapping("/spacex/launches")
     public String launches() {
         try {
-            return SpaceX.invoke();
+            return SpaceX.launches();
+        } catch (Exception e) {
+            log.catching(e);
+        }
+        return "{}";
+    }
+
+    @GetMapping("/spacex/ship/{id}")
+    public String ship(@PathVariable String id) {
+        try {
+            return SpaceX.ship(id);
         } catch (Exception e) {
             log.catching(e);
         }

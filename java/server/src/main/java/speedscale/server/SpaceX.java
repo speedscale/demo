@@ -8,7 +8,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 
 public class SpaceX {
 
-    private static final String SPACEX_URL = "https://api.spacexdata.com/";
+    private static final String SPACEX_URL = "https://api.spacexdata.com";
 
     private static final HttpClient HTTP_TRANSPORT = HttpClient.newHttpClient();
 

@@ -1,0 +1,291 @@
+{
+  "info": {
+    "_postman_id": "b638d9c2-76bd-4ae9-a461-087de0316223",
+    "name": "demo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "28385687"
+  },
+  "item": [
+    {
+      "name": "health",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/healthz",
+          "host": ["{{base_url}}"],
+          "path": ["healthz"]
+        }
+      },
+      "response": [
+        {
+          "name": "health",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/healthz",
+              "host": ["{{base_url}}"],
+              "path": ["healthz"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "plain",
+          "header": [
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "0"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, max-age=0, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "0"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "Content-Type",
+              "value": "text/plain;charset=UTF-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "16"
+            },
+            {
+              "key": "Date",
+              "value": "Thu, 06 Jul 2023 20:08:42 GMT"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=60"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            }
+          ],
+          "cookie": [],
+          "body": "{\"health\": \"ok\"}"
+        }
+      ]
+    },
+    {
+      "name": "login",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"pass\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": ["{{base_url}}"],
+          "path": ["login"]
+        }
+      },
+      "response": [
+        {
+          "name": "login",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"pass\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "0"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, max-age=0, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "0"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "key": "Date",
+              "value": "Thu, 06 Jul 2023 20:11:11 GMT"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=60"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY4ODc2MDY3MSwiaWF0IjoxNjg4Njc0MjcxfQ.w3kvIZubt4Ek7zmbNx8RKcZd9rW1phmK6COGfKDTqzE\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "launches",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/spacex/launches",
+          "host": ["{{base_url}}"],
+          "path": ["spacex", "launches"]
+        }
+      },
+      "response": [
+        {
+          "name": "launches",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spacex/launches",
+              "host": ["{{base_url}}"],
+              "path": ["spacex", "launches"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "plain",
+          "header": [
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "0"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, max-age=0, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "0"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "Content-Type",
+              "value": "text/plain;charset=UTF-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "1557"
+            },
+            {
+              "key": "Date",
+              "value": "Thu, 06 Jul 2023 20:21:31 GMT"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=60"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            }
+          ],
+          "cookie": [],
+          "body": "{\"fairings\":null,\"links\":{\"patch\":{\"small\":\"https://images2.imgbox.com/eb/d8/D1Yywp0w_o.png\",\"large\":\"https://images2.imgbox.com/33/2e/k6VE4iYl_o.png\"},\"reddit\":{\"campaign\":null,\"launch\":\"https://www.reddit.com/r/spacex/comments/xvm76j/rspacex_crew5_launchcoast_docking_discussion_and/\",\"media\":null,\"recovery\":null},\"flickr\":{\"small\":[],\"original\":[]},\"presskit\":null,\"webcast\":\"https://youtu.be/5EwW8ZkArL4\",\"youtube_id\":\"5EwW8ZkArL4\",\"article\":null,\"wikipedia\":\"https://en.wikipedia.org/wiki/SpaceX_Crew-5\"},\"static_fire_date_utc\":null,\"static_fire_date_unix\":null,\"net\":false,\"window\":null,\"rocket\":\"5e9d0d95eda69973a809d1ec\",\"success\":true,\"failures\":[],\"details\":null,\"crew\":[{\"crew\":\"62dd7196202306255024d13c\",\"role\":\"Commander\"},{\"crew\":\"62dd71c9202306255024d13d\",\"role\":\"Pilot\"},{\"crew\":\"62dd7210202306255024d13e\",\"role\":\"Mission Specialist 1\"},{\"crew\":\"62dd7253202306255024d13f\",\"role\":\"Mission Specialist 2\"}],\"ships\":[],\"capsules\":[\"617c05591bad2c661a6e2909\"],\"payloads\":[\"62dd73ed202306255024d145\"],\"launchpad\":\"5e9e4502f509094188566f88\",\"flight_number\":187,\"name\":\"Crew-5\",\"date_utc\":\"2022-10-05T16:00:00.000Z\",\"date_unix\":1664985600,\"date_local\":\"2022-10-05T12:00:00-04:00\",\"date_precision\":\"hour\",\"upcoming\":false,\"cores\":[{\"core\":\"633d9da635a71d1d9c66797b\",\"flight\":1,\"gridfins\":true,\"legs\":true,\"reused\":false,\"landing_attempt\":true,\"landing_success\":true,\"landing_type\":\"ASDS\",\"landpad\":\"5e9e3033383ecbb9e534e7cc\"}],\"auto_update\":true,\"tbd\":false,\"launch_library_id\":\"f33d5ece-e825-4cd8-809f-1d4c72a2e0d3\",\"id\":\"62dd70d5202306255024d139\"}"
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ]
+}

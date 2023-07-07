@@ -70,13 +70,20 @@ public class Controller {
 
     @GetMapping("/treasury/max_interest")
     @ResponseBody
-    public TreasuryResponse interest() {
+    public TreasuryResponse.Record interest() {
         Calendar firstOfYear = Calendar.getInstance();
         firstOfYear.set(Calendar.DAY_OF_MONTH, 1);
         firstOfYear.set(Calendar.MONTH, 1);
 
         try {
-            return Treasury.interestRates(firstOfYear.getTime());
+            TreasuryResponse resp = Treasury.interestRates(firstOfYear.getTime());
+            TreasuryResponse.Record max = resp.data.remove(0);
+            for (TreasuryResponse.Record record : resp.data) {
+                if (max.avg_interest_rate_amt < record.avg_interest_rate_amt) {
+                    max = record;
+                }
+            }
+            return max;
         } catch (Exception e) {
             log.catching(e);
         }

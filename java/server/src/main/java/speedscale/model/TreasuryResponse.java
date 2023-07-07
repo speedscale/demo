@@ -1,6 +1,7 @@
 package speedscale.model;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -10,17 +11,16 @@ public class TreasuryResponse {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Record {
-        public String record_date;
+        public Date record_date;
         public String security_type_desc;
         public String security_desc;
-        public String avg_interest_rate_amt;
-        public String src_line_nbr;
-        public String record_fiscal_year;
-        public String record_fiscal_quarter;
-        public String record_calendar_year;
-        public String record_calendar_quarter;
-        public String record_calendar_month;
-        public String record_calendar_day;
+        public float avg_interest_rate_amt;
+        public int src_line_nbr;
+        public int record_fiscal_year;
+        public int record_fiscal_quarter;
+        public int record_calendar_year;
+        public int record_calendar_quarter;
+        public int record_calendar_month;
+        public int record_calendar_day;
     }
-
 }

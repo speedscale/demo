@@ -209,7 +209,7 @@
           },
           "status": "OK",
           "code": 200,
-          "_postman_previewlanguage": "plain",
+          "_postman_previewlanguage": "json",
           "header": [
             {
               "key": "X-Content-Type-Options",
@@ -237,7 +237,10 @@
             },
             {
               "key": "Content-Type",
-              "value": "text/plain;charset=UTF-8"
+              "value": "application/json",
+              "name": "Content-Type",
+              "description": "",
+              "type": "text"
             },
             {
               "key": "Content-Length",
@@ -257,7 +260,164 @@
             }
           ],
           "cookie": [],
-          "body": "{\"fairings\":null,\"links\":{\"patch\":{\"small\":\"https://images2.imgbox.com/eb/d8/D1Yywp0w_o.png\",\"large\":\"https://images2.imgbox.com/33/2e/k6VE4iYl_o.png\"},\"reddit\":{\"campaign\":null,\"launch\":\"https://www.reddit.com/r/spacex/comments/xvm76j/rspacex_crew5_launchcoast_docking_discussion_and/\",\"media\":null,\"recovery\":null},\"flickr\":{\"small\":[],\"original\":[]},\"presskit\":null,\"webcast\":\"https://youtu.be/5EwW8ZkArL4\",\"youtube_id\":\"5EwW8ZkArL4\",\"article\":null,\"wikipedia\":\"https://en.wikipedia.org/wiki/SpaceX_Crew-5\"},\"static_fire_date_utc\":null,\"static_fire_date_unix\":null,\"net\":false,\"window\":null,\"rocket\":\"5e9d0d95eda69973a809d1ec\",\"success\":true,\"failures\":[],\"details\":null,\"crew\":[{\"crew\":\"62dd7196202306255024d13c\",\"role\":\"Commander\"},{\"crew\":\"62dd71c9202306255024d13d\",\"role\":\"Pilot\"},{\"crew\":\"62dd7210202306255024d13e\",\"role\":\"Mission Specialist 1\"},{\"crew\":\"62dd7253202306255024d13f\",\"role\":\"Mission Specialist 2\"}],\"ships\":[],\"capsules\":[\"617c05591bad2c661a6e2909\"],\"payloads\":[\"62dd73ed202306255024d145\"],\"launchpad\":\"5e9e4502f509094188566f88\",\"flight_number\":187,\"name\":\"Crew-5\",\"date_utc\":\"2022-10-05T16:00:00.000Z\",\"date_unix\":1664985600,\"date_local\":\"2022-10-05T12:00:00-04:00\",\"date_precision\":\"hour\",\"upcoming\":false,\"cores\":[{\"core\":\"633d9da635a71d1d9c66797b\",\"flight\":1,\"gridfins\":true,\"legs\":true,\"reused\":false,\"landing_attempt\":true,\"landing_success\":true,\"landing_type\":\"ASDS\",\"landpad\":\"5e9e3033383ecbb9e534e7cc\"}],\"auto_update\":true,\"tbd\":false,\"launch_library_id\":\"f33d5ece-e825-4cd8-809f-1d4c72a2e0d3\",\"id\":\"62dd70d5202306255024d139\"}"
+          "body": "{\n    \"fairings\": null,\n    \"links\": {\n        \"patch\": {\n            \"small\": \"https://images2.imgbox.com/eb/d8/D1Yywp0w_o.png\",\n            \"large\": \"https://images2.imgbox.com/33/2e/k6VE4iYl_o.png\"\n        },\n        \"reddit\": {\n            \"campaign\": null,\n            \"launch\": \"https://www.reddit.com/r/spacex/comments/xvm76j/rspacex_crew5_launchcoast_docking_discussion_and/\",\n            \"media\": null,\n            \"recovery\": null\n        },\n        \"flickr\": {\n            \"small\": [],\n            \"original\": []\n        },\n        \"presskit\": null,\n        \"webcast\": \"https://youtu.be/5EwW8ZkArL4\",\n        \"youtube_id\": \"5EwW8ZkArL4\",\n        \"article\": null,\n        \"wikipedia\": \"https://en.wikipedia.org/wiki/SpaceX_Crew-5\"\n    },\n    \"static_fire_date_utc\": null,\n    \"static_fire_date_unix\": null,\n    \"net\": false,\n    \"window\": null,\n    \"rocket\": \"5e9d0d95eda69973a809d1ec\",\n    \"success\": true,\n    \"failures\": [],\n    \"details\": null,\n    \"crew\": [\n        {\n            \"crew\": \"62dd7196202306255024d13c\",\n            \"role\": \"Commander\"\n        },\n        {\n            \"crew\": \"62dd71c9202306255024d13d\",\n            \"role\": \"Pilot\"\n        },\n        {\n            \"crew\": \"62dd7210202306255024d13e\",\n            \"role\": \"Mission Specialist 1\"\n        },\n        {\n            \"crew\": \"62dd7253202306255024d13f\",\n            \"role\": \"Mission Specialist 2\"\n        }\n    ],\n    \"ships\": [],\n    \"capsules\": [\n        \"617c05591bad2c661a6e2909\"\n    ],\n    \"payloads\": [\n        \"62dd73ed202306255024d145\"\n    ],\n    \"launchpad\": \"5e9e4502f509094188566f88\",\n    \"flight_number\": 187,\n    \"name\": \"Crew-5\",\n    \"date_utc\": \"2022-10-05T16:00:00.000Z\",\n    \"date_unix\": 1664985600,\n    \"date_local\": \"2022-10-05T12:00:00-04:00\",\n    \"date_precision\": \"hour\",\n    \"upcoming\": false,\n    \"cores\": [\n        {\n            \"core\": \"633d9da635a71d1d9c66797b\",\n            \"flight\": 1,\n            \"gridfins\": true,\n            \"legs\": true,\n            \"reused\": false,\n            \"landing_attempt\": true,\n            \"landing_success\": true,\n            \"landing_type\": \"ASDS\",\n            \"landpad\": \"5e9e3033383ecbb9e534e7cc\"\n        }\n    ],\n    \"auto_update\": true,\n    \"tbd\": false,\n    \"launch_library_id\": \"f33d5ece-e825-4cd8-809f-1d4c72a2e0d3\",\n    \"id\": \"62dd70d5202306255024d139\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "ship",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/spacex/ship/{{ship_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["spacex", "ship", "{{ship_id}}"]
+        }
+      },
+      "response": [
+        {
+          "name": "ship",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spacex/ship/{{ship_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["spacex", "ship", "{{ship_id}}"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "0"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, max-age=0, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "0"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "name": "Content-Type",
+              "description": "",
+              "type": "text"
+            },
+            {
+              "key": "Content-Length",
+              "value": "573"
+            },
+            {
+              "key": "Date",
+              "value": "Fri, 07 Jul 2023 20:13:09 GMT"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=60"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"last_ais_update\": null,\n    \"legacy_id\": \"RACHEL\",\n    \"model\": null,\n    \"type\": \"Tug\",\n    \"roles\": [\n        \"ASDS Tug\"\n    ],\n    \"imo\": 7600378,\n    \"mmsi\": 367488370,\n    \"abs\": 576417,\n    \"class\": 7611785,\n    \"mass_kg\": 312072,\n    \"mass_lbs\": 688000,\n    \"year_built\": 1976,\n    \"home_port\": \"Port Canaveral\",\n    \"status\": \"\",\n    \"speed_kn\": null,\n    \"course_deg\": null,\n    \"latitude\": null,\n    \"longitude\": null,\n    \"link\": \"https://www.marinetraffic.com/en/ais/details/ships/shipid:447352/mmsi:367488370/imo:7600378/vessel:RACHEL\",\n    \"image\": \"https://i.imgur.com/IpYJWUW.jpg\",\n    \"name\": \"RACHEL\",\n    \"active\": false,\n    \"launches\": [\n        \"5eb87d19ffd86e000604b366\"\n    ],\n    \"id\": \"5ea6ed30080df4000697c916\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "interest",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/treasury/max_interest",
+          "host": ["{{base_url}}"],
+          "path": ["treasury", "max_interest"]
+        }
+      },
+      "response": [
+        {
+          "name": "interest",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/treasury/max_interest",
+              "host": ["{{base_url}}"],
+              "path": ["treasury", "max_interest"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "X-XSS-Protection",
+              "value": "0"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, max-age=0, must-revalidate"
+            },
+            {
+              "key": "Pragma",
+              "value": "no-cache"
+            },
+            {
+              "key": "Expires",
+              "value": "0"
+            },
+            {
+              "key": "X-Frame-Options",
+              "value": "DENY"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "key": "Date",
+              "value": "Fri, 07 Jul 2023 20:12:22 GMT"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=60"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"record_date\": \"2023-02-28T00:00:00.000+00:00\",\n    \"security_type_desc\": \"Non-marketable\",\n    \"security_desc\": \"United States Savings Inflation Securities\",\n    \"avg_interest_rate_amt\": 8.593,\n    \"src_line_nbr\": 13,\n    \"record_fiscal_year\": 2023,\n    \"record_fiscal_quarter\": 2,\n    \"record_calendar_year\": 2023,\n    \"record_calendar_quarter\": 1,\n    \"record_calendar_month\": 2,\n    \"record_calendar_day\": 28\n}"
         }
       ]
     }
@@ -286,6 +446,13 @@
         "type": "text/javascript",
         "exec": [""]
       }
+    }
+  ],
+  "variable": [
+    {
+      "key": "ship_id",
+      "value": "5ea6ed30080df4000697c916",
+      "type": "string"
     }
   ]
 }

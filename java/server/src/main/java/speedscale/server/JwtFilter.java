@@ -21,7 +21,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().contains("/spacex");
+        String uri = request.getRequestURI();
+        switch (uri) {
+            case "/login":
+            case "/healthz":
+                return true;
+            default:
+                return false;
+        }
     }
 
     @Override
@@ -31,7 +38,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String tokenHeader = request.getHeader("Authorization");
         if (tokenHeader == null || !tokenHeader.startsWith("Bearer ")) {
-            throw new ServletException("invalid auth header");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
         }
         String token = tokenHeader.substring(7);
         tokenManager.validateJwtToken(token);

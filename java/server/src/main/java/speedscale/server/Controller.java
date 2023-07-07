@@ -1,5 +1,6 @@
 package speedscale.server;
 
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,6 +60,20 @@ public class Controller {
     public String ship(@PathVariable String id) {
         try {
             return SpaceX.ship(id);
+        } catch (Exception e) {
+            log.catching(e);
+        }
+        return "{}";
+    }
+
+    @GetMapping("/treasury/max_interest")
+    public String interest() {
+        Calendar firstOfYear = Calendar.getInstance();
+        firstOfYear.set(Calendar.DAY_OF_MONTH, 1);
+        firstOfYear.set(Calendar.MONTH, 1);
+
+        try {
+            return Treasury.interestRates(firstOfYear.getTime());
         } catch (Exception e) {
             log.catching(e);
         }

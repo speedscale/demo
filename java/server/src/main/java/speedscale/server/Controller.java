@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import speedscale.model.Login;
+import speedscale.model.TreasuryResponse;
 
 @RestController
 public class Controller {
@@ -67,7 +69,8 @@ public class Controller {
     }
 
     @GetMapping("/treasury/max_interest")
-    public String interest() {
+    @ResponseBody
+    public TreasuryResponse interest() {
         Calendar firstOfYear = Calendar.getInstance();
         firstOfYear.set(Calendar.DAY_OF_MONTH, 1);
         firstOfYear.set(Calendar.MONTH, 1);
@@ -77,7 +80,7 @@ public class Controller {
         } catch (Exception e) {
             log.catching(e);
         }
-        return "{}";
+        return null;
     }
 
 }

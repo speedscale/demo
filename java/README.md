@@ -1,10 +1,10 @@
 ## Java Demo
 
-This is a Java Spring Boot app that makes makes requests to the (SpaceX API)[https://github.com/r-spacex/SpaceX-API/tree/master] and the (US Treasury API)[https://fiscaldata.treasury.gov/api-documentation/].
+This is a Java Spring Boot app that makes makes requests to the [SpaceX API](https://github.com/r-spacex/SpaceX-API/tree/master) and the [US Treasury API](https://fiscaldata.treasury.gov/api-documentation/).
 
 ### Tools used
 
-Different parts of this project can be run without installing everything listed here. For eg. the Docker mode can be run without installing Java and conversely the local version can be run without installing Docker. All modes are listed (here)[#Running].
+Different parts of this project can be run without installing everything listed here. For eg. the Docker mode can be run without installing Java and conversely the local version can be run without installing Docker. All modes are listed [here](#Running).
 
 - `jq`
 - `curl`

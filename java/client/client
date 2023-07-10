@@ -19,7 +19,7 @@ login() {
 
 launches() {
     echo -e "${BLUE}Getting launches ${NC}"
-    curl -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/spacex/launches"
+    curl -s -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/spacex/launches"
     echo
     echo
 }
@@ -29,14 +29,14 @@ ship() {
     id=${ships[ $RANDOM % ${#ships[@]} ]}
 
     echo -e "${BLUE}Getting ship ${id} ${NC}"
-    curl -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/spacex/ship/${id}"
+    curl -s -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/spacex/ship/${id}"
     echo
     echo
 }
 
 interest() {
     echo -e "${BLUE}Getting max interest rate security ${NC}"
-    curl -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/treasury/max_interest"
+    curl -s -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/treasury/max_interest"
     echo
     echo
 }

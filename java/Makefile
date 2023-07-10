@@ -20,12 +20,12 @@ docker-multi:
 .PHONY: kube
 kube:
 	@echo "Deploying app to namespace: ${NAMESPACE} in Kubernetes"
-	@kubectl -n ${NAMESPACE} apply -f kubernetes.yaml
+	@kubectl -n ${NAMESPACE} apply -k ./
 
 .PHONY: kube-clean
 kube-clean:
 	@echo "Deleting app from kubernetes"
-	@kubectl -n ${NAMESPACE} delete -f kubernetes.yaml
+	@kubectl -n ${NAMESPACE} delete -k ./
 
 .PHONY: client
 client:

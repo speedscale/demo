@@ -52,3 +52,47 @@ spec:
       targetPort: 8080
   selector:
     app: java-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-client
+  labels:
+    app: java-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-client
+  template:
+    metadata:
+      labels:
+        app: java-client
+    spec:
+      containers:
+        - name: java-client
+          image: registry.gitlab.com/gitlab-ci-utils/curl-jq
+          imagePullPolicy: Always
+          command:
+          - bash
+          - -c
+          - /client
+          env:
+          - name: SERVER_URL
+            value: java-server
+          volumeMounts:
+          - mountPath: "/client"
+            name: "script"
+            subPath: client
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+            limits:
+              cpu: 50m
+              memory: 100Mi
+      volumes:
+      - name: script
+        configMap:
+          name: client-script
+          defaultMode: 0777

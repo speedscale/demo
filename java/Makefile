@@ -26,3 +26,8 @@ kube:
 kube-clean:
 	@echo "Deleting app from kubernetes"
 	@kubectl -n ${NAMESPACE} delete -f kubernetes.yaml
+
+.PHONY: client
+client:
+	@echo "Running client"
+	@./client/client

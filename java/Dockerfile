@@ -7,4 +7,4 @@ RUN mvn -q clean \
 
 FROM amazoncorretto:20
 COPY --from=build /app.jar /app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["/bin/bash", "-c", "java $JAVA_OPTS -jar app.jar"]

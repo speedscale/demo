@@ -5,6 +5,7 @@ set -eou pipefail
 SERVER_URL=${SERVER_URL:-"localhost:8080"}
 token=""
 
+echo $SERVER_URL
 
 RED='\033[0;31m'
 BLUE='\033[0;34m'

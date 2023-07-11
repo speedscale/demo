@@ -5,7 +5,11 @@ NAMESPACE?=default
 .PHONY: local
 local:
 	@echo "Running java locally"
-	@cd server && ./mvnw spring-boot:run
+	@cd server && ./mvnw spring-boot:run ${SPRING_BOOT_RUN_OPTS}
+
+.PHONY: local-with-speedscale
+local-with-speedscale: export SPRING_BOOT_RUN_OPTS=-Dspring-boot.run.jvmArguments="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=4140 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=4140 -Djavax.net.ssl.trustStore=${SPEEDCTL_HOME}/certs/cacerts.jks -Djavax.net.ssl.trustStorePassword=changeit"
+local-with-speedscale: local
 
 .PHONY: docker
 compose:
@@ -31,3 +35,7 @@ kube-clean:
 client:
 	@echo "Running client"
 	@./client/client
+
+.PHONY: local-client-capture
+local-client-capture: export SERVER_URL=localhost:4143
+local-client-capture: client

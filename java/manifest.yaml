@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: java-server
-  labels:
-    app: java-server
 spec:
   replicas: 1
   selector:

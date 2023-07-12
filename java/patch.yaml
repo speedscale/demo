@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    sidecar.speedscale.com/inject: "true"
+    sidecar.speedscale.com/tls-out: "true"
+  name: java-server
+spec:
+  template:
+    spec:
+      containers:
+      - name: java-server
+        env:
+        - name: JAVA_OPTS
+          value: >-
+            -Djavax.net.ssl.trustStore=/etc/ssl/speedscale/jks/cacerts.jks
+            -Djavax.net.ssl.trustStorePassword=changeit

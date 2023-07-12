@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+SERVER_URL=${SERVER_URL:-"localhost:8080"}
+token=""
+
+echo $SERVER_URL
+
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+login() {
+    echo -e "${RED}Logging in ${NC}"
+    token=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/login" | jq -r .token)
+    echo -e "${RED}Token is ${token}${NC}"
+    echo
+}
+
+launches() {
+    echo -e "${BLUE}Getting launches ${NC}"
+    curl -s -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/spacex/launches"
+    echo
+    echo
+}
+
+random-ship() {
+    echo -e "${BLUE}Getting random ship ${NC}"
+    curl -s -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/spacex/ship"
+    echo
+    echo
+}
+
+ship() {
+    ships=("618fad7e563d69573ed8caa9" "614251b711a64135defb3654" "5ea6ed30080df4000697c916")
+    id=${ships[ $RANDOM % ${#ships[@]} ]}
+
+    echo -e "${BLUE}Getting ship ${id} ${NC}"
+    curl -s -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/spacex/ship/${id}"
+    echo
+    echo
+}
+
+interest() {
+    echo -e "${BLUE}Getting max interest rate security ${NC}"
+    curl -s -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/treasury/max_interest"
+    echo
+    echo
+}
+
+random-sleep () {
+    sleep $(( RANDOM % 3 ))
+}
+
+i=0
+while true; do
+    if [[ $((i % 100)) == 0 ]]; then
+        login
+    fi
+
+    launches
+    random-sleep
+
+    random-ship
+    random-sleep
+
+    ship
+    random-sleep
+
+    interest
+    random-sleep
+    i=$((i+1))
+done

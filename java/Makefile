@@ -7,9 +7,12 @@ local:
 	@echo "Running java locally"
 	@cd server && ./mvnw spring-boot:run ${SPRING_BOOT_RUN_OPTS}
 
-.PHONY: local-with-speedscale
-local-with-speedscale: export SPRING_BOOT_RUN_OPTS=-Dspring-boot.run.jvmArguments="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=4140 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=4140 -Djavax.net.ssl.trustStore=${SPEEDCTL_HOME}/certs/cacerts.jks -Djavax.net.ssl.trustStorePassword=changeit"
-local-with-speedscale: local
+.PHONY: local-capture
+local-capture: export SPRING_BOOT_RUN_OPTS=-Dspring-boot.run.jvmArguments="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=4140 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=4140 -Djavax.net.ssl.trustStore=${SPEEDCTL_HOME}/certs/cacerts.jks -Djavax.net.ssl.trustStorePassword=changeit"
+local-capture: local
+
+.PHONY: local-replay
+local-replay: local-capture
 
 .PHONY: compose
 compose:
@@ -19,6 +22,9 @@ compose:
 .PHONY: compose-capture
 compose-capture: export JAVA_OPTS=-Dhttp.proxyHost=host.docker.internal -Dhttp.proxyPort=4140 -Dhttps.proxyHost=host.docker.internal -Dhttps.proxyPort=4140 -Djavax.net.ssl.trustStore=/etc/ssl/speedscale/cacerts.jks -Djavax.net.ssl.trustStorePassword=changeit
 compose-capture: compose
+
+.PHONY: compose-replay
+compose-replay: compose-capture
 
 .PHONY: kube
 kube:

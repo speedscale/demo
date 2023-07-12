@@ -58,6 +58,13 @@ public class Controller {
         return "{}";
     }
 
+    @GetMapping("/spacex/ship")
+    public Map<String, String> randomShip() {
+        Map<String, String> m = new HashMap<String, String>();
+        m.put("ship_id", SpaceX.randomShip());
+        return m;
+    }
+
     @GetMapping("/spacex/ship/{id}")
     public String ship(@PathVariable String id) {
         try {

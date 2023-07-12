@@ -25,6 +25,13 @@ launches() {
     echo
 }
 
+random-ship() {
+    echo -e "${BLUE}Getting random ship ${NC}"
+    curl -s -X GET -H "Authorization: Bearer ${token}" "${SERVER_URL}/spacex/ship"
+    echo
+    echo
+}
+
 ship() {
     ships=("618fad7e563d69573ed8caa9" "614251b711a64135defb3654" "5ea6ed30080df4000697c916")
     id=${ships[ $RANDOM % ${#ships[@]} ]}
@@ -53,6 +60,9 @@ while true; do
     fi
 
     launches
+    random-sleep
+
+    random-ship
     random-sleep
 
     ship

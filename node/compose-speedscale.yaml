@@ -1,0 +1,12 @@
+services:
+  demo-node:
+    environment:
+      - GLOBAL_AGENT_HTTP_PROXY=http://host.docker.internal:4140
+      - GLOBAL_AGENT_HTTPS_PROXY=http://host.docker.internal:4140
+      - export GLOBAL_AGENT_NO_PROXY=*127.0.0.1:12557
+      - NODE_EXTRA_CA_CERTS=/etc/ssl/speedscale/tls.crt
+    image: demo-node:latest
+    ports:
+    - 3000:3000
+    volumes:
+      - ${HOME}/.speedscale/certs:/etc/ssl/speedscale

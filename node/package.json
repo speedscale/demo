@@ -1,0 +1,19 @@
+{
+  "name": "demo-node",
+  "version": "1.0.0",
+  "description": "demo app for node",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "speedscale",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "express": "^4.18.2",
+    "global-agent": "^3.0.0",
+    "got": "^13.0.0",
+    "morgan": "^1.10.0"
+  },
+  "type": "module"
+}

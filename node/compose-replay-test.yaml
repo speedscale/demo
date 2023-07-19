@@ -1,0 +1,101 @@
+services:
+  demo-node:
+    environment:
+      - GLOBAL_AGENT_HTTP_PROXY=http://host.docker.internal:4140
+      - GLOBAL_AGENT_HTTPS_PROXY=http://host.docker.internal:4140
+      - export GLOBAL_AGENT_NO_PROXY=*127.0.0.1:12557
+      - NODE_EXTRA_CA_CERTS=/etc/ssl/speedscale/tls.crt
+    image: demo-node:latest
+    ports:
+      - 3000:3000
+    volumes:
+      - ${HOME}/.speedscale/certs:/etc/ssl/speedscale
+  generator:
+    environment:
+      - SPEEDSCALE_CONFIG_YAML=/config.yaml
+      - LOCAL_REPLAY_MODE=true
+      - REDIS_SERVICE_HOST=redis
+      - REDIS_SERVICE_PORT=6379
+      - TELEMETRY_INTERVAL=0
+      - APP_LABEL=docker
+      - APP_POD_NAME=docker
+      - APP_POD_NAMESPACE=${USER}
+      ### settings you may want to change ###
+      # https://app.speedscale.com/config
+      - TEST_CONFIG_ID=standard
+      # UUID for the report, leave blank to generate one
+      - TEST_REPORT_ID=${TEST_REPORT_ID}
+      # snapshot to source requests from
+      - SNAPSHOT_ID=125f22f8-747b-40c1-be45-75eddf29f844
+      # must respond with 2xx before generator starts making requests
+      - READINESS_URL=
+      # your service on localhost
+      - CUSTOM_URL=http://host.docker.internal:3000
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    image: gcr.io/speedscale/generator:v1.3.122
+    networks:
+      - speedscale-responder-net
+    volumes:
+      - ${HOME}/.speedscale/certs:/etc/ssl/speedscale
+      - ${HOME}/.speedscale/config.yaml:/config.yaml
+  goproxy:
+    environment:
+      - SPEEDSCALE_CONFIG_YAML=/config.yaml
+      - TLS_OUT_UNWRAP=true
+      - CAPTURE_MODE=proxy
+      - PROXY_TYPE=dual
+      - PROXY_PROTOCOL=tcp:http
+      - ENABLE_API=false
+      - APP_POD_NAME=demo-node
+      - APP_POD_NAMESPACE=${USER}
+      - COLLECTION_MODE=discard
+      ### settings you may want to change ###
+      # requests from your service go through Speedscale outbound proxy
+      - PROXY_OUT_PORT=4140
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    image: gcr.io/speedscale/goproxy:v1.3.122
+    networks:
+      - speedscale-responder-net
+    ports:
+      - 4144:4144
+      # exposes PROXY_OUT_PORT
+      - 4140:4140
+    volumes:
+      - ${HOME}/.speedscale/certs:/etc/ssl/speedscale
+      - ${HOME}/.speedscale/config.yaml:/config.yaml
+  redis:
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_AOF_ENABLED=no
+    image: gcr.io/speedscale/redis
+    networks:
+      - speedscale-responder-net
+    ports:
+      - 6379:6379
+  responder:
+    environment:
+      - SPEEDSCALE_CONFIG_YAML=/config.yaml
+      - REDIS_SERVICE_HOST=redis
+      - REDIS_SERVICE_PORT=6379
+      - SERVICE_HTTPS_PORT=443
+      - SERVICE_HTTP_PORT=80
+      # https://app.speedscale.com/config
+      - TEST_CONFIG_ID=standard
+      # snapshot to source requests from
+      - SNAPSHOT_ID=125f22f8-747b-40c1-be45-75eddf29f844
+      - TEST_REPORT_ID=${TEST_REPORT_ID}
+    image: gcr.io/speedscale/responder:v1.3.122
+    networks:
+      speedscale-responder-net:
+        aliases:
+          - api.github.com
+          - api.nasa.gov
+          - httpbin.org
+    volumes:
+      - ${HOME}/.speedscale/certs:/etc/ssl/speedscale
+      - ${HOME}/.speedscale/config.yaml:/config.yaml
+networks:
+  speedscale-responder-net:
+    driver: bridge

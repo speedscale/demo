@@ -1,6 +1,6 @@
 ## Java Demo
 
-This is a Java Spring Boot app that makes makes requests to the [SpaceX API](https://github.com/r-spacex/SpaceX-API/tree/master) and the [US Treasury API](https://fiscaldata.treasury.gov/api-documentation/).
+This is a Java Spring Boot app that makes makes requests to the [SpaceX API](https://github.com/r-spacex/SpaceX-API/tree/master) and the [US Treasury API](https://fiscaldata.treasury.gov/api-documentation/). The Speedscale documentation also includes a [full walkthrough](https://docs.speedscale.com/end-to-end/) of using this demo.
 
 ### Tools used
 

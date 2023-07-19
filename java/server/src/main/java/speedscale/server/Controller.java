@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,8 +33,10 @@ public class Controller {
     static final Logger log = LogManager.getLogger();
 
     @GetMapping("/healthz")
-    public String health() {
-        return "{\"health\": \"ok\"}";
+    public Map<String, String> health() {
+        Map<String, String> m = new HashMap<String, String>();
+        m.put("health", "ok");
+        return m;
     }
 
     @PostMapping("/login")
@@ -49,13 +52,17 @@ public class Controller {
     }
 
     @GetMapping("/spacex/launches")
-    public String launches() {
+    public ResponseEntity<String> launches() {
         try {
-            return SpaceX.launches();
+            return ResponseEntity.ok()
+                    .header("Content-Type", "application/json")
+                    .body(SpaceX.launches());
         } catch (Exception e) {
             log.catching(e);
         }
-        return "{}";
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/json")
+                .body("{}");
     }
 
     @GetMapping("/spacex/ship")
@@ -66,13 +73,17 @@ public class Controller {
     }
 
     @GetMapping("/spacex/ship/{id}")
-    public String ship(@PathVariable String id) {
+    public ResponseEntity<String> ship(@PathVariable String id) {
         try {
-            return SpaceX.ship(id);
+            return ResponseEntity.ok()
+                    .header("Content-Type", "application/json")
+                    .body(SpaceX.ship(id));
         } catch (Exception e) {
             log.catching(e);
         }
-        return "{}";
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/json")
+                .body("{}");
     }
 
     @GetMapping("/treasury/max_interest")

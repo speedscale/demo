@@ -137,11 +137,11 @@ As this is running you should get proper responses from the application, and you
 
 The first step to replay is to [create a snapshot](https://docs.speedscale.com/guides/creating-a-snapshot/). You should see the data like this in your traffic viewer:
 
-![traffic-viewer](/img/spd-traffic-viewer.png)
+![traffic-viewer](img/spd-traffic-viewer.png)
 
 The next step is to `Save Tests/Mocks` and follow the workflow using all the default values. The result should be a snapshot that looks like so:
 
-![snapshot](/img/spd-snapshot.png)
+![snapshot](img/spd-snapshot.png)
 
 Now you are going to replay that snapshot on your own machine using `docker`. You can use the `speedctl install` command to generate the compose file. You are going to pick the following options:
 
@@ -169,18 +169,18 @@ docker compose --file compose-replay-merged.yaml up
 
 When you see the log message `demo-node-generator-1 exited with code 0` then the generator has completed, and you can turn down all the conatiners. Now you should see a Report in the [Speedscale Reports](https://app.speedscale.com/reports) list. It should have an 87.5% success rate like this.
 
-![Speedscale Report](/img/spd-report-summary.png)
+![Speedscale Report](img/spd-report-summary.png)
 
 The reason for the lower success rate is because the `/` endpoint includes a timestamp, and all the values in the JSON response are being compared. In this case you want to ignore the timestamp and just compare all the other fields.
 
-![Assertion](/img/spd-report-assert.png)
+![Assertion](img/spd-report-assert.png)
 
 You can customize your test config to ignore the `ts` value. You can test this immediately by hitting the 3 dots in the corner and selecting `Edit Test Config`. Then go to the `Assertions` tab and click on the `HTTP Response Body` assertion and add `ts` to the ignore list and `Save`. Then `Save` the entire test config and your report will be reanalyzed.
 
-![HTTP Response Body](/img/spd-http-response-body.png)
+![HTTP Response Body](img/spd-http-response-body.png)
 
 Your report should now show 100% and you can see the `ts` is ignored by opening up the assertion view.
 
-![Assert Ignored](/img/spd-report-assert-ignored.png)
+![Assert Ignored](img/spd-report-assert-ignored.png)
 
 Congrats, you completed all the capture and replay steps in docker! Now is a great time to explore and check out other ways to run your tests for load, contract validation, chaos, or even start to integrate this into your CI/CD workflow.

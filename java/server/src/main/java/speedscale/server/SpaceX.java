@@ -32,6 +32,11 @@ public class SpaceX {
                 "614251b711a64135defb3654",
                 "5ea6ed30080df4000697c916"
         };
+        try {
+            Thread.sleep(r.nextLong(50));
+        } catch (InterruptedException e) {
+            // ignored
+        }
         return ships[r.nextInt(ships.length)];
     }
 }

@@ -3,8 +3,6 @@ package speedscale.server;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,6 +23,7 @@ public class JwtFilter extends OncePerRequestFilter {
         switch (uri) {
             case "/login":
             case "/healthz":
+            case "/rsaToken":
                 return true;
             default:
                 return false;
@@ -42,9 +41,12 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
         String token = tokenHeader.substring(7);
-        tokenManager.validateJwtToken(token);
-        SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken("jwt", "pass"));
+        
+        // If the JWT is not valid, return unauthorized
+        if (!tokenManager.validateJwtToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
 
         filterChain.doFilter(request, response);
     }

@@ -47,9 +47,22 @@ public class Controller {
             return m;
         }
 
-        m.put("token", jwt.generateJwtToken(login.getUsername()));
+        m.put("token", jwt.generateHmacToken(login.getUsername()));
         return m;
     }
+
+    @PostMapping("/rsaToken")
+    public Map<String, String> rsaToken(@RequestBody Login login) {
+        Map<String, String> m = new HashMap<String, String>();
+        if (!username.equals(login.getUsername()) || !password.equals(login.getPassword())) {
+            m.put("err", "invalid auth");
+            return m;
+        }
+
+        m.put("token", jwt.generateRsaToken(login.getUsername()));
+        return m;
+    }
+
 
     @GetMapping("/spacex/launches")
     public ResponseEntity<String> launches() {

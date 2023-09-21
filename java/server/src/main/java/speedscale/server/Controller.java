@@ -47,7 +47,7 @@ public class Controller {
             return m;
         }
 
-        m.put("token", jwt.generateHmacToken(login.getUsername()));
+        m.put("access_token", jwt.generateHmacToken(login.getUsername()));
         return m;
     }
 
@@ -59,7 +59,7 @@ public class Controller {
             return m;
         }
 
-        m.put("token", jwt.generateRsaToken(login.getUsername()));
+        m.put("access_token", jwt.generateRsaToken(login.getUsername()));
         return m;
     }
 

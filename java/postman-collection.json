@@ -180,7 +180,7 @@
             }
           ],
           "cookie": [],
-          "body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY4ODc2MDY3MSwiaWF0IjoxNjg4Njc0MjcxfQ.w3kvIZubt4Ek7zmbNx8RKcZd9rW1phmK6COGfKDTqzE\"\n}"
+          "body": "{\n    \"access_token\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY4ODc2MDY3MSwiaWF0IjoxNjg4Njc0MjcxfQ.w3kvIZubt4Ek7zmbNx8RKcZd9rW1phmK6COGfKDTqzE\"\n}"
         }
       ]
     },
@@ -503,7 +503,7 @@
     "type": "bearer",
     "bearer": [
       {
-        "key": "token",
+        "key": "access_token",
         "value": "{{token}}",
         "type": "string"
       }

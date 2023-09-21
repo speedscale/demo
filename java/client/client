@@ -14,14 +14,14 @@ NC='\033[0m'
 
 login() {
     echo -e "${RED}Getting login token ${NC}"
-    loginToken=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/login" | jq -r .token)
+    loginToken=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/login" | jq -r .access_token)
     echo -e "${RED}Login token is ${loginToken}${NC}"
     echo
 }
 
 rsaToken() {
     echo -e "${RED}Getting RSA token ${NC}"
-    rsaToken=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/rsaToken" | jq -r .token)
+    rsaToken=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/rsaToken" | jq -r .access_token)
     echo -e "${RED}RSA token is ${rsaToken}${NC}"
     echo
 }

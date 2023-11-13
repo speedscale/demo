@@ -8,7 +8,7 @@ local:
 	@cd server && ./mvnw spring-boot:run ${SPRING_BOOT_RUN_OPTS}
 
 .PHONY: local-capture
-local-capture: export SPRING_BOOT_RUN_OPTS=-Dspring-boot.run.jvmArguments="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=4140 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=4140 -Djavax.net.ssl.trustStore=${SPEEDCTL_HOME}/certs/cacerts.jks -Djavax.net.ssl.trustStorePassword=changeit"
+local-capture: export SPRING_BOOT_RUN_OPTS=-Dspring-boot.run.jvmArguments="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=4140 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=4140 -Djavax.net.ssl.trustStore=${SPEEDSCALE_HOME}/certs/cacerts.jks -Djavax.net.ssl.trustStorePassword=changeit"
 local-capture: local
 
 .PHONY: local-replay

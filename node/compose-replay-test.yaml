@@ -1,11 +1,11 @@
 services:
-  demo-node:
+  node-server:
     environment:
       - GLOBAL_AGENT_HTTP_PROXY=http://host.docker.internal:4140
       - GLOBAL_AGENT_HTTPS_PROXY=http://host.docker.internal:4140
       - export GLOBAL_AGENT_NO_PROXY=*127.0.0.1:12557
       - NODE_EXTRA_CA_CERTS=/etc/ssl/speedscale/tls.crt
-    image: demo-node:latest
+    image: node-server:latest
     ports:
       - 3000:3000
     volumes:
@@ -47,7 +47,7 @@ services:
       - PROXY_TYPE=dual
       - PROXY_PROTOCOL=tcp:http
       - ENABLE_API=false
-      - APP_POD_NAME=demo-node
+      - APP_POD_NAME=node-server
       - APP_POD_NAMESPACE=${USER}
       - COLLECTION_MODE=discard
       ### settings you may want to change ###

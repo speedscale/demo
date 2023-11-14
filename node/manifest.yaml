@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-server
+  template:
+    metadata:
+      labels:
+        app: node-server
+    spec:
+      containers:
+        - name: node-server
+          image: gcr.io/speedscale-demos/node-server:1.0.4
+          imagePullPolicy: Always
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          ports:
+            - containerPort: 3000
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-server
+  labels:
+    app: node-server
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+  selector:
+    app: node-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-client
+  labels:
+    app: node-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-client
+  template:
+    metadata:
+      labels:
+        app: node-client
+    spec:
+      initContainers:
+        - name: check-server
+          image: registry.gitlab.com/gitlab-ci-utils/curl-jq
+          command:
+          - bash
+          - -c
+          args:
+          - |-
+            for i in {1..300}
+              do sleep 1
+              echo "Checking for server liveness"
+              if curl -m 1 -s http://${SERVER_URL}/healthz; then
+                exit 0
+              fi
+            done
+            exit 1
+          env:
+          - name: SERVER_URL
+            value: node-server
+      containers:
+        - name: node-client
+          image: registry.gitlab.com/gitlab-ci-utils/curl-jq
+          imagePullPolicy: Always
+          command:
+          - bash
+          - -c
+          - /client
+          env:
+          - name: SERVER_URL
+            value: node-server
+          volumeMounts:
+          - mountPath: "/client"
+            name: "script"
+            subPath: client
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+            limits:
+              cpu: 50m
+              memory: 100Mi
+      volumes:
+      - name: script
+        configMap:
+          name: client-script
+          defaultMode: 0777

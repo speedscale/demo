@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+SERVER_URL=${SERVER_URL:-"localhost:3000"}
+loginToken=""
+rsaToken=""
+
+echo $SERVER_URL
+
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+login() {
+    echo -e "${RED}Getting login token ${NC}"
+    loginToken=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/login" | jq -r .access_token)
+    echo -e "${RED}Login token is ${loginToken}${NC}"
+    echo
+}
+
+home() {
+    echo -e "${BLUE}Getting unauthenticated home ${NC}"
+    curl -s -X GET "${SERVER_URL}/"
+    echo
+    echo
+}
+
+space() {
+    echo -e "${BLUE}Getting SpaceX ${NC}"
+    curl -s -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/space"
+    echo
+    echo
+}
+
+events() {
+    echo -e "${BLUE}Getting GitHub Events ${NC}"
+    curl -s -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/events"
+    echo
+    echo
+}
+
+random-sleep () {
+    sleep $(( RANDOM % 3 ))
+}
+
+i=0
+while true; do
+    if [[ $((i % 5)) == 0 ]]; then
+        login
+    fi
+
+    home
+    random-sleep
+
+    space
+    random-sleep
+
+    events
+    random-sleep
+    i=$((i+1))
+done

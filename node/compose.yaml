@@ -1,5 +1,5 @@
 services:
-  demo-node:
-    image: demo-node:latest
+  node-server:
+    image: node-server:latest
     ports:
     - 3000:3000

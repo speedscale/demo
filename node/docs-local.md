@@ -19,10 +19,10 @@ npm start
 If the log looks like this it's working:
 
 ```
-> demo-node@1.0.0 start
+> node-server@1.0.0 start
 > node index.js
 
-demo-node listening on port 3000
+node-server listening on port 3000
 ```
 
 ## Send Test Transactions
@@ -54,7 +54,7 @@ speedctl create certs -o ~/.speedscale/certs
 To quickly capture on your own local machine, you can capture the inbound and outbound traffic using `speedctl` with this command:
 
 ```
-speedctl capture demo-node 3000
+speedctl capture node-server 3000
 ```
 
 Now you need to configure your application to use the proxy, this is from the [Speedscale Proxy Docs](https://docs.speedscale.com/setup/sidecar/proxy-modes/#configuring-your-application-proxy-server).

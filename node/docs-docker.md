@@ -8,7 +8,7 @@ Pre-requisites:
 First you need to build the docker image:
 
 ```
-docker build . -t demo-node:latest
+docker build . -t node-server:latest
 ```
 
 Then you can run it using `docker compose`. Make sure you use `docker compose` NOT `docker-compose` which is legacy and no longer supported. There is an example file which will start the listener on port 3000.
@@ -20,10 +20,10 @@ docker compose up
 If the output looks like this then it's working:
 
 ```
-demo-node-demo-node-1  | > demo-node@1.0.0 start
-demo-node-demo-node-1  | > node index.js
-demo-node-demo-node-1  |
-demo-node-demo-node-1  | demo-node listening on port 3000
+node-server-node-server-1  | > node-server@1.0.0 start
+node-server-node-server-1  | > node index.js
+node-server-node-server-1  |
+node-server-node-server-1  | node-server listening on port 3000
 ```
 
 ## Send Test Transactions
@@ -83,7 +83,7 @@ Choose one:
  [q] Quit
 ▸ What would you like to do? [q]: 1
 
-▸ What is the name of your service? [MY_SERVICE]: demo-node
+▸ What is the name of your service? [MY_SERVICE]: node-server
 
 ▸ What port does your service listen on locally? [8080]: 3000
 ```
@@ -94,17 +94,17 @@ This will create a file `speedscale-docker-capture.yaml` which runs the capture 
 yq '. *= load("speedscale-docker-capture.yaml")' compose-speedscale.yaml > compose-capture-merged.yaml
 ```
 
-The resulting file should look like this with 3 sections for `demo-node` along with `forwarder` and `goproxy` which are the Speedscale containers.
+The resulting file should look like this with 3 sections for `node-server` along with `forwarder` and `goproxy` which are the Speedscale containers.
 
 ```
 services:
-  demo-node:
+  node-server:
     environment:
       - GLOBAL_AGENT_HTTP_PROXY=http://host.docker.internal:4140
       - GLOBAL_AGENT_HTTPS_PROXY=http://host.docker.internal:4140
       - export GLOBAL_AGENT_NO_PROXY=*127.0.0.1:12557
       - NODE_EXTRA_CA_CERTS=/etc/ssl/speedscale/tls.crt
-    image: demo-node:latest
+    image: node-server:latest
     ports:
       - 3000:3000
     volumes:
@@ -148,7 +148,7 @@ Now you are going to replay that snapshot on your own machine using `docker`. Yo
 ```
 [2] Docker
 [3] Replay recorded traffic from a Snapshot against my service locally
-Choose your service: `demo-node`
+Choose your service: `node-server`
 Choose your test config: `standard`
 Which snapshot ID should be used? (the one you created earlier)
 What port does your service listen on locally? [8080]: 3000
@@ -161,13 +161,13 @@ This will create `speedscale-docker-replay.yaml` which runs the replay component
 yq '. *= load("speedscale-docker-replay.yaml")' compose-speedscale.yaml > compose-replay-merged.yaml
 ```
 
-The resulting file should look like this with 3 sections for `demo-node` along with `generator`, `goproxy`, `redis` and `responder` which are the Speedscale containers. You can run it like this:
+The resulting file should look like this with 3 sections for `node-server` along with `generator`, `goproxy`, `redis` and `responder` which are the Speedscale containers. You can run it like this:
 
 ```
 docker compose --file compose-replay-merged.yaml up
 ```
 
-When you see the log message `demo-node-generator-1 exited with code 0` then the generator has completed, and you can turn down all the conatiners. Now you should see a Report in the [Speedscale Reports](https://app.speedscale.com/reports) list. It should have an 87.5% success rate like this.
+When you see the log message `node-server-generator-1 exited with code 0` then the generator has completed, and you can turn down all the conatiners. Now you should see a Report in the [Speedscale Reports](https://app.speedscale.com/reports) list. It should have an 87.5% success rate like this.
 
 ![Speedscale Report](img/spd-report-summary.png)
 

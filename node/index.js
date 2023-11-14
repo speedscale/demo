@@ -2,8 +2,10 @@ import 'global-agent/bootstrap.js';
 import got from 'got';
 import express from 'express';
 import morgan from 'morgan';
+import jwt from 'jsonwebtoken';
 
 const app = express()
+app.use(express.json())
 app.use(morgan('tiny'))
 const port = 3000
 
@@ -37,6 +39,15 @@ app.get('/healthz', (req, res) => {
   res.send(body);
 })
 
+app.post('/login', (req, res) => {
+  var token = jwt.sign({ user: req.body.username }, 'shhhhh');
+  const body = {
+    'access_token': token,
+    'ts': new Date().toISOString()
+  }
+  res.send(body);
+})
+
 app.get('/nasa', async (req, res) => {
   try {
     const url = 'https://api.nasa.gov/planetary/apod'
@@ -46,6 +57,19 @@ app.get('/nasa', async (req, res) => {
       }
     }
     const data = await got(url, options).json()
+    res.send(data)
+  } catch (err) {
+    const msg = makeError(err)
+    console.error(msg)
+    res.status(500)
+    res.send(msg)
+  }
+})
+
+app.get('/space', async (req, res) => {
+  try {
+    const url = 'https://api.spacexdata.com/v5/launches/latest';
+    const data = await got(url).json()
     res.send(data)
   } catch (err) {
     const msg = makeError(err)
@@ -87,6 +111,6 @@ app.get('/bin', async (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`demo-node listening on port ${port}`)
+  console.log(`node-server listening on port ${port}`)
 })
 

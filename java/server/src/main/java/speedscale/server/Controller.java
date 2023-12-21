@@ -16,16 +16,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import speedscale.lib.*;
 import speedscale.model.Login;
 import speedscale.model.TreasuryResponse;
 
 @RestController
 public class Controller {
-
-    @Value("${my.username}")
-    private String username;
-    @Value("${my.password}")
-    private String password;
 
     @Autowired
     TokenManager jwt;
@@ -42,24 +38,34 @@ public class Controller {
     @PostMapping("/login")
     public Map<String, String> login(@RequestBody Login login) {
         Map<String, String> m = new HashMap<String, String>();
-        if (!username.equals(login.getUsername()) || !password.equals(login.getPassword())) {
+        
+        // Check the user auth
+        boolean valid = UserAuth.validate(login);
+        if (!valid) {
             m.put("err", "invalid auth");
             return m;
         }
 
         m.put("access_token", jwt.generateHmacToken(login.getUsername()));
+        m.put("token_type", "Bearer");
+        m.put("expires_id", TokenManager.EXPIRATION_OFFSET + "");
         return m;
     }
 
     @PostMapping("/rsaToken")
     public Map<String, String> rsaToken(@RequestBody Login login) {
         Map<String, String> m = new HashMap<String, String>();
-        if (!username.equals(login.getUsername()) || !password.equals(login.getPassword())) {
+        
+        // Check the user auth
+        boolean valid = UserAuth.validate(login);
+        if (!valid) {
             m.put("err", "invalid auth");
             return m;
         }
 
         m.put("access_token", jwt.generateRsaToken(login.getUsername()));
+        m.put("token_type", "Bearer");
+        m.put("expires_id", TokenManager.EXPIRATION_OFFSET + "");
         return m;
     }
 

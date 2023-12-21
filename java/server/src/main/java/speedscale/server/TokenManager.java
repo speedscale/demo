@@ -48,6 +48,8 @@ public class TokenManager {
 
     private MySigningKeyResolver resolver = new MySigningKeyResolver();
 
+    public static int EXPIRATION_OFFSET = 60 * 60 * 24 * 1000;
+
     public String generateHmacToken(String username) {
         Key hmacShaKey = Keys.hmacShaKeyFor(hmacSecret.getBytes());
         return makeBuilder(username)
@@ -100,7 +102,7 @@ public class TokenManager {
             .setSubject(username)
             .setAudience("spacex-fans")
             .setIssuedAt(new Date(ts))
-            .setExpiration(new Date(ts + 60 * 60 * 24 * 1000))
+            .setExpiration(new Date(ts + EXPIRATION_OFFSET))
             .setNotBefore(new Date(ts - 60 * 60 * 1000));
     }
 

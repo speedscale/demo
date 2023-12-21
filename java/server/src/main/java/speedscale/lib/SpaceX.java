@@ -1,4 +1,4 @@
-package speedscale.server;
+package speedscale.lib;
 
 import java.net.URI;
 import java.net.http.HttpClient;

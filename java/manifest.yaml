@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: java-server
-          image: gcr.io/speedscale-demos/java-server:1.0.4
+          image: gcr.io/speedscale-demos/java-server:1.0.5
           imagePullPolicy: Always
           readinessProbe:
             httpGet:
@@ -91,7 +91,7 @@ spec:
     spec:
       initContainers:
         - name: check-server
-          image: registry.gitlab.com/gitlab-ci-utils/curl-jq
+          image: gcr.io/speedscale-demos/curl-jq
           command:
           - bash
           - -c
@@ -110,7 +110,7 @@ spec:
             value: java-server
       containers:
         - name: java-client
-          image: registry.gitlab.com/gitlab-ci-utils/curl-jq
+          image: gcr.io/speedscale-demos/curl-jq
           imagePullPolicy: Always
           command:
           - bash

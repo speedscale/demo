@@ -32,7 +32,7 @@ app.MapGet("/weatherforecast", async () =>
     // Configure proxy
     var proxy = new HttpClientHandler
     {
-        Proxy = new WebProxy("http://localhost:4150"), // proxy on speedctl
+        Proxy = new WebProxy("http://localhost:4140"), // proxy on speedctl
         // {
         //     Credentials = new NetworkCredential("username", "password") // Optional: Replace with proxy credentials
         // },

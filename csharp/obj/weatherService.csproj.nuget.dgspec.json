@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/emilenriquez/Sites/dojo/c-sharp/weatherService/weatherService.csproj": {}
+    "/Users/emilenriquez/Sites/speedscale/demo/csharp/weatherService.csproj": {}
   },
   "projects": {
-    "/Users/emilenriquez/Sites/dojo/c-sharp/weatherService/weatherService.csproj": {
+    "/Users/emilenriquez/Sites/speedscale/demo/csharp/weatherService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/emilenriquez/Sites/dojo/c-sharp/weatherService/weatherService.csproj",
+        "projectUniqueName": "/Users/emilenriquez/Sites/speedscale/demo/csharp/weatherService.csproj",
         "projectName": "weatherService",
-        "projectPath": "/Users/emilenriquez/Sites/dojo/c-sharp/weatherService/weatherService.csproj",
+        "projectPath": "/Users/emilenriquez/Sites/speedscale/demo/csharp/weatherService.csproj",
         "packagesPath": "/Users/emilenriquez/.nuget/packages/",
-        "outputPath": "/Users/emilenriquez/Sites/dojo/c-sharp/weatherService/obj/",
+        "outputPath": "/Users/emilenriquez/Sites/speedscale/demo/csharp/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/emilenriquez/.nuget/NuGet/NuGet.Config"

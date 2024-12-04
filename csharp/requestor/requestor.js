@@ -1,4 +1,6 @@
-const http = require('http');
+// const http = require('https');
+const httpRequest = require('http');
+// const httpRequest = require('https');
 // const { HttpProxyAgent } = require('http-proxy-agent');
 
 // Proxy configuration (replace with your proxy's address)
@@ -13,27 +15,43 @@ const options = {
   headers: {
     Accept: '*/*',
   },
+  // rejectUnauthorized: false,
   // agent: agent,  // Use the proxy agent
 };
 
 const sendRequest = (id) => {
-  const req = http.request(options, (res) => {
-    let data = '';
+  const req = httpRequest.request(options, (res) => {
+    console.log(`Status Code: ${res.statusCode}`);
+
+    let responseData = '';
 
     res.on('data', (chunk) => {
-      data += chunk;
+      responseData += chunk.toString();
+      console.log(`Received chunk: ${chunk.length} bytes`);
     });
 
     res.on('end', () => {
-      console.log(`Response ${id}:`, data);
+      console.log(`Request ${id} completed. Final Response:`, responseData);
+    });
+
+    res.on('error', (err) => {
+      console.error(`Error in response for Request ${id}: ${err.message}`);
     });
   });
 
   req.on('error', (e) => {
-    console.error(`Error in request ${id}: ${e.message}`);
+    console.error(`Request ${id} encountered an error: ${e.message}`);
   });
 
+  // Add a timeout to prevent hanging requests
+  req.setTimeout(5000, () => {
+    console.error(`Request ${id} timed out.`);
+    req.abort();
+  });
+
+  // Send the request body (if any) and finalize it
   req.end();
+
 };
 
 // Launch 100 requests

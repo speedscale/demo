@@ -8,6 +8,12 @@ import (
 	"math"
 	"net/http"
 	"os"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
 // This is a simple API that returns the distance between two IP addresses.
@@ -23,7 +29,10 @@ import (
 // {"city":"Tucker","connection_type":"cable","continent_code":"NA","continent_name":"North America","country_code":"US","country_name":"United States","dma":"524","ip":"50.168.198.162","ip_routing_type":"fixed","latitude":33.856021881103516,"location":{"calling_code":"1","capital":"Washington D.C.","country_flag":"https://assets.ipstack.com/flags/us.svg","country_flag_emoji":"🇺🇸","country_flag_emoji_unicode":"U+1F1FA U+1F1F8","geoname_id":4227213,"is_eu":false,"languages":[{"code":"en","name":"English","native":"English"}]},"longitude":-84.21367645263672,"msa":"12060","radius":"46.20358","region_code":"GA","region_name":"Georgia","type":"ipv4","zip":"30084"}
 // {"city":"Alpharetta","connection_type":"cable","continent_code":"NA","continent_name":"North America","country_code":"US","country_name":"United States","dma":"524","ip":"174.49.112.125","ip_routing_type":"fixed","latitude":34.08958053588867,"location":{"calling_code":"1","capital":"Washington D.C.","country_flag":"https://assets.ipstack.com/flags/us.svg","country_flag_emoji":"🇺🇸","country_flag_emoji_unicode":"U+1F1FA U+1F1F8","geoname_id":4179574,"is_eu":false,"languages":[{"code":"en","name":"English","native":"English"}]},"longitude":-84.29045867919922,"msa":"12060","radius":"44.94584","region_code":"GA","region_name":"Georgia","type":"ipv4","zip":"30004"}
 
-var ipstackAPIKey string
+var (
+	ipstackAPIKey string
+	cache         bool
+)
 
 type response struct {
 	Distance float64                `json:"distance"`
@@ -35,6 +44,16 @@ func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run main.go <ip_address>")
 		return
+	}
+	if len(os.Args) == 3 {
+		if os.Args[2] != "--cache" {
+			log.Fatal("Invalid argument: ", os.Args[2])
+		}
+
+		cache = true
+		if err := ensureTableExists(); err != nil {
+			log.Fatal(fmt.Sprintf("Failed to ensure table exists: %v\n", err))
+		}
 	}
 	ipstackAPIKey = os.Args[1]
 	http.HandleFunc("/get-ip-info", ipInfoHandler)
@@ -50,6 +69,19 @@ func ipInfoHandler(w http.ResponseWriter, r *http.Request) {
 	ip := r.URL.Query().Get("ip1")
 	if ip == "" {
 		http.Error(w, "IP address is required", http.StatusBadRequest)
+		return
+	}
+
+	if cache {
+		response, err := getResponseFromDynamoDB(ip, id2)
+		if err != nil {
+			http.Error(w, "Failed to get response from DynamoDB", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+
+		fmt.Println(response)
 		return
 	}
 
@@ -81,6 +113,160 @@ func ipInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(response)
 
+	err = storeResponseInDynamoDB(response)
+	if err != nil {
+		fmt.Printf("Failed to store response in DynamoDB: %v\n", err)
+	}
+}
+
+func getResponseFromDynamoDB(ip1, ip2 string) (response, error) {
+	// Create a session using the shared config
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2")},
+	)
+	if err != nil {
+		return response{}, fmt.Errorf("failed to create session: %v", err)
+	}
+
+	// Create DynamoDB client
+	svc := dynamodb.New(sess)
+
+	// Create the key for the GetItem call
+	key := ip1 + "|" + ip2
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String("IPInfoResponses"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"ID": {
+				S: aws.String(key),
+			},
+		},
+	}
+
+	// Get the item from the DynamoDB table
+	result, err := svc.GetItem(input)
+	if err != nil {
+		return response{}, fmt.Errorf("failed to get item from DynamoDB: %v", err)
+	}
+
+	if result.Item == nil {
+		return response{}, fmt.Errorf("no item found in DynamoDB for key: %s", key)
+	}
+
+	// Unmarshal the result into a response struct
+	var resp response
+	err = dynamodbattribute.UnmarshalMap(result.Item, &resp)
+	if err != nil {
+		return response{}, fmt.Errorf("failed to unmarshal result: %v", err)
+	}
+
+	return resp, nil
+}
+
+func storeResponseInDynamoDB(response response) error {
+	// Create a session using the shared config
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2")},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create session: %v", err)
+	}
+
+	// Create DynamoDB client
+	svc := dynamodb.New(sess)
+
+	// Marshal the response into a map of AttributeValues
+	av, err := dynamodbattribute.MarshalMap(response)
+	if err != nil {
+		return fmt.Errorf("failed to marshal response: %v", err)
+	}
+
+	key := response.Request1["ip"].(string) + "|" + response.Request2["ip"].(string)
+	av["ID"] = &dynamodb.AttributeValue{
+		S: aws.String(key),
+	}
+	// Create the input for the PutItem call
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String("IPInfoResponses"),
+	}
+
+	// Put the item into the DynamoDB table
+	_, err = svc.PutItem(input)
+	if err != nil {
+		return fmt.Errorf("failed to put item in DynamoDB: %v", err)
+	}
+
+	return nil
+}
+
+func ensureTableExists() error {
+	// Create a session using the shared config
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2")},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create session: %v", err)
+	}
+
+	// Create DynamoDB client
+	svc := dynamodb.New(sess)
+
+	// Check if the table exists
+	_, err = svc.DescribeTable(&dynamodb.DescribeTableInput{
+		TableName: aws.String("IPInfoResponses"),
+	})
+	if err == nil {
+		// Table exists
+		return nil
+	}
+
+	// If the error is not because the table doesn't exist, return the error
+	if !isTableNotFoundError(err) {
+		return fmt.Errorf("failed to describe table: %v", err)
+	}
+
+	// Table does not exist, create it
+	_, err = svc.CreateTable(&dynamodb.CreateTableInput{
+		TableName: aws.String("IPInfoResponses"),
+		AttributeDefinitions: []*dynamodb.AttributeDefinition{
+			{
+				AttributeName: aws.String("ID"),
+				AttributeType: aws.String("S"),
+			},
+		},
+		KeySchema: []*dynamodb.KeySchemaElement{
+			{
+				AttributeName: aws.String("ID"),
+				KeyType:       aws.String("HASH"),
+			},
+		},
+		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(5),
+			WriteCapacityUnits: aws.Int64(5),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create table: %v", err)
+	}
+
+	// Wait until the table is created
+	err = svc.WaitUntilTableExists(&dynamodb.DescribeTableInput{
+		TableName: aws.String("IPInfoResponses"),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to wait for table creation: %v", err)
+	}
+
+	return nil
+}
+
+func isTableNotFoundError(err error) bool {
+	if aerr, ok := err.(awserr.Error); ok {
+		if aerr.Code() == dynamodb.ErrCodeResourceNotFoundException {
+			return true
+		}
+	}
+	return false
 }
 
 func getIPInfo(w http.ResponseWriter, ip string) (map[string]interface{}, error) {

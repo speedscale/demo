@@ -115,10 +115,15 @@ This is a trivial API that returns the distance between two IP addresses. It use
     }
     ```
 
+## Options
+
+- `--cache`: Cache the response in DynamoDB
+
+Note that an AWS IAM role with the necessary permissions is required to write to the DynamoDB table.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 
 ## Acknowledgements
 

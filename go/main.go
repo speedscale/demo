@@ -163,6 +163,10 @@ func getResponseFromDynamoDB(ip1, ip2 string) (response, error) {
 }
 
 func storeResponseInDynamoDB(response response) error {
+	if !cache {
+		return nil
+	}
+
 	// Create a session using the shared config
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2")},

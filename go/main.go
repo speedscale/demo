@@ -91,19 +91,17 @@ func ipInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	success, ok := result1["success"]
-	if !ok || success.(bool) == false {
+	if ok && success.(bool) == false {
 		http.Error(w, "IP Stack call failed, probably due to rate limiting. Have you considered mocking this endpoint with proxymock?", http.StatusFailedDependency)
-		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	result2, err := getIPInfo(w, id2)
 	if err != nil {
 		http.Error(w, "Failed to get IP info", http.StatusInternalServerError)
-		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	success, ok = result2["success"]
-	if !ok || success.(bool) == false {
+	if ok && success.(bool) == false {
 		http.Error(w, "IP Stack call failed, probably due to rate limiting. Have you considered mocking this endpoint with proxymock?", http.StatusFailedDependency)
 		return
 	}

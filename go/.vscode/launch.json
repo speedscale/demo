@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "inputs": [
+        {
+            "id": "ipstack_key",
+            "type": "promptString",
+            "description": "Enter your IPStack API Key"
+        }
+    ],
+    "configurations": [
+        {
+            "name": "Launch with IPStack Key",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}",
+            "args": [
+                "${input:ipstack_key}"
+            ]
+        },
+    ]
+}

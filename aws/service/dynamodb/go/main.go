@@ -59,6 +59,12 @@ func main() {
 		deleteItem(svc, tableName, fmt.Sprintf("%d", i))
 	}
 
+	// Batch Write Items
+	batchWriteItems(svc, tableName)
+
+	// Batch Get Items
+	batchGetItems(svc, tableName, []string{"2", "3"})
+
 	// Delete Table
 	deleteTable(svc, tableName)
 }
@@ -108,7 +114,7 @@ func putItem(svc *dynamodb.DynamoDB, tableName string, item Item) {
 
 	_, err = svc.PutItem(input)
 	if err != nil {
-		log.Fatalf("Failed to put item: %v", err)
+		log.Fatalf("Failed to put item %v: %v", item.ID, err)
 	}
 	fmt.Println("Item inserted successfully")
 }
@@ -199,4 +205,67 @@ func deleteTable(svc *dynamodb.DynamoDB, tableName string) {
 		log.Fatalf("Failed to delete table: %v", err)
 	}
 	fmt.Println("Table deleted successfully")
+}
+
+func batchWriteItems(svc *dynamodb.DynamoDB, tableName string) {
+	items := []Item{
+		{ID: "2b", Name: "Item2", Value: "Value2"},
+		{ID: "3b", Name: "Item3", Value: "Value3"},
+	}
+
+	writeRequests := make([]*dynamodb.WriteRequest, 0)
+	for _, item := range items {
+		av, err := dynamodbattribute.MarshalMap(item)
+		if err != nil {
+			log.Fatalf("Failed to marshal item: %v", err)
+		}
+		writeRequests = append(writeRequests, &dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: av,
+			},
+		})
+	}
+
+	input := &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]*dynamodb.WriteRequest{
+			tableName: writeRequests,
+		},
+	}
+
+	_, err := svc.BatchWriteItem(input)
+	if err != nil {
+		log.Fatalf("Failed to batch write items: %v", err)
+	}
+	fmt.Println("Batch write completed successfully")
+}
+
+func batchGetItems(svc *dynamodb.DynamoDB, tableName string, ids []string) {
+	keys := make([]map[string]*dynamodb.AttributeValue, 0)
+	for _, id := range ids {
+		keys = append(keys, map[string]*dynamodb.AttributeValue{
+			"ID": {S: aws.String(id)},
+		})
+	}
+
+	input := &dynamodb.BatchGetItemInput{
+		RequestItems: map[string]*dynamodb.KeysAndAttributes{
+			tableName: {
+				Keys: keys,
+			},
+		},
+	}
+
+	result, err := svc.BatchGetItem(input)
+	if err != nil {
+		log.Fatalf("Failed to batch get items: %v", err)
+	}
+
+	for _, item := range result.Responses[tableName] {
+		retrievedItem := Item{}
+		err = dynamodbattribute.UnmarshalMap(item, &retrievedItem)
+		if err != nil {
+			log.Fatalf("Failed to unmarshal item: %v", err)
+		}
+		fmt.Printf("Batch retrieved item: %+v\n", retrievedItem)
+	}
 }

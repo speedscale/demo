@@ -29,6 +29,8 @@ import (
 // {"city":"Tucker","connection_type":"cable","continent_code":"NA","continent_name":"North America","country_code":"US","country_name":"United States","dma":"524","ip":"50.168.198.162","ip_routing_type":"fixed","latitude":33.856021881103516,"location":{"calling_code":"1","capital":"Washington D.C.","country_flag":"https://assets.ipstack.com/flags/us.svg","country_flag_emoji":"🇺🇸","country_flag_emoji_unicode":"U+1F1FA U+1F1F8","geoname_id":4227213,"is_eu":false,"languages":[{"code":"en","name":"English","native":"English"}]},"longitude":-84.21367645263672,"msa":"12060","radius":"46.20358","region_code":"GA","region_name":"Georgia","type":"ipv4","zip":"30084"}
 // {"city":"Alpharetta","connection_type":"cable","continent_code":"NA","continent_name":"North America","country_code":"US","country_name":"United States","dma":"524","ip":"174.49.112.125","ip_routing_type":"fixed","latitude":34.08958053588867,"location":{"calling_code":"1","capital":"Washington D.C.","country_flag":"https://assets.ipstack.com/flags/us.svg","country_flag_emoji":"🇺🇸","country_flag_emoji_unicode":"U+1F1FA U+1F1F8","geoname_id":4179574,"is_eu":false,"languages":[{"code":"en","name":"English","native":"English"}]},"longitude":-84.29045867919922,"msa":"12060","radius":"44.94584","region_code":"GA","region_name":"Georgia","type":"ipv4","zip":"30004"}
 
+const port = 8080
+
 var (
 	ipstackAPIKey string
 	cache         bool
@@ -52,12 +54,14 @@ func main() {
 
 		cache = true
 		if err := ensureTableExists(); err != nil {
-			log.Fatal(fmt.Sprintf("Failed to ensure table exists: %v\n", err))
+			log.Fatalf("Failed to ensure table exists: %v\n", err)
 		}
 	}
 	ipstackAPIKey = os.Args[1]
 	http.HandleFunc("/get-ip-info", ipInfoHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	log.Printf("Listening on port %d", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
 func ipInfoHandler(w http.ResponseWriter, r *http.Request) {
@@ -87,28 +91,24 @@ func ipInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	result1, err := getIPInfo(w, ip)
 	if err != nil {
-		http.Error(w, "Failed to get IP info", http.StatusInternalServerError)
-		return
-	}
-	success, ok := result1["success"]
-	if ok && success.(bool) == false {
-		http.Error(w, "IP Stack call failed, probably due to rate limiting. Have you considered mocking this endpoint with proxymock?", http.StatusFailedDependency)
 		return
 	}
 	result2, err := getIPInfo(w, id2)
 	if err != nil {
-		http.Error(w, "Failed to get IP info", http.StatusInternalServerError)
-		return
-	}
-	success, ok = result2["success"]
-	if ok && success.(bool) == false {
-		http.Error(w, "IP Stack call failed, probably due to rate limiting. Have you considered mocking this endpoint with proxymock?", http.StatusFailedDependency)
 		return
 	}
 
-	lat1 := result1["latitude"].(float64)
+	lat1, ok := result1["latitude"].(float64)
+	if !ok {
+		log.Println("request failed")
+		return
+	}
 	long1 := result1["longitude"].(float64)
-	lat2 := result2["latitude"].(float64)
+	lat2, ok := result2["latitude"].(float64)
+	if !ok {
+		log.Println("request failed")
+		return
+	}
 	long2 := result2["longitude"].(float64)
 	foozibar := haversineDistance(lat1, long1, lat2, long2)
 
@@ -121,7 +121,7 @@ func ipInfoHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 
-	fmt.Println(response)
+	log.Println("request successful")
 
 	err = storeResponseInDynamoDB(response)
 	if err != nil {
@@ -287,10 +287,17 @@ func getIPInfo(w http.ResponseWriter, ip string) (map[string]interface{}, error)
 	ipstackURL := fmt.Sprintf("http://api.ipstack.com/%s?access_key=%s", ip, ipstackAPIKey)
 	resp, err := http.Get(ipstackURL)
 	if err != nil {
-		http.Error(w, "Failed to call ipstack API", http.StatusInternalServerError)
+		msg := "IP Stack call failed. Have you considered mocking this endpoint with proxymock?"
+		http.Error(w, msg, http.StatusInternalServerError)
 		return nil, nil
 	}
 	defer resp.Body.Close()
+
+	if resp != nil && resp.StatusCode == http.StatusTooManyRequests {
+		msg := "IP Stack call failed because it was rate limited. Have you considered mocking this endpoint with proxymock?"
+		http.Error(w, msg, http.StatusInternalServerError)
+		return nil, nil
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -302,6 +309,21 @@ func getIPInfo(w http.ResponseWriter, ip string) (map[string]interface{}, error)
 	if err := json.Unmarshal(body, &result); err != nil {
 		http.Error(w, "Failed to parse ipstack API response", http.StatusInternalServerError)
 		return nil, err
+	}
+
+	// ipstack doesn't care about status codes so we need to read their messsage
+	// to see if it's an auth error
+	if result != nil {
+		if resErr, ok := result["error"]; ok {
+			if errMap, ok := resErr.(map[string]interface{}); ok {
+				if errType, ok := errMap["type"]; ok && errType.(string) == "invalid_access_key" {
+					log.Println("Invalid ipstack API key")
+					msg := "IP Stack call failed because the API key is invalid. Have you considered mocking this endpoint with proxymock?"
+					http.Error(w, msg, http.StatusInternalServerError)
+					return nil, fmt.Errorf("invalid ipstack API key")
+				}
+			}
+		}
 	}
 
 	return result, nil

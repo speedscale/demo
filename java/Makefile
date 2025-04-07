@@ -1,4 +1,4 @@
-VERSION?=1.0.5
+VERSION?=1.0.6
 REGISTRY?=gcr.io/speedscale-demos/java-server:${VERSION}
 NAMESPACE?=default
 

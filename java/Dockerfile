@@ -1,4 +1,4 @@
-FROM maven:3-amazoncorretto-20 as build
+FROM maven:3-amazoncorretto-20 AS build
 COPY ./server /usr/src/server
 WORKDIR /usr/src/server
 RUN mvn -q clean \
@@ -7,4 +7,4 @@ RUN mvn -q clean \
 
 FROM amazoncorretto:20
 COPY --from=build /app.jar /app.jar
-ENTRYPOINT ["/bin/bash", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["/bin/bash", "-c", "java $JAVA_OPTS $SPEEDSCALE_JAVA_OPTS -jar app.jar"]

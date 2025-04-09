@@ -1,4 +1,8 @@
 {
     "image": "mcr.microsoft.com/devcontainers/universal:2",
-    "features": {}
+    "features": {},
+    "workspaceMount": "source=${localWorkspaceFolder}/go,target=/workspace,type=bind,consistency=cached",
+    "workspaceFolder": "/workspace",
+    // Use 'postCreateCommand' to run commands after the container is created.
+    "postCreateCommand": "curl \"https://downloads.speedscale.com/proxymock/proxymock-linux-$(case $(uname -m) in x86_64) echo 'amd64';; arm | arm64 | aarch64) echo 'arm64';; esac)\" -o /go/bin/proxymock && chmod +x /go/bin/proxymock"
 }

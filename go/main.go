@@ -37,9 +37,9 @@ var (
 )
 
 type response struct {
-	Distance float64                `json:"distance"`
-	Request1 map[string]interface{} `json:"request1"`
-	Request2 map[string]interface{} `json:"request2"`
+	Distance float64        `json:"distance"`
+	Request1 map[string]any `json:"request1"`
+	Request2 map[string]any `json:"request2"`
 }
 
 func main() {
@@ -93,6 +93,10 @@ func ipInfoHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+
+	// uncomment when you need to record again so you don't get rate limited
+	// time.Sleep(time.Second)
+
 	result2, err := getIPInfo(w, id2)
 	if err != nil {
 		return
@@ -283,7 +287,7 @@ func isTableNotFoundError(err error) bool {
 	return false
 }
 
-func getIPInfo(w http.ResponseWriter, ip string) (map[string]interface{}, error) {
+func getIPInfo(w http.ResponseWriter, ip string) (map[string]any, error) {
 	ipstackURL := fmt.Sprintf("http://api.ipstack.com/%s?access_key=%s", ip, ipstackAPIKey)
 	resp, err := http.Get(ipstackURL)
 	if err != nil {
@@ -305,7 +309,7 @@ func getIPInfo(w http.ResponseWriter, ip string) (map[string]interface{}, error)
 		return nil, err
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(body, &result); err != nil {
 		http.Error(w, "Failed to parse ipstack API response", http.StatusInternalServerError)
 		return nil, err
@@ -315,7 +319,7 @@ func getIPInfo(w http.ResponseWriter, ip string) (map[string]interface{}, error)
 	// to see if it's an auth error
 	if result != nil {
 		if resErr, ok := result["error"]; ok {
-			if errMap, ok := resErr.(map[string]interface{}); ok {
+			if errMap, ok := resErr.(map[string]any); ok {
 				if errType, ok := errMap["type"]; ok && errType.(string) == "invalid_access_key" {
 					log.Println("Invalid ipstack API key")
 					msg := "IP Stack call failed because the API key is invalid. Have you considered mocking this endpoint with proxymock?"

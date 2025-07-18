@@ -70,17 +70,17 @@
 - [x] Create unit tests for all endpoints
 - [x] Add OpenTelemetry instrumentation
 
-**Testing 2.1:**
-- [ ] Spring Boot application starts successfully
-- [ ] Database connection established and entities created
-- [ ] POST /users/register creates new user with hashed password
-- [ ] POST /users/login returns valid JWT token
-- [ ] GET /users/profile requires authentication and returns user data
-- [ ] Invalid credentials return appropriate error codes
-- [ ] Input validation works for all fields
-- [ ] All unit tests pass
-- [ ] JWT tokens are properly generated and validated
-- [ ] OpenTelemetry traces are generated
+**Testing 2.1:** ✅ COMPLETED
+- [x] Spring Boot application starts successfully
+- [x] Database connection established and entities created
+- [x] POST /users/register creates new user with hashed password
+- [x] POST /users/login returns valid JWT token
+- [x] GET /users/profile requires authentication and returns user data
+- [x] Invalid credentials return appropriate error codes
+- [x] Input validation works for all fields
+- [x] All unit tests pass
+- [x] JWT tokens are properly generated and validated
+- [x] OpenTelemetry traces are generated
 
 ### 2.2 Accounts Service ✅ COMPLETED
 - [x] Create Spring Boot project structure
@@ -98,18 +98,18 @@
 - [x] Create unit tests for all endpoints
 - [x] Add OpenTelemetry instrumentation
 
-**Testing 2.2:**
-- [ ] Spring Boot application starts successfully
-- [ ] Database connection established and entities created
-- [ ] JWT validation middleware rejects invalid tokens
-- [ ] POST /accounts creates new account with unique account number
-- [ ] GET /accounts returns only authenticated user's accounts
-- [ ] GET /accounts/{accountId} returns account details for authorized user
-- [ ] GET /accounts/{accountId}/balance returns correct balance
-- [ ] Users cannot access other users' accounts (authorization test)
-- [ ] Account number generation produces unique numbers
-- [ ] All unit tests pass
-- [ ] OpenTelemetry traces are generated
+**Testing 2.2:** ✅ COMPLETED
+- [x] Spring Boot application starts successfully
+- [x] Database connection established and entities created
+- [x] JWT validation middleware rejects invalid tokens
+- [x] POST /accounts creates new account with unique account number
+- [x] GET /accounts returns only authenticated user's accounts
+- [x] GET /accounts/{accountId} returns account details for authorized user
+- [x] GET /accounts/{accountId}/balance returns correct balance
+- [x] Users cannot access other users' accounts (authorization test)
+- [x] Account number generation produces unique numbers
+- [x] All unit tests pass
+- [x] OpenTelemetry traces are generated
 
 ### 2.3 Transactions Service
 - [ ] Create Spring Boot project structure

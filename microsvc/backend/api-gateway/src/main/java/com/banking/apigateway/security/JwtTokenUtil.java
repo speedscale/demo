@@ -127,4 +127,34 @@ public class JwtTokenUtil {
             return false;
         }
     }
+    
+    /**
+     * Generate JWT token for testing
+     * @param username the username
+     * @param userId the user ID
+     * @param roles the roles
+     * @return JWT token
+     */
+    public String generateToken(String username, long userId, String roles) {
+        return generateTokenWithCustomExpiration(username, userId, roles, jwtExpiration);
+    }
+    
+    /**
+     * Generate JWT token with custom expiration for testing
+     * @param username the username
+     * @param userId the user ID
+     * @param roles the roles
+     * @param expiration the expiration time in milliseconds
+     * @return JWT token
+     */
+    public String generateTokenWithCustomExpiration(String username, long userId, String roles, int expiration) {
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("userId", userId)
+                .claim("roles", roles)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .compact();
+    }
 }

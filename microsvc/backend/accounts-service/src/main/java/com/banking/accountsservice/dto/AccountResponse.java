@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public class AccountResponse {
     
     private Long id;
+    private Long userId;
     private String accountNumber;
     private BigDecimal balance;
     private String accountType;
@@ -14,9 +15,10 @@ public class AccountResponse {
     
     public AccountResponse() {}
     
-    public AccountResponse(Long id, String accountNumber, BigDecimal balance, String accountType, 
+    public AccountResponse(Long id, Long userId, String accountNumber, BigDecimal balance, String accountType, 
                           LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
+        this.userId = userId;
         this.accountNumber = accountNumber;
         this.balance = balance;
         this.accountType = accountType;
@@ -70,5 +72,13 @@ public class AccountResponse {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    public Long getUserId() {
+        return userId;
+    }
+    
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

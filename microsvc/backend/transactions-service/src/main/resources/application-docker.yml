@@ -16,6 +16,17 @@ accounts:
 
 # OpenTelemetry Configuration for Docker
 otel:
+  service:
+    name: ${spring.application.name}
   exporter:
-    jaeger:
-      endpoint: http://jaeger:14250
+    otlp:
+      protocol: http/protobuf
+      endpoint: http://jaeger:4318
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: otlp
+  propagation:
+    type: w3c

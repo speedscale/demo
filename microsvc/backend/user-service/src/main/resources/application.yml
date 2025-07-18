@@ -26,6 +26,8 @@ spring:
     schemas: ${DB_SCHEMA:user_service}
     locations: classpath:db/migration
     baseline-on-migrate: true
+  main:
+    web-application-type: servlet
 
 # JWT Configuration
 jwt:
@@ -54,3 +56,20 @@ logging:
     org.springframework.security: DEBUG
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+
+# OpenTelemetry Configuration
+otel:
+  service:
+    name: ${spring.application.name}
+  exporter:
+    otlp:
+      protocol: http/protobuf
+      endpoint: http://localhost:4318
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: otlp
+  propagation:
+    type: w3c

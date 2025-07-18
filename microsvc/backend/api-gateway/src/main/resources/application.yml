@@ -44,8 +44,8 @@ logging:
     com.banking.apigateway: DEBUG
     org.springframework.cloud.gateway: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+    file: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
   file:
     name: logs/api-gateway.log
 
@@ -58,13 +58,23 @@ management:
   endpoint:
     health:
       show-details: always
-  tracing:
-    enabled: ${TRACING_ENABLED:true}
-    sampling:
-      probability: 1.0
-  otlp:
-    tracing:
-      endpoint: ${OTLP_ENDPOINT:http://localhost:4317}
+
+# OpenTelemetry Configuration
+otel:
+  service:
+    name: ${spring.application.name}
+  exporter:
+    otlp:
+      protocol: http/protobuf
+      endpoint: http://localhost:4318
+  traces:
+    exporter: otlp
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: otlp
+  propagation:
+    type: w3c
 
 # Info endpoint
 info:
@@ -75,3 +85,38 @@ info:
     encoding: UTF-8
     java:
       version: ${java.version}
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        
+# Tracing
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://localhost:4317
+    metrics:
+      export:
+        enabled: true
+        step: 1m
+        resource-attributes:
+          service.name: ${spring.application.name}
+          
+# Logging
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+    

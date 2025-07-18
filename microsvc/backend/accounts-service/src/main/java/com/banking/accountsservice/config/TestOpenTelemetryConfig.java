@@ -1,23 +1,24 @@
 package com.banking.accountsservice.config;
 
-import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.metrics.MeterProvider;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.TracerProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile("!test")
-public class OpenTelemetryConfig {
-
+@Profile("test")
+public class TestOpenTelemetryConfig {
+    
     @Bean
     public Tracer tracer() {
-        return GlobalOpenTelemetry.getTracer("accounts-service", "1.0.0");
+        return TracerProvider.noop().get("accounts-service-test");
     }
     
     @Bean
     public Meter meter() {
-        return GlobalOpenTelemetry.getMeter("accounts-service");
+        return MeterProvider.noop().meterBuilder("accounts-service-test").build();
     }
 }

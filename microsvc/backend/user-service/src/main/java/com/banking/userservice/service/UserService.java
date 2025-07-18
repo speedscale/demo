@@ -7,6 +7,7 @@ import com.banking.userservice.dto.UserProfileResponse;
 import com.banking.userservice.entity.User;
 import com.banking.userservice.repository.UserRepository;
 import com.banking.userservice.security.JwtTokenUtil;
+import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import org.slf4j.Logger;
@@ -35,6 +36,15 @@ public class UserService {
 
     @Autowired
     private Tracer tracer;
+
+    @Autowired
+    private LongCounter registeredUsersCounter;
+
+    @Autowired
+    private LongCounter successfulLoginsCounter;
+
+    @Autowired
+    private LongCounter failedLoginsCounter;
 
     /**
      * Register a new user
@@ -69,6 +79,8 @@ public class UserService {
             User savedUser = userRepository.save(user);
             logger.info("User registered successfully: {}", savedUser.getUsername());
             
+            registeredUsersCounter.add(1);
+            
             span.setAttribute("user.id", savedUser.getId());
             span.setAttribute("user.username", savedUser.getUsername());
             
@@ -99,6 +111,7 @@ public class UserService {
 
             if (userOptional.isEmpty()) {
                 logger.error("User not found: {}", request.getUsernameOrEmail());
+                failedLoginsCounter.add(1);
                 throw new RuntimeException("Invalid credentials");
             }
 
@@ -107,6 +120,7 @@ public class UserService {
             // Verify password
             if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
                 logger.error("Invalid password for user: {}", user.getUsername());
+                failedLoginsCounter.add(1);
                 throw new RuntimeException("Invalid credentials");
             }
 
@@ -114,6 +128,8 @@ public class UserService {
             String token = jwtTokenUtil.generateToken(user.getUsername(), user.getId(), user.getRoles());
 
             logger.info("User authenticated successfully: {}", user.getUsername());
+            
+            successfulLoginsCounter.add(1);
             
             span.setAttribute("user.id", user.getId());
             span.setAttribute("user.username", user.getUsername());

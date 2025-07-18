@@ -36,6 +36,8 @@ spring:
     user: transactions_service_user
     password: transactions_service_pass
     url: jdbc:postgresql://localhost:5432/banking_app
+  main:
+    web-application-type: servlet
 
 # External Service URLs
 accounts:
@@ -56,8 +58,8 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+    file: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
 
 # Management endpoints
 management:
@@ -76,8 +78,16 @@ management:
 # OpenTelemetry Configuration
 otel:
   service:
-    name: transactions-service
+    name: ${spring.application.name}
+  exporter:
+    otlp:
+      protocol: http/protobuf
+      endpoint: http://localhost:4318
   traces:
-    exporter: jaeger
+    exporter: otlp
   metrics:
-    exporter: prometheus
+    exporter: otlp
+  logs:
+    exporter: otlp
+  propagation:
+    type: w3c

@@ -65,14 +65,17 @@ logging:
 
 # OpenTelemetry configuration
 otel:
-  resource:
-    attributes:
-      service.name: ${spring.application.name}
-      service.version: 1.0.0
+  service:
+    name: ${spring.application.name}
   exporter:
-    jaeger:
-      endpoint: http://jaeger:14268/api/traces
+    otlp:
+      protocol: http/protobuf
+      endpoint: http://jaeger:4318
   traces:
-    exporter: jaeger
+    exporter: otlp
   metrics:
-    exporter: prometheus
+    exporter: otlp
+  logs:
+    exporter: otlp
+  propagation:
+    type: w3c

@@ -6,14 +6,25 @@ import com.banking.userservice.dto.UserRegistrationRequest;
 import com.banking.userservice.entity.User;
 import com.banking.userservice.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.LongCounterBuilder;
+import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.Tracer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -25,7 +36,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
-@WebMvcTest(UserController.class)
+@WebMvcTest(value = UserController.class, excludeAutoConfiguration = {
+    org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
+    org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class
+})
+@ContextConfiguration(classes = {UserController.class, UserControllerTest.TestConfig.class})
 class UserControllerTest {
 
     @Autowired
@@ -176,6 +191,41 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.available").value(false));
 
         verify(userService, times(1)).usernameExists("existinguser");
+    }
+
+    @TestConfiguration
+    static class TestConfig {
+        
+        @Bean
+        @Primary
+        public Tracer tracer() {
+            Tracer mockTracer = mock(Tracer.class);
+            SpanBuilder mockSpanBuilder = mock(SpanBuilder.class);
+            Span mockSpan = mock(Span.class);
+            
+            lenient().when(mockTracer.spanBuilder(anyString())).thenReturn(mockSpanBuilder);
+            lenient().when(mockSpanBuilder.startSpan()).thenReturn(mockSpan);
+            lenient().when(mockSpan.setAttribute(anyString(), anyString())).thenReturn(mockSpan);
+            lenient().when(mockSpan.setAttribute(anyString(), any(Long.class))).thenReturn(mockSpan);
+            lenient().when(mockSpan.setAttribute(anyString(), any(Boolean.class))).thenReturn(mockSpan);
+            
+            return mockTracer;
+        }
+        
+        @Bean
+        @Primary
+        public Meter meter() {
+            Meter mockMeter = mock(Meter.class);
+            LongCounterBuilder mockBuilder = mock(LongCounterBuilder.class);
+            LongCounter mockCounter = mock(LongCounter.class);
+            
+            lenient().when(mockMeter.counterBuilder(anyString())).thenReturn(mockBuilder);
+            lenient().when(mockBuilder.setDescription(anyString())).thenReturn(mockBuilder);
+            lenient().when(mockBuilder.setUnit(anyString())).thenReturn(mockBuilder);
+            lenient().when(mockBuilder.build()).thenReturn(mockCounter);
+            
+            return mockMeter;
+        }
     }
 
     @Test

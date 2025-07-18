@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);

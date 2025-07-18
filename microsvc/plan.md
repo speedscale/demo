@@ -82,21 +82,21 @@
 - [ ] JWT tokens are properly generated and validated
 - [ ] OpenTelemetry traces are generated
 
-### 2.2 Accounts Service
-- [ ] Create Spring Boot project structure
-- [ ] Set up database entities:
+### 2.2 Accounts Service ✅ COMPLETED
+- [x] Create Spring Boot project structure
+- [x] Set up database entities:
   - Account entity (id, userId, accountNumber, balance, accountType)
   - AccountRepository interface
-- [ ] Implement JWT validation middleware
-- [ ] Create REST controllers:
+- [x] Implement JWT validation middleware
+- [x] Create REST controllers:
   - `GET /accounts` - List user accounts
   - `POST /accounts` - Create new account
   - `GET /accounts/{accountId}` - Get account details
   - `GET /accounts/{accountId}/balance` - Get account balance
-- [ ] Add account number generation logic
-- [ ] Implement authorization (users can only access their accounts)
-- [ ] Create unit tests for all endpoints
-- [ ] Add OpenTelemetry instrumentation
+- [x] Add account number generation logic
+- [x] Implement authorization (users can only access their accounts)
+- [x] Create unit tests for all endpoints
+- [x] Add OpenTelemetry instrumentation
 
 **Testing 2.2:**
 - [ ] Spring Boot application starts successfully

@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: 8080
   servlet:
     context-path: /
 
@@ -44,7 +44,7 @@ accounts:
 
 # JWT Configuration
 jwt:
-  secret: mySecretKey123456789012345678901234567890
+  secret: banking-app-super-secret-key-change-this-in-production-256-bit
   expiration: 86400000
 
 # Logging Configuration

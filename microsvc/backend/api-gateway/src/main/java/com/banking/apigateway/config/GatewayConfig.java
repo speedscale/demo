@@ -20,49 +20,53 @@ public class GatewayConfig {
     @Bean
     public RouteLocator routes(RouteLocatorBuilder builder) {
         return builder.routes()
-            // User Service Routes
-            .route("user-service", r -> r
+            // User Service Routes - Public endpoints
+            .route("user-service-public", r -> r
+                .path("/api/users/register", "/api/users/login", "/api/users/check-username", "/api/users/check-email", "/api/users/health")
+                .filters(f -> f
+                    .filter(requestResponseLoggingFilter.apply(new RequestResponseLoggingFilter.Config())))
+                .uri("http://user-service:8080"))
+            
+            // User Service Routes - Protected endpoints
+            .route("user-service-protected", r -> r
                 .path("/api/users/**")
                 .filters(f -> f
                     .filter(requestResponseLoggingFilter.apply(new RequestResponseLoggingFilter.Config()))
                     .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
-                .uri("${services.user-service.url:http://localhost:8081}"))
+                .uri("http://user-service:8080"))
             
-            // Accounts Service Routes  
-            .route("accounts-service", r -> r
+            // Accounts Service Routes - Public endpoints
+            .route("accounts-service-public", r -> r
+                .path("/api/accounts/health")
+                .filters(f -> f
+                    .filter(requestResponseLoggingFilter.apply(new RequestResponseLoggingFilter.Config())))
+                .uri("http://accounts-service:8080"))
+            
+            // Accounts Service Routes - Protected endpoints  
+            .route("accounts-service-protected", r -> r
                 .path("/api/accounts/**")
                 .filters(f -> f
                     .filter(requestResponseLoggingFilter.apply(new RequestResponseLoggingFilter.Config()))
-                    .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config()))
-                    .requestRateLimiter(rl -> rl
-                        .setRateLimiter(redisRateLimiter())
-                        .setKeyResolver(userKeyResolver())))
-                .uri("${services.accounts-service.url:http://localhost:8082}"))
+                    .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                .uri("http://accounts-service:8080"))
             
-            // Transactions Service Routes
-            .route("transactions-service", r -> r
+            // Transactions Service Routes - Public endpoints
+            .route("transactions-service-public", r -> r
+                .path("/api/transactions/health")
+                .filters(f -> f
+                    .filter(requestResponseLoggingFilter.apply(new RequestResponseLoggingFilter.Config())))
+                .uri("http://transactions-service:8080"))
+            
+            // Transactions Service Routes - Protected endpoints
+            .route("transactions-service-protected", r -> r
                 .path("/api/transactions/**")
                 .filters(f -> f
                     .filter(requestResponseLoggingFilter.apply(new RequestResponseLoggingFilter.Config()))
-                    .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config()))
-                    .requestRateLimiter(rl -> rl
-                        .setRateLimiter(redisRateLimiter())
-                        .setKeyResolver(userKeyResolver())))
-                .uri("${services.transactions-service.url:http://localhost:8083}"))
+                    .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config())))
+                .uri("http://transactions-service:8080"))
             
             .build();
     }
 
-    @Bean
-    public org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter redisRateLimiter() {
-        return new org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter(10, 20, 1);
-    }
-
-    @Bean
-    public org.springframework.cloud.gateway.filter.ratelimit.KeyResolver userKeyResolver() {
-        return exchange -> exchange.getPrincipal()
-            .cast(java.security.Principal.class)
-            .map(java.security.Principal::getName)
-            .switchIfEmpty(reactor.core.publisher.Mono.just("anonymous"));
-    }
+    // Rate limiting disabled for now - Redis rate limiter beans removed
 }

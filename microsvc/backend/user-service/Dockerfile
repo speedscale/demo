@@ -1,5 +1,5 @@
 # Multi-stage build for User Service
-FROM maven:3.9-eclipse-temurin-17 AS builder
+FROM maven:3-amazoncorretto-20 AS builder
 
 WORKDIR /app
 
@@ -14,12 +14,13 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime image
-FROM eclipse-temurin:17-jre-alpine
+FROM amazoncorretto:20-alpine
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup -g 1001 -S appuser && \
+# Install curl for health checks and create non-root user
+RUN apk add --no-cache curl && \
+    addgroup -g 1001 -S appuser && \
     adduser -S appuser -u 1001
 
 # Copy the built JAR file
@@ -37,7 +38,7 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

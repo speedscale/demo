@@ -1,4 +1,4 @@
-# Multi-stage build for Transactions Service
+# Multi-stage build for API Gateway
 FROM maven:3-amazoncorretto-20 AS builder
 
 WORKDIR /app
@@ -21,10 +21,10 @@ WORKDIR /app
 # Install curl for health checks and create non-root user
 RUN apk add --no-cache curl && \
     addgroup -g 1001 -S appuser && \
-    adduser -S appuser -u 1001
+    adduser -S appuser -u 1001 -G appuser
 
 # Copy the built JAR file
-COPY --from=builder /app/target/transactions-service-*.jar app.jar
+COPY --from=builder /app/target/api-gateway-*.jar app.jar
 
 # Create logs directory
 RUN mkdir -p /var/log && \

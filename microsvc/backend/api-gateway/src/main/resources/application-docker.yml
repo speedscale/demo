@@ -27,11 +27,11 @@ server:
 # Service Discovery Configuration
 services:
   user-service:
-    url: ${USER_SERVICE_URL:http://localhost:8081}
+    url: ${USER_SERVICE_URL:http://user-service:8080}
   accounts-service:
-    url: ${ACCOUNTS_SERVICE_URL:http://localhost:8082}
+    url: ${ACCOUNTS_SERVICE_URL:http://accounts-service:8080}
   transactions-service:
-    url: ${TRANSACTIONS_SERVICE_URL:http://localhost:8083}
+    url: ${TRANSACTIONS_SERVICE_URL:http://transactions-service:8080}
 
 # JWT Configuration
 jwt:
@@ -46,8 +46,6 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: logs/api-gateway.log
 
 # Management and Monitoring
 management:
@@ -64,7 +62,7 @@ management:
       probability: 1.0
   otlp:
     tracing:
-      endpoint: ${OTLP_ENDPOINT:http://localhost:4317}
+      endpoint: ${OTLP_ENDPOINT:http://jaeger:4317}
 
 # Info endpoint
 info:

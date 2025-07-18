@@ -1,22 +1,44 @@
-FROM openjdk:17-jdk-slim
+# Multi-stage build for Accounts Service
+FROM maven:3-amazoncorretto-20 AS builder
 
 WORKDIR /app
 
-# Copy the JAR file
-COPY target/accounts-service-*.jar app.jar
+# Copy pom.xml and download dependencies
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-# Create a non-root user
-RUN addgroup --system spring && adduser --system spring --ingroup spring
-RUN chown -R spring:spring /app
-USER spring:spring
+# Copy source code
+COPY src ./src
+
+# Build the application
+RUN mvn clean package -DskipTests
+
+# Runtime image
+FROM amazoncorretto:20-alpine
+
+WORKDIR /app
+
+# Install curl for health checks and create non-root user
+RUN apk add --no-cache curl && \
+    addgroup -g 1001 -S appuser && \
+    adduser -S appuser -u 1001
+
+# Copy the built JAR file
+COPY --from=builder /app/target/accounts-service-*.jar app.jar
+
+# Create logs directory
+RUN mkdir -p /var/log && \
+    chown -R appuser:appuser /var/log /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
-EXPOSE 8082
+EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8082/api/accounts/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
-CMD ["--spring.profiles.active=docker"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

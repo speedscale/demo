@@ -22,25 +22,10 @@
         </rollingPolicy>
     </appender>
     
-    <!-- JSON appender for structured logging -->
-    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <timestamp/>
-                <logLevel/>
-                <loggerName/>
-                <message/>
-                <mdc/>
-                <pattern>
-                    <pattern>
-                        {
-                            "traceId": "%X{traceId:-}",
-                            "spanId": "%X{spanId:-}",
-                            "service": "${spring.application.name:-unknown}"
-                        }
-                    </pattern>
-                </pattern>
-            </providers>
+    <!-- Docker appender for structured logging -->
+    <appender name="DOCKER" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
     
@@ -56,7 +41,7 @@
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
         <springProfile name="docker">
-            <appender-ref ref="JSON"/>
+            <appender-ref ref="DOCKER"/>
         </springProfile>
     </root>
 </configuration>

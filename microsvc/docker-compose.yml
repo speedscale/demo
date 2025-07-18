@@ -1,0 +1,171 @@
+services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: banking-postgres
+    environment:
+      POSTGRES_DB: banking_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - banking-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Services
+  user-service:
+    build: 
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: banking-user-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=banking_app
+      - DB_USERNAME=user_service_user
+      - DB_PASSWORD=user_service_pass
+      - DB_SCHEMA=user_service
+    ports:
+      - "8081:8080"
+    networks:
+      - banking-network
+    # Uncomment when service is implemented
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+  accounts-service:
+    build: 
+      context: ./backend/accounts-service
+      dockerfile: Dockerfile
+    container_name: banking-accounts-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=banking_app
+      - DB_USERNAME=accounts_service_user
+      - DB_PASSWORD=accounts_service_pass
+      - DB_SCHEMA=accounts_service
+    ports:
+      - "8082:8080"
+    networks:
+      - banking-network
+
+  transactions-service:
+    build: 
+      context: ./backend/transactions-service
+      dockerfile: Dockerfile
+    container_name: banking-transactions-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=banking_app
+      - DB_USERNAME=transactions_service_user
+      - DB_PASSWORD=transactions_service_pass
+      - DB_SCHEMA=transactions_service
+    ports:
+      - "8083:8080"
+    networks:
+      - banking-network
+
+  api-gateway:
+    build: 
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: banking-api-gateway
+    depends_on:
+      - user-service
+      - accounts-service
+      - transactions-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - USER_SERVICE_URL=http://user-service:8080
+      - ACCOUNTS_SERVICE_URL=http://accounts-service:8080
+      - TRANSACTIONS_SERVICE_URL=http://transactions-service:8080
+    ports:
+      - "8080:8080"
+    networks:
+      - banking-network
+
+  # Frontend
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: banking-frontend
+    depends_on:
+      - api-gateway
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    networks:
+      - banking-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  # Observability Stack
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: banking-jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - banking-network
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: banking-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - banking-network
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: banking-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - banking-network
+
+volumes:
+  postgres_data:
+  grafana_data:
+
+networks:
+  banking-network:
+    driver: bridge

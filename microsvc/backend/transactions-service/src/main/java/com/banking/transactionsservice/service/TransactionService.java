@@ -4,6 +4,7 @@ import com.banking.transactionsservice.client.AccountsServiceClient;
 import com.banking.transactionsservice.dto.*;
 import com.banking.transactionsservice.entity.Transaction;
 import com.banking.transactionsservice.repository.TransactionRepository;
+import io.opentelemetry.api.metrics.DoubleHistogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,15 @@ public class TransactionService {
     
     @Autowired
     private AccountsServiceClient accountsServiceClient;
+
+    @Autowired
+    private DoubleHistogram depositAmountHistogram;
+
+    @Autowired
+    private DoubleHistogram withdrawAmountHistogram;
+
+    @Autowired
+    private DoubleHistogram transferAmountHistogram;
     
     public List<TransactionResponse> getUserTransactions(Long userId) {
         logger.info("Fetching transactions for user: {}", userId);
@@ -75,6 +85,8 @@ public class TransactionService {
             
             Transaction savedTransaction = transactionRepository.save(transaction);
             logger.info("Deposit completed successfully for transaction: {}", savedTransaction.getId());
+            
+            depositAmountHistogram.record(request.getAmount().doubleValue());
             
             return convertToResponse(savedTransaction);
         } catch (Exception e) {
@@ -133,6 +145,8 @@ public class TransactionService {
             
             Transaction savedTransaction = transactionRepository.save(transaction);
             logger.info("Withdrawal completed successfully for transaction: {}", savedTransaction.getId());
+            
+            withdrawAmountHistogram.record(request.getAmount().doubleValue());
             
             return convertToResponse(savedTransaction);
         } catch (Exception e) {
@@ -206,6 +220,8 @@ public class TransactionService {
             Transaction savedTransaction = transactionRepository.save(transaction);
             logger.info("Transfer completed successfully for transaction: {}", savedTransaction.getId());
             
+            transferAmountHistogram.record(request.getAmount().doubleValue());
+            
             return convertToResponse(savedTransaction);
         } catch (Exception e) {
             // Mark transaction as failed
@@ -222,6 +238,7 @@ public class TransactionService {
     private TransactionResponse convertToResponse(Transaction transaction) {
         return new TransactionResponse(
             transaction.getId(),
+            transaction.getUserId(),
             transaction.getFromAccountId(),
             transaction.getToAccountId(),
             transaction.getAmount(),

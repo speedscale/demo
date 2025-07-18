@@ -6,6 +6,8 @@ import com.banking.userservice.dto.UserLoginResponse;
 import com.banking.userservice.dto.UserProfileResponse;
 import com.banking.userservice.entity.User;
 import com.banking.userservice.service.UserService;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import jakarta.validation.Valid;
@@ -30,11 +32,19 @@ public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final Tracer tracer;
+    private final LongCounter registeredUsersCounter;
 
     @Autowired
-    private Tracer tracer;
+    public UserController(UserService userService, Tracer tracer, Meter meter) {
+        this.userService = userService;
+        this.tracer = tracer;
+        this.registeredUsersCounter = meter.counterBuilder("users.registered")
+                .setDescription("Number of registered users")
+                .setUnit("1")
+                .build();
+    }
 
     /**
      * Register a new user
@@ -67,24 +77,22 @@ public class UserController {
 
             // Register user
             User user = userService.registerUser(request);
+            registeredUsersCounter.add(1);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "User registered successfully");
-            response.put("user", new UserProfileResponse(
+            UserProfileResponse userProfile = new UserProfileResponse(
                     user.getId(),
                     user.getUsername(),
                     user.getEmail(),
                     user.getRoles(),
                     user.getCreatedAt(),
                     user.getUpdatedAt()
-            ));
+            );
 
             span.setAttribute("user.id", user.getId());
             span.setAttribute("user.username", user.getUsername());
             span.setAttribute("registration.success", true);
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(201).body(userProfile);
 
         } catch (RuntimeException e) {
             span.recordException(e);
@@ -95,6 +103,12 @@ public class UserController {
             response.put("message", e.getMessage());
             
             logger.error("Registration failed: {}", e.getMessage());
+            
+            // Return 409 for conflicts (username/email already exists)
+            if (e.getMessage().contains("already exists")) {
+                return ResponseEntity.status(409).body(response);
+            }
+            
             return ResponseEntity.badRequest().body(response);
             
         } finally {
@@ -134,16 +148,11 @@ public class UserController {
             // Authenticate user
             UserLoginResponse loginResponse = userService.authenticateUser(request);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Authentication successful");
-            response.put("data", loginResponse);
-
             span.setAttribute("user.id", loginResponse.getId());
             span.setAttribute("user.username", loginResponse.getUsername());
             span.setAttribute("authentication.success", true);
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(loginResponse);
 
         } catch (RuntimeException e) {
             span.recordException(e);
@@ -154,6 +163,12 @@ public class UserController {
             response.put("message", e.getMessage());
             
             logger.error("Authentication failed: {}", e.getMessage());
+            
+            // Return 401 for authentication failures
+            if (e.getMessage().contains("Invalid credentials")) {
+                return ResponseEntity.status(401).body(response);
+            }
+            
             return ResponseEntity.badRequest().body(response);
             
         } finally {

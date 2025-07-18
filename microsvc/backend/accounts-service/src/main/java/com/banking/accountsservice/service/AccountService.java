@@ -5,6 +5,7 @@ import com.banking.accountsservice.dto.AccountResponse;
 import com.banking.accountsservice.dto.BalanceResponse;
 import com.banking.accountsservice.entity.Account;
 import com.banking.accountsservice.repository.AccountRepository;
+import io.opentelemetry.api.metrics.LongCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class AccountService {
     
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private LongCounter createdAccountsCounter;
     
     private final SecureRandom random = new SecureRandom();
     
@@ -63,6 +67,8 @@ public class AccountService {
         Account savedAccount = accountRepository.save(account);
         logger.info("Created account {} for user: {}", savedAccount.getAccountNumber(), userId);
         
+        createdAccountsCounter.add(1);
+        
         return convertToResponse(savedAccount);
     }
     
@@ -77,9 +83,24 @@ public class AccountService {
         return accountNumber;
     }
     
+    public boolean validateAccountOwnership(Long accountId, Long userId) {
+        logger.info("Validating ownership of account {} for user: {}", accountId, userId);
+        return accountRepository.existsByIdAndUserId(accountId, userId);
+    }
+    
+    public boolean updateBalance(Long accountId, BigDecimal newBalance, Long userId) {
+        logger.info("Updating balance for account {} to {} for user: {}", accountId, newBalance, userId);
+        Account account = accountRepository.findByIdAndUserId(accountId, userId)
+                .orElseThrow(() -> new RuntimeException("Account not found or access denied"));
+        account.setBalance(newBalance);
+        accountRepository.save(account);
+        return true;
+    }
+
     private AccountResponse convertToResponse(Account account) {
         return new AccountResponse(
                 account.getId(),
+                account.getUserId(),
                 account.getAccountNumber(),
                 account.getBalance(),
                 account.getAccountType(),

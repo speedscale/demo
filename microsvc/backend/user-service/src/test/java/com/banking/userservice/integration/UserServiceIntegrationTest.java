@@ -3,6 +3,7 @@ package com.banking.userservice.integration;
 import com.banking.userservice.dto.UserRegistrationRequest;
 import com.banking.userservice.dto.UserLoginRequest;
 import com.banking.userservice.dto.UserLoginResponse;
+import com.banking.userservice.dto.UserProfileResponse;
 import com.banking.userservice.entity.User;
 import com.banking.userservice.repository.UserRepository;
 import com.banking.userservice.service.UserService;
@@ -214,23 +215,24 @@ class UserServiceIntegrationTest {
         User registeredUser = userService.registerUser(registrationRequest);
 
         // Get user profile  
-        User profile = userService.getUserById(registeredUser.getId());
+        UserProfileResponse profile = userService.getUserProfile(registeredUser.getUsername());
         
         assertNotNull(profile);
         assertEquals(registeredUser.getId(), profile.getId());
         assertEquals("integrationuser", profile.getUsername());
         assertEquals("integration@example.com", profile.getEmail());
         assertEquals("USER", profile.getRoles());
+        assertNotNull(profile.getCreatedAt());
+        assertNotNull(profile.getUpdatedAt());
         
-        // Password hash should not be exposed in profile
-        assertNull(profile.getPasswordHash());
+        // Password hash should not be exposed in profile (UserProfileResponse doesn't have passwordHash field)
     }
 
     @Test
     void testUserProfile_NotFound() {
         // Try to get profile for user that doesn't exist
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            userService.getUserById(999L);
+            userService.getUserProfile("nonexistentuser");
         });
 
         assertEquals("User not found", exception.getMessage());

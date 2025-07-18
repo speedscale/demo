@@ -7,6 +7,8 @@ import com.banking.userservice.entity.User;
 import com.banking.userservice.repository.UserRepository;
 import com.banking.userservice.security.JwtTokenUtil;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.SpanBuilder;
+import io.opentelemetry.api.trace.Span;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +39,12 @@ class UserServiceTest {
     @Mock
     private Tracer tracer;
 
+    @Mock
+    private SpanBuilder spanBuilder;
+
+    @Mock
+    private Span span;
+
     @InjectMocks
     private UserService userService;
 
@@ -62,9 +70,12 @@ class UserServiceTest {
         loginRequest.setUsernameOrEmail("testuser");
         loginRequest.setPassword("password123");
 
-        // Mock tracer to return a no-op span
-        when(tracer.spanBuilder(anyString())).thenReturn(mock(io.opentelemetry.api.trace.SpanBuilder.class));
-        when(tracer.spanBuilder(anyString()).startSpan()).thenReturn(mock(io.opentelemetry.api.trace.Span.class));
+        // Mock OpenTelemetry tracing chain
+        lenient().when(tracer.spanBuilder(anyString())).thenReturn(spanBuilder);
+        lenient().when(spanBuilder.startSpan()).thenReturn(span);
+        lenient().when(span.setAttribute(anyString(), anyString())).thenReturn(span);
+        lenient().when(span.setAttribute(anyString(), any(Long.class))).thenReturn(span);
+        lenient().when(span.setAttribute(anyString(), any(Boolean.class))).thenReturn(span);
     }
 
     @Test

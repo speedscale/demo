@@ -40,3 +40,13 @@ This project follows a phased implementation approach. Each phase must be comple
 ## Current Status
 
 Check `plan.md` for the current implementation phase and specific tasks. Each sub-phase includes both implementation tasks and testing requirements that must be completed.
+
+```
+Total cost:            $39.71
+Total duration (API):  1h 38m 8.7s
+Total duration (wall): 5h 28m 8.7s
+Total code changes:    14233 lines added, 995 lines removed
+Usage by model:
+    claude-3-5-haiku:  659.7k input, 17.9k output, 0 cache read, 0 cache write
+       claude-sonnet:  4.8k input, 325.5k output, 67.0m cache read, 3.8m cache write
+```

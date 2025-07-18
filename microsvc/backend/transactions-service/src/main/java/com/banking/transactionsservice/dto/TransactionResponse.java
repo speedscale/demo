@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public class TransactionResponse {
     
     private Long id;
+    private Long userId;
     private Long fromAccountId;
     private Long toAccountId;
     private BigDecimal amount;
@@ -19,11 +20,12 @@ public class TransactionResponse {
     
     public TransactionResponse() {}
     
-    public TransactionResponse(Long id, Long fromAccountId, Long toAccountId, BigDecimal amount,
+    public TransactionResponse(Long id, Long userId, Long fromAccountId, Long toAccountId, BigDecimal amount,
                               Transaction.TransactionType type, String description, 
                               Transaction.TransactionStatus status, LocalDateTime createdAt, 
                               LocalDateTime processedAt) {
         this.id = id;
+        this.userId = userId;
         this.fromAccountId = fromAccountId;
         this.toAccountId = toAccountId;
         this.amount = amount;
@@ -104,5 +106,13 @@ public class TransactionResponse {
     
     public void setProcessedAt(LocalDateTime processedAt) {
         this.processedAt = processedAt;
+    }
+    
+    public Long getUserId() {
+        return userId;
+    }
+    
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

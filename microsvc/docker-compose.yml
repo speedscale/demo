@@ -166,6 +166,7 @@ services:
     ports:
       - "16686:16686"
       - "14268:14268"
+      - "4318:4318"
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     networks:
@@ -190,6 +191,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
     networks:
       - banking-network
 

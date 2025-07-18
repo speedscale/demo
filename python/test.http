@@ -1,0 +1,4 @@
+@host = localhost:5001
+
+### List available API calls
+GET http://{{host}}/spacex/launches

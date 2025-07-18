@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/banking_app
+    username: transactions_service_user
+    password: transactions_service_pass
+  
+  flyway:
+    url: jdbc:postgresql://postgres:5432/banking_app
+    user: transactions_service_user
+    password: transactions_service_pass
+
+# External Service URLs for Docker
+accounts:
+  service:
+    url: http://accounts-service:8082
+
+# OpenTelemetry Configuration for Docker
+otel:
+  exporter:
+    jaeger:
+      endpoint: http://jaeger:14250

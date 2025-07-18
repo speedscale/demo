@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+      httpclient:
+        connect-timeout: 30000
+        response-timeout: 60s
+      redis-rate-limiter:
+        replenish-rate: 10
+        burst-capacity: 20
+        requested-tokens: 1
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+server:
+  port: 8080
+
+# Service Discovery Configuration
+services:
+  user-service:
+    url: ${USER_SERVICE_URL:http://localhost:8081}
+  accounts-service:
+    url: ${ACCOUNTS_SERVICE_URL:http://localhost:8082}
+  transactions-service:
+    url: ${TRANSACTIONS_SERVICE_URL:http://localhost:8083}
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:mySecretKey1234567890123456789012345678901234567890}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+# Logging Configuration
+logging:
+  level:
+    com.banking.apigateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/api-gateway.log
+
+# Management and Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    enabled: ${TRACING_ENABLED:true}
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTLP_ENDPOINT:http://localhost:4317}
+
+# Info endpoint
+info:
+  app:
+    name: ${spring.application.name}
+    description: Banking API Gateway
+    version: 1.0.0
+    encoding: UTF-8
+    java:
+      version: ${java.version}

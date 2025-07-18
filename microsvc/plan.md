@@ -111,64 +111,64 @@
 - [x] All unit tests pass
 - [x] OpenTelemetry traces are generated
 
-### 2.3 Transactions Service
-- [ ] Create Spring Boot project structure
-- [ ] Set up database entities:
+### 2.3 Transactions Service ✅ COMPLETED
+- [x] Create Spring Boot project structure
+- [x] Set up database entities:
   - Transaction entity (id, fromAccountId, toAccountId, amount, type, timestamp)
   - TransactionRepository interface
-- [ ] Implement JWT validation middleware
-- [ ] Create REST controllers:
+- [x] Implement JWT validation middleware
+- [x] Create REST controllers:
   - `POST /transactions/deposit` - Deposit funds
   - `POST /transactions/withdraw` - Withdraw funds
   - `POST /transactions/transfer` - Transfer between accounts
   - `GET /transactions` - Get transaction history
-- [ ] Implement transaction logic with proper validation:
+- [x] Implement transaction logic with proper validation:
   - Check account ownership
   - Validate sufficient balance for withdrawals/transfers
   - Ensure atomic operations
-- [ ] Add transaction rollback mechanisms
-- [ ] Create unit tests for all endpoints
-- [ ] Add OpenTelemetry instrumentation
+- [x] Add transaction rollback mechanisms
+- [x] Create unit tests for all endpoints
+- [x] Add OpenTelemetry instrumentation
 
-**Testing 2.3:**
-- [ ] Spring Boot application starts successfully
-- [ ] Database connection established and entities created
-- [ ] JWT validation middleware rejects invalid tokens
-- [ ] POST /transactions/deposit increases account balance correctly
-- [ ] POST /transactions/withdraw decreases balance and validates sufficient funds
-- [ ] POST /transactions/transfer moves funds between accounts atomically
-- [ ] GET /transactions returns only authenticated user's transactions
-- [ ] Transaction rollback works on failed operations
-- [ ] Insufficient balance scenarios are handled correctly
-- [ ] Account ownership validation prevents unauthorized transactions
-- [ ] All unit tests pass
-- [ ] Concurrent transaction handling works correctly
-- [ ] OpenTelemetry traces are generated
+**Testing 2.3:** ✅ COMPLETED
+- [x] Spring Boot application starts successfully
+- [x] Database connection established and entities created
+- [x] JWT validation middleware rejects invalid tokens
+- [x] POST /transactions/deposit increases account balance correctly
+- [x] POST /transactions/withdraw decreases balance and validates sufficient funds
+- [x] POST /transactions/transfer moves funds between accounts atomically
+- [x] GET /transactions returns only authenticated user's transactions
+- [x] Transaction rollback works on failed operations
+- [x] Insufficient balance scenarios are handled correctly
+- [x] Account ownership validation prevents unauthorized transactions
+- [x] All unit tests pass
+- [x] Concurrent transaction handling works correctly
+- [x] OpenTelemetry traces are generated
 
-### 2.4 API Gateway
-- [ ] Create Spring Cloud Gateway project
-- [ ] Configure routing rules:
+### 2.4 API Gateway ✅ COMPLETED
+- [x] Create Spring Cloud Gateway project
+- [x] Configure routing rules:
   - `/api/users/**` → User Service
   - `/api/accounts/**` → Accounts Service
   - `/api/transactions/**` → Transactions Service
-- [ ] Implement global JWT authentication filter
-- [ ] Add rate limiting configuration
-- [ ] Configure CORS settings
-- [ ] Add request/response logging
-- [ ] Create health check endpoints
-- [ ] Add OpenTelemetry instrumentation
+- [x] Implement global JWT authentication filter
+- [x] Add rate limiting configuration
+- [x] Configure CORS settings
+- [x] Add request/response logging
+- [x] Create health check endpoints
+- [x] Add OpenTelemetry instrumentation
 
-**Testing 2.4:**
-- [ ] Spring Cloud Gateway starts successfully
-- [ ] All routing rules direct requests to correct services
-- [ ] JWT authentication filter validates tokens correctly
-- [ ] Rate limiting prevents excessive requests
-- [ ] CORS headers are set correctly for frontend requests
-- [ ] Request/response logging captures all traffic
-- [ ] Health check endpoints return service status
-- [ ] All backend services are accessible through the gateway
-- [ ] Authentication is enforced on protected routes
-- [ ] OpenTelemetry traces span across gateway and services
+**Testing 2.4:** ✅ COMPLETED
+- [x] Spring Cloud Gateway starts successfully
+- [x] All routing rules direct requests to correct services
+- [x] JWT authentication filter validates tokens correctly
+- [x] Rate limiting prevents excessive requests
+- [x] CORS headers are set correctly for frontend requests
+- [x] Request/response logging captures all traffic
+- [x] Health check endpoints return service status
+- [x] All backend services are accessible through the gateway
+- [x] Authentication is enforced on protected routes
+- [x] OpenTelemetry traces span across gateway and services
 
 ## Phase 3: Frontend Development
 

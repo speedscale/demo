@@ -52,23 +52,23 @@
 
 ## Phase 2: Backend Services Development
 
-### 2.1 User Service
-- [ ] Create Spring Boot project structure
-- [ ] Set up database entities:
+### 2.1 User Service ✅ COMPLETED
+- [x] Create Spring Boot project structure
+- [x] Set up database entities:
   - User entity with fields (id, username, email, password, roles)
   - UserRepository interface
-- [ ] Implement JWT utility classes:
+- [x] Implement JWT utility classes:
   - JwtTokenUtil for generation/validation
   - JwtAuthenticationEntryPoint
   - JwtRequestFilter
-- [ ] Create REST controllers:
+- [x] Create REST controllers:
   - `POST /users/register` - User registration
   - `POST /users/login` - Authentication with JWT generation
   - `GET /users/profile` - Get user profile (authenticated)
-- [ ] Implement password hashing (BCrypt)
-- [ ] Add input validation and error handling
-- [ ] Create unit tests for all endpoints
-- [ ] Add OpenTelemetry instrumentation
+- [x] Implement password hashing (BCrypt)
+- [x] Add input validation and error handling
+- [x] Create unit tests for all endpoints
+- [x] Add OpenTelemetry instrumentation
 
 **Testing 2.1:**
 - [ ] Spring Boot application starts successfully

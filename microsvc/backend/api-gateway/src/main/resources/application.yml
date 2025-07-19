@@ -3,6 +3,25 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      routes:
+        - id: user-service
+          uri: ${services.user-service.url}
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=2
+        - id: accounts-service
+          uri: ${services.accounts-service.url}
+          predicates:
+            - Path=/api/accounts/**
+          filters:
+            - StripPrefix=2
+        - id: transactions-service
+          uri: ${services.transactions-service.url}
+          predicates:
+            - Path=/api/transactions/**
+          filters:
+            - StripPrefix=2
       globalcors:
         cors-configurations:
           '[/**]':
@@ -41,82 +60,12 @@ jwt:
 # Logging Configuration
 logging:
   level:
-    com.banking.apigateway: DEBUG
+    com.banking.apigroup: DEBUG
     org.springframework.cloud.gateway: DEBUG
+    org.springframework.boot.actuate.endpoint.web: WARN
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
     file: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
   file:
     name: logs/api-gateway.log
-
-# Management and Monitoring
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus,metrics
-  endpoint:
-    health:
-      show-details: always
-
-# OpenTelemetry Configuration
-otel:
-  service:
-    name: ${spring.application.name}
-  exporter:
-    otlp:
-      protocol: http/protobuf
-      endpoint: http://localhost:4318
-  traces:
-    exporter: otlp
-  metrics:
-    exporter: otlp
-  logs:
-    exporter: otlp
-  propagation:
-    type: w3c
-
-# Info endpoint
-info:
-  app:
-    name: ${spring.application.name}
-    description: Banking API Gateway
-    version: 1.0.0
-    encoding: UTF-8
-    java:
-      version: ${java.version}
-
-# Actuator
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  endpoint:
-    health:
-      show-details: always
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-        
-# Tracing
-management:
-  tracing:
-    sampling:
-      probability: 1.0
-  otlp:
-    tracing:
-      endpoint: http://localhost:4317
-    metrics:
-      export:
-        enabled: true
-        step: 1m
-        resource-attributes:
-          service.name: ${spring.application.name}
-          
-# Logging
-logging:
-  pattern:
-    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
     

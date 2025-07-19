@@ -33,6 +33,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
+        // Skip authentication for public endpoints
+        if (isPublicEndpoint(request)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         final String requestTokenHeader = request.getHeader("Authorization");
 
         String username = null;
@@ -80,5 +86,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
         }
         chain.doFilter(request, response);
+    }
+
+    private boolean isPublicEndpoint(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.equals("/register") ||
+               path.equals("/login") ||
+               path.equals("/check-username") ||
+               path.equals("/check-email") ||
+               path.equals("/health") ||
+               path.startsWith("/actuator");
     }
 }

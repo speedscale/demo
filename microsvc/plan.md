@@ -406,29 +406,39 @@ During manual testing, critical issues were discovered and systematically resolv
 - [ ] Dashboards provide meaningful insights
 - [ ] Alert notifications are delivered correctly
 
+### 5.3: Refactoring
+- [ ] Refactor the api-gateway endpoints to this format: /api/{service}/{verb}/{id}
+- [ ] Refactor the account-service endpoints to this format: /account/{id}
+- [ ] Refactor the transaction-service endpoints to this format: /transaction/{id}
+- [ ] Refactor the user-service endpoints to this format: /user/{id}
+
+**Testing 5.3:**
+- [ ] Call each of the endpoints from api gateway (long URL)
+- [ ] Call each of the endpoints directly (short URL)
+
 ## Phase 6: Containerization
 
-### 6.1 Docker Images
-- [ ] Create Dockerfile for each service
-- [ ] Optimize image sizes (multi-stage builds)
-- [ ] Create Docker Compose for local development
-- [ ] Set up container health checks
-- [ ] Configure proper security (non-root users)
+### 6.1 Docker Images ✅ COMPLETED
+- [x] Create Dockerfile for each service
+- [x] Optimize image sizes (multi-stage builds)
+- [x] Create Docker Compose for local development
+- [x] Set up container health checks
+- [x] Configure proper security (non-root users)
 
-**Testing 6.1:**
-- [ ] All Docker images build successfully
-- [ ] Images are optimized for size and security
-- [ ] Docker Compose starts all services
-- [ ] Health checks report service status correctly
-- [ ] Containers run as non-root users
-- [ ] Security scans pass for all images
-- [ ] Container startup times are acceptable
+**Testing 6.1:** ✅ COMPLETED
+- [x] All Docker images build successfully
+- [x] Images are optimized for size and security
+- [x] Docker Compose starts all services
+- [x] Health checks report service status correctly
+- [x] Containers run as non-root users
+- [x] Security scans pass for all images
+- [x] Container startup times are acceptable
 
-### 6.2 Container Testing
-- [ ] Test services in containerized environment
-- [ ] Validate service discovery
-- [ ] Test database connectivity
-- [ ] Verify environment variable handling
+### 6.2 Container Testing ✅ COMPLETED
+- [x] Test services in containerized environment
+- [x] Validate service discovery
+- [x] Test database connectivity
+- [x] Verify environment variable handling
 
 **Testing 6.2:**
 - [ ] All services start successfully in containers

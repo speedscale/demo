@@ -35,14 +35,12 @@ public class SecurityConfig {
             .cors(cors -> cors.disable())
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
-                .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/users/check-username").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/users/check-email").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/users/health").permitAll()
-                
-                // Actuator endpoints
-                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/check-username").permitAll()
+                .requestMatchers(HttpMethod.GET, "/check-email").permitAll()
+                .requestMatchers(HttpMethod.GET, "/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
                 
                 // All other endpoints require authentication
                 .anyRequest().authenticated()

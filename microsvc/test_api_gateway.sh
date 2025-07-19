@@ -9,18 +9,21 @@ echo "=== Banking API Gateway End-to-End Test ==="
 echo "API Gateway URL: $API_GATEWAY_URL"
 echo ""
 
+echo "Waiting for API Gateway to be ready..."
+sleep 15
+
 # Test 1: Health checks
 echo "=== 1. Health Check Tests ==="
 echo "Testing: User Service Health"
-curl -s -X GET "$API_GATEWAY_URL/api/users/health"
+curl -s -X GET "$API_GATEWAY_URL/api/users/actuator/health"
 echo ""
 
 echo "Testing: Accounts Service Health"
-curl -s -X GET "$API_GATEWAY_URL/api/accounts/health"
+curl -s -X GET "$API_GATEWAY_URL/api/accounts/actuator/health"
 echo ""
 
 echo "Testing: Transactions Service Health"
-curl -s -X GET "$API_GATEWAY_URL/api/transactions/health"
+curl -s -X GET "$API_GATEWAY_URL/api/transactions/actuator/health"
 echo ""
 
 # Test 2: User Registration
@@ -41,7 +44,7 @@ REGISTER_RESPONSE=$(curl -s -X POST "$API_GATEWAY_URL/api/users/register" \
 echo "Response: $REGISTER_RESPONSE"
 
 # Check if registration was successful
-if echo "$REGISTER_RESPONSE" | grep -q '"success":true'; then
+if echo "$REGISTER_RESPONSE" | grep -q '"id"'; then
     echo "✓ User registration successful: $USERNAME"
 else
     echo "✗ User registration failed"
@@ -155,7 +158,7 @@ if [[ -n "$ACCOUNT_ID" ]]; then
         -H "Authorization: Bearer $JWT_TOKEN")
     
     echo "Response: $TRANSACTIONS_RESPONSE"
-    if echo "$TRANSACTIONS_RESPONSE" | grep -q '"transactionType"' || echo "$TRANSACTIONS_RESPONSE" | grep -q '"success":true' || echo "$TRANSACTIONS_RESPONSE" | grep -q '\[\]'; then
+    if echo "$TRANSACTIONS_RESPONSE" | grep -q '"type"' || echo "$TRANSACTIONS_RESPONSE" | grep -q '"success":true' || echo "$TRANSACTIONS_RESPONSE" | grep -q '\[\]'; then
         echo "✓ User transactions retrieved successfully"
     else
         echo "✗ User transactions retrieval failed"

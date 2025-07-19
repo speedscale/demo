@@ -28,7 +28,7 @@ public class AccountsServiceClient {
     
     public boolean validateAccountOwnership(Long accountId, Long userId, String jwtToken) {
         try {
-            String url = accountsServiceUrl + "/api/accounts/" + accountId;
+            String url = accountsServiceUrl + "/" + accountId;
             
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(jwtToken.replace("Bearer ", ""));
@@ -47,7 +47,7 @@ public class AccountsServiceClient {
     
     public BigDecimal getAccountBalance(Long accountId, String jwtToken) {
         try {
-            String url = accountsServiceUrl + "/api/accounts/" + accountId + "/balance";
+            String url = accountsServiceUrl + "/" + accountId + "/balance";
             
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(jwtToken.replace("Bearer ", ""));
@@ -71,7 +71,7 @@ public class AccountsServiceClient {
     
     public boolean updateAccountBalance(Long accountId, BigDecimal newBalance, String jwtToken) {
         try {
-            String url = accountsServiceUrl + "/api/accounts/" + accountId + "/balance";
+            String url = accountsServiceUrl + "/" + accountId + "/balance";
             
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(jwtToken.replace("Bearer ", ""));

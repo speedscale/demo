@@ -6,6 +6,7 @@ import com.banking.userservice.dto.UserLoginResponse;
 import com.banking.userservice.entity.User;
 import com.banking.userservice.repository.UserRepository;
 import com.banking.userservice.security.JwtTokenUtil;
+import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.Span;
@@ -44,6 +45,15 @@ class UserServiceTest {
 
     @Mock
     private Span span;
+
+    @Mock
+    private LongCounter registeredUsersCounter;
+
+    @Mock
+    private LongCounter successfulLoginsCounter;
+
+    @Mock
+    private LongCounter failedLoginsCounter;
 
     @InjectMocks
     private UserService userService;

@@ -15,15 +15,15 @@ sleep 15
 # Test 1: Health checks
 echo "=== 1. Health Check Tests ==="
 echo "Testing: User Service Health"
-curl -s -X GET "$API_GATEWAY_URL/api/users/actuator/health"
+curl -s -X GET "$API_GATEWAY_URL/api/user-service/health"
 echo ""
 
 echo "Testing: Accounts Service Health"
-curl -s -X GET "$API_GATEWAY_URL/api/accounts/actuator/health"
+curl -s -X GET "$API_GATEWAY_URL/api/accounts-service/health"
 echo ""
 
 echo "Testing: Transactions Service Health"
-curl -s -X GET "$API_GATEWAY_URL/api/transactions/actuator/health"
+curl -s -X GET "$API_GATEWAY_URL/api/transactions-service/health"
 echo ""
 
 # Test 2: User Registration
@@ -33,7 +33,7 @@ USERNAME="testuser_$TIMESTAMP"
 EMAIL="test$TIMESTAMP@example.com"
 
 echo "Testing: User Registration for $USERNAME"
-REGISTER_RESPONSE=$(curl -s -X POST "$API_GATEWAY_URL/api/users/register" \
+REGISTER_RESPONSE=$(curl -s -X POST "$API_GATEWAY_URL/api/user-service/register" \
     -H 'Content-Type: application/json' \
     -d '{
         "username": "'$USERNAME'",
@@ -55,7 +55,7 @@ echo ""
 # Test 3: User Login
 echo "=== 3. User Login Test ==="
 echo "Testing: User Login for $USERNAME"
-LOGIN_RESPONSE=$(curl -s -X POST "$API_GATEWAY_URL/api/users/login" \
+LOGIN_RESPONSE=$(curl -s -X POST "$API_GATEWAY_URL/api/user-service/login" \
     -H 'Content-Type: application/json' \
     -d '{
         "usernameOrEmail": "'$USERNAME'",
@@ -76,7 +76,7 @@ echo ""
 # Test 4: Get User Profile (Protected endpoint)
 echo "=== 4. User Profile Test (Protected) ==="
 echo "Testing: Get User Profile"
-PROFILE_RESPONSE=$(curl -s -X GET "$API_GATEWAY_URL/api/users/profile" \
+PROFILE_RESPONSE=$(curl -s -X GET "$API_GATEWAY_URL/api/user-service/profile" \
     -H "Authorization: Bearer $JWT_TOKEN")
 
 echo "Response: $PROFILE_RESPONSE"
@@ -91,12 +91,11 @@ echo ""
 # Test 5: Create Account (Protected endpoint)
 echo "=== 5. Create Account Test (Protected) ==="
 echo "Testing: Create Account"
-ACCOUNT_RESPONSE=$(curl -s -X POST "$API_GATEWAY_URL/api/accounts" \
+ACCOUNT_RESPONSE=$(curl -s -X POST "$API_GATEWAY_URL/api/accounts-service" \
     -H "Authorization: Bearer $JWT_TOKEN" \
     -H 'Content-Type: application/json' \
     -d '{
-        "accountType": "CHECKING",
-        "initialBalance": 1000.00
+        "accountType": "CHECKING"
     }')
 
 echo "Response: $ACCOUNT_RESPONSE"
@@ -120,7 +119,7 @@ echo ""
 if [[ -n "$ACCOUNT_ID" ]]; then
     echo "=== 6. Get Account Details Test (Protected) ==="
     echo "Testing: Get Account Details for Account ID: $ACCOUNT_ID"
-    ACCOUNT_DETAILS_RESPONSE=$(curl -s -X GET "$API_GATEWAY_URL/api/accounts/$ACCOUNT_ID" \
+    ACCOUNT_DETAILS_RESPONSE=$(curl -s -X GET "$API_GATEWAY_URL/api/accounts-service/$ACCOUNT_ID" \
         -H "Authorization: Bearer $JWT_TOKEN")
     
     echo "Response: $ACCOUNT_DETAILS_RESPONSE"
@@ -134,13 +133,12 @@ if [[ -n "$ACCOUNT_ID" ]]; then
     # Test 7: Create Transaction (Deposit)
     echo "=== 7. Create Transaction Test (Protected) ==="
     echo "Testing: Create Deposit Transaction"
-    TRANSACTION_RESPONSE=$(curl -s -X POST "$API_GATEWAY_URL/api/transactions/deposit" \
+    TRANSACTION_RESPONSE=$(curl -s -X POST "$API_GATEWAY_URL/api/transactions-service/deposit" \
         -H "Authorization: Bearer $JWT_TOKEN" \
         -H 'Content-Type: application/json' \
         -d '{
             "accountId": '$ACCOUNT_ID',
-            "amount": 50.00,
-            "description": "Test deposit"
+            "amount": 50.00
         }')
     
     echo "Response: $TRANSACTION_RESPONSE"
@@ -154,7 +152,7 @@ if [[ -n "$ACCOUNT_ID" ]]; then
     # Test 8: Get User Transactions
     echo "=== 8. Get User Transactions Test (Protected) ==="
     echo "Testing: Get User Transactions"
-    TRANSACTIONS_RESPONSE=$(curl -s -X GET "$API_GATEWAY_URL/api/transactions" \
+    TRANSACTIONS_RESPONSE=$(curl -s -X GET "$API_GATEWAY_URL/api/transactions-service" \
         -H "Authorization: Bearer $JWT_TOKEN")
     
     echo "Response: $TRANSACTIONS_RESPONSE"
@@ -171,7 +169,7 @@ fi
 # Test 9: Unauthorized Access Test
 echo "=== 9. Unauthorized Access Test ==="
 echo "Testing: Access Protected Endpoint Without Token (Should Fail)"
-UNAUTHORIZED_RESPONSE=$(curl -s -X GET "$API_GATEWAY_URL/api/users/profile")
+UNAUTHORIZED_RESPONSE=$(curl -s -X GET "$API_GATEWAY_URL/api/user-service/profile")
 
 echo "Response: $UNAUTHORIZED_RESPONSE"
 if echo "$UNAUTHORIZED_RESPONSE" | grep -q '"error":"Unauthorized"'; then

@@ -50,7 +50,7 @@ export class AuthAPI {
   // User registration
   static async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
-      const response = await authAPI.post('/api/users/register', userData);
+      const response = await authAPI.post('/api/user-service/register', userData);
       return response.data;
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string; errors?: string[] } } };
@@ -65,7 +65,7 @@ export class AuthAPI {
   // User login
   static async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
-      const response = await authAPI.post('/api/users/login', credentials);
+      const response = await authAPI.post('/api/user-service/login', credentials);
       return response.data;
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string; errors?: string[] } } };
@@ -80,7 +80,7 @@ export class AuthAPI {
   // Get user profile
   static async getProfile(): Promise<{ success: boolean; data?: User; message?: string }> {
     try {
-      const response = await authAPI.get('/api/users/profile');
+      const response = await authAPI.get('/api/user-service/profile');
       return response.data;
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string } } };
@@ -94,7 +94,7 @@ export class AuthAPI {
   // Check username availability
   static async checkUsername(username: string): Promise<{ available: boolean }> {
     try {
-      const response = await authAPI.get(`/api/users/check-username?username=${username}`);
+      const response = await authAPI.get(`/api/user-service/check-username?username=${username}`);
       return response.data;
     } catch {
       return { available: false };
@@ -104,7 +104,7 @@ export class AuthAPI {
   // Check email availability
   static async checkEmail(email: string): Promise<{ available: boolean }> {
     try {
-      const response = await authAPI.get(`/api/users/check-email?email=${email}`);
+      const response = await authAPI.get(`/api/user-service/check-email?email=${email}`);
       return response.data;
     } catch {
       return { available: false };

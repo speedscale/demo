@@ -35,7 +35,7 @@ export interface AccountSummary {
 export class AccountsAPI {
   // Get all accounts for the current user
   static async getAccounts(): Promise<ApiResponse<Account[]>> {
-    return await apiClient.get<Account[]>('/api/accounts');
+    return await apiClient.get<Account[]>('/api/accounts-service');
   }
 
   // Get paginated accounts
@@ -50,17 +50,17 @@ export class AccountsAPI {
       sort,
     });
 
-    return await apiClient.get<PaginatedResponse<Account>>(`/api/accounts?${params}`);
+    return await apiClient.get<PaginatedResponse<Account>>(`/api/accounts-service?${params}`);
   }
 
   // Get account by ID
   static async getAccount(accountId: number): Promise<ApiResponse<Account>> {
-    return await apiClient.get<Account>(`/api/accounts/${accountId}`);
+    return await apiClient.get<Account>(`/api/accounts-service/${accountId}`);
   }
 
   // Create new account
   static async createAccount(accountData: CreateAccountRequest): Promise<ApiResponse<Account>> {
-    return await apiClient.post<Account>('/api/accounts', accountData);
+    return await apiClient.post<Account>('/api/accounts-service', accountData);
   }
 
   // Update account
@@ -68,22 +68,22 @@ export class AccountsAPI {
     accountId: number,
     accountData: UpdateAccountRequest
   ): Promise<ApiResponse<Account>> {
-    return await apiClient.put<Account>(`/api/accounts/${accountId}`, accountData);
+    return await apiClient.put<Account>(`/api/accounts-service/${accountId}`, accountData);
   }
 
   // Delete account
   static async deleteAccount(accountId: number): Promise<ApiResponse<void>> {
-    return await apiClient.delete<void>(`/api/accounts/${accountId}`);
+    return await apiClient.delete<void>(`/api/accounts-service/${accountId}`);
   }
 
   // Get account summary/statistics
   static async getAccountSummary(): Promise<ApiResponse<AccountSummary>> {
-    return await apiClient.get<AccountSummary>('/api/accounts/summary');
+    return await apiClient.get<AccountSummary>('/api/accounts-service/summary');
   }
 
   // Get account balance
   static async getAccountBalance(accountId: number): Promise<ApiResponse<{ balance: number; currency: string }>> {
-    return await apiClient.get<{ balance: number; currency: string }>(`/api/accounts/${accountId}/balance`);
+    return await apiClient.get<{ balance: number; currency: string }>(`/api/accounts-service/${accountId}/balance`);
   }
 
   // Update account status
@@ -91,7 +91,7 @@ export class AccountsAPI {
     accountId: number,
     status: Account['status']
   ): Promise<ApiResponse<Account>> {
-    return await apiClient.patch<Account>(`/api/accounts/${accountId}/status`, { status });
+    return await apiClient.patch<Account>(`/api/accounts-service/${accountId}/status`, { status });
   }
 
   // Freeze account
@@ -113,14 +113,14 @@ export class AccountsAPI {
   static async getAccountsByType(
     accountType: Account['accountType']
   ): Promise<ApiResponse<Account[]>> {
-    return await apiClient.get<Account[]>(`/api/accounts?type=${accountType}`);
+    return await apiClient.get<Account[]>(`/api/accounts-service?type=${accountType}`);
   }
 
   // Get accounts by status
   static async getAccountsByStatus(
     status: Account['status']
   ): Promise<ApiResponse<Account[]>> {
-    return await apiClient.get<Account[]>(`/api/accounts?status=${status}`);
+    return await apiClient.get<Account[]>(`/api/accounts-service?status=${status}`);
   }
 
   // Search accounts
@@ -135,7 +135,7 @@ export class AccountsAPI {
       size: size.toString(),
     });
 
-    return await apiClient.get<PaginatedResponse<Account>>(`/api/accounts/search?${params}`);
+    return await apiClient.get<PaginatedResponse<Account>>(`/api/accounts-service/search?${params}`);
   }
 }
 

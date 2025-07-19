@@ -35,11 +35,10 @@ public class SecurityConfig {
             .cors(cors -> cors.disable())
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
-                .requestMatchers(HttpMethod.POST, "/register").permitAll()
-                .requestMatchers(HttpMethod.POST, "/login").permitAll()
-                .requestMatchers(HttpMethod.GET, "/check-username").permitAll()
-                .requestMatchers(HttpMethod.GET, "/check-email").permitAll()
-                .requestMatchers(HttpMethod.GET, "/health").permitAll()
+                .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/user/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/user/check-username").permitAll()
+                .requestMatchers(HttpMethod.GET, "/user/check-email").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
                 
                 // All other endpoints require authentication

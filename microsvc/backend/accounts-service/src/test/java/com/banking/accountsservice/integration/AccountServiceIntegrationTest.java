@@ -128,7 +128,7 @@ class AccountServiceIntegrationTest {
             accountService.getAccountById(999L, testUserId);
         });
 
-        assertEquals("Account not found", exception.getMessage());
+        assertEquals("Account not found or access denied", exception.getMessage());
     }
 
     @Test
@@ -142,7 +142,7 @@ class AccountServiceIntegrationTest {
             accountService.getAccountById(createdAccount.getId(), testUserId);
         });
 
-        assertEquals("Account not found", exception.getMessage());
+        assertEquals("Account not found or access denied", exception.getMessage());
     }
 
     @Test
@@ -219,7 +219,7 @@ class AccountServiceIntegrationTest {
             accountService.updateBalance(createdAccount.getId(), newBalance, testUserId);
         });
 
-        assertEquals("Account not owned by user", exception.getMessage());
+        assertEquals("Account not found or access denied", exception.getMessage());
     }
 
     @Test
@@ -231,7 +231,7 @@ class AccountServiceIntegrationTest {
             accountService.updateBalance(999L, newBalance, testUserId);
         });
 
-        assertEquals("Account not found", exception.getMessage());
+        assertEquals("Account not found or access denied", exception.getMessage());
     }
 
     @Test

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/transactions")
 public class TransactionController {
     
     private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
@@ -30,13 +31,6 @@ public class TransactionController {
     @Autowired
     private Tracer tracer;
     
-    @GetMapping("/health")
-    public ResponseEntity<Map<String, String>> health() {
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "UP");
-        response.put("service", "transactions-service");
-        return ResponseEntity.ok(response);
-    }
     
     @GetMapping
     public ResponseEntity<List<TransactionResponse>> getUserTransactions(Authentication authentication) {

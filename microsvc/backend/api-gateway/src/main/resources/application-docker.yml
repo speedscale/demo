@@ -3,6 +3,49 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      routes:
+        # Health check routes for direct access (higher priority with lower order)
+        - id: user-service-health
+          uri: ${services.user-service.url}
+          order: -1
+          predicates:
+            - Path=/api/user-service/health
+          filters:
+            - RewritePath=/api/user-service/health, /actuator/health
+        - id: accounts-service-health
+          uri: ${services.accounts-service.url}
+          order: -1
+          predicates:
+            - Path=/api/accounts-service/health
+          filters:
+            - RewritePath=/api/accounts-service/health, /actuator/health
+        - id: transactions-service-health
+          uri: ${services.transactions-service.url}
+          order: -1
+          predicates:
+            - Path=/api/transactions-service/health
+          filters:
+            - RewritePath=/api/transactions-service/health, /actuator/health
+            
+        # Main service routes
+        - id: user-service
+          uri: ${services.user-service.url}
+          predicates:
+            - Path=/api/user-service/**
+          filters:
+            - RewritePath=/api/user-service/(?<path>.*), /user/$\{path}
+        - id: accounts-service
+          uri: ${services.accounts-service.url}
+          predicates:
+            - Path=/api/accounts-service/**
+          filters:
+            - RewritePath=/api/accounts-service/(?<path>.*), /accounts/$\{path}
+        - id: transactions-service
+          uri: ${services.transactions-service.url}
+          predicates:
+            - Path=/api/transactions-service/**
+          filters:
+            - RewritePath=/api/transactions-service/(?<path>.*), /transactions/$\{path}
       globalcors:
         cors-configurations:
           '[/**]':

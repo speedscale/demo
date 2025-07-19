@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/accounts")
 public class AccountController {
     
     private static final Logger logger = LoggerFactory.getLogger(AccountController.class);
@@ -32,13 +33,6 @@ public class AccountController {
     @Autowired
     private Tracer tracer;
     
-    @GetMapping("/health")
-    public ResponseEntity<Map<String, String>> health() {
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "UP");
-        response.put("service", "accounts-service");
-        return ResponseEntity.ok(response);
-    }
     
     @GetMapping
     public ResponseEntity<List<AccountResponse>> getUserAccounts(Authentication authentication) {

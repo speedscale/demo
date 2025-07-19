@@ -90,11 +90,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     private boolean isPublicEndpoint(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.equals("/register") ||
-               path.equals("/login") ||
-               path.equals("/check-username") ||
-               path.equals("/check-email") ||
-               path.equals("/health") ||
+        return path.equals("/user/register") ||
+               path.equals("/user/login") ||
+               path.equals("/user/check-username") ||
+               path.equals("/user/check-email") ||
+               path.equals("/user/health") ||
                path.startsWith("/actuator");
     }
 }

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
+@RequestMapping("/user")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -272,17 +273,4 @@ public class UserController {
         }
     }
 
-    /**
-     * Health check endpoint
-     * @return health status
-     */
-    @GetMapping("/api/users/health")
-    public ResponseEntity<?> healthCheck() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "UP");
-        response.put("service", "user-service");
-        response.put("timestamp", System.currentTimeMillis());
-        
-        return ResponseEntity.ok(response);
-    }
 }

@@ -69,22 +69,22 @@ export interface UserPreferences {
 export class UsersAPI {
   // Get current user profile
   static async getProfile(): Promise<ApiResponse<UserProfile>> {
-    return await apiClient.get<UserProfile>('/api/users/profile');
+    return await apiClient.get<UserProfile>('/api/user-service/profile');
   }
 
   // Update user profile
   static async updateProfile(userData: UpdateUserRequest): Promise<ApiResponse<User>> {
-    return await apiClient.put<User>('/api/users/profile', userData);
+    return await apiClient.put<User>('/api/user-service/profile', userData);
   }
 
   // Change password
   static async changePassword(passwordData: ChangePasswordRequest): Promise<ApiResponse<void>> {
-    return await apiClient.put<void>('/api/users/password', passwordData);
+    return await apiClient.put<void>('/api/user-service/password', passwordData);
   }
 
   // Get user by ID (admin only)
   static async getUser(userId: number): Promise<ApiResponse<User>> {
-    return await apiClient.get<User>(`/api/users/${userId}`);
+    return await apiClient.get<User>(`/api/user-service/${userId}`);
   }
 
   // Get all users (admin only)
@@ -99,7 +99,7 @@ export class UsersAPI {
       sort,
     });
 
-    return await apiClient.get<PaginatedResponse<User>>(`/api/users?${params}`);
+    return await apiClient.get<PaginatedResponse<User>>(`/api/user-service?${params}`);
   }
 
   // Update user status (admin only)
@@ -107,12 +107,12 @@ export class UsersAPI {
     userId: number,
     status: User['status']
   ): Promise<ApiResponse<User>> {
-    return await apiClient.patch<User>(`/api/users/${userId}/status`, { status });
+    return await apiClient.patch<User>(`/api/user-service/${userId}/status`, { status });
   }
 
   // Delete user (admin only)
   static async deleteUser(userId: number): Promise<ApiResponse<void>> {
-    return await apiClient.delete<void>(`/api/users/${userId}`);
+    return await apiClient.delete<void>(`/api/user-service/${userId}`);
   }
 
   // Search users (admin only)
@@ -127,52 +127,52 @@ export class UsersAPI {
       size: size.toString(),
     });
 
-    return await apiClient.get<PaginatedResponse<User>>(`/api/users/search?${params}`);
+    return await apiClient.get<PaginatedResponse<User>>(`/api/user-service/search?${params}`);
   }
 
   // Check username availability
   static async checkUsernameAvailability(username: string): Promise<ApiResponse<{ available: boolean }>> {
-    return await apiClient.get<{ available: boolean }>(`/api/users/check-username?username=${username}`);
+    return await apiClient.get<{ available: boolean }>(`/api/user-service/check-username?username=${username}`);
   }
 
   // Check email availability
   static async checkEmailAvailability(email: string): Promise<ApiResponse<{ available: boolean }>> {
-    return await apiClient.get<{ available: boolean }>(`/api/users/check-email?email=${email}`);
+    return await apiClient.get<{ available: boolean }>(`/api/user-service/check-email?email=${email}`);
   }
 
   // Get user preferences
   static async getUserPreferences(): Promise<ApiResponse<UserPreferences>> {
-    return await apiClient.get<UserPreferences>('/api/users/preferences');
+    return await apiClient.get<UserPreferences>('/api/user-service/preferences');
   }
 
   // Update user preferences
   static async updateUserPreferences(preferences: Partial<UserPreferences>): Promise<ApiResponse<UserPreferences>> {
-    return await apiClient.put<UserPreferences>('/api/users/preferences', preferences);
+    return await apiClient.put<UserPreferences>('/api/user-service/preferences', preferences);
   }
 
   // Send email verification
   static async sendEmailVerification(): Promise<ApiResponse<void>> {
-    return await apiClient.post<void>('/api/users/verify-email');
+    return await apiClient.post<void>('/api/user-service/verify-email');
   }
 
   // Verify email with token
   static async verifyEmail(token: string): Promise<ApiResponse<void>> {
-    return await apiClient.post<void>('/api/users/verify-email/confirm', { token });
+    return await apiClient.post<void>('/api/user-service/verify-email/confirm', { token });
   }
 
   // Send phone verification
   static async sendPhoneVerification(): Promise<ApiResponse<void>> {
-    return await apiClient.post<void>('/api/users/verify-phone');
+    return await apiClient.post<void>('/api/user-service/verify-phone');
   }
 
   // Verify phone with code
   static async verifyPhone(code: string): Promise<ApiResponse<void>> {
-    return await apiClient.post<void>('/api/users/verify-phone/confirm', { code });
+    return await apiClient.post<void>('/api/user-service/verify-phone/confirm', { code });
   }
 
   // Request password reset
   static async requestPasswordReset(email: string): Promise<ApiResponse<void>> {
-    return await apiClient.post<void>('/api/users/password-reset', { email });
+    return await apiClient.post<void>('/api/user-service/password-reset', { email });
   }
 
   // Reset password with token
@@ -181,7 +181,7 @@ export class UsersAPI {
     newPassword: string,
     confirmPassword: string
   ): Promise<ApiResponse<void>> {
-    return await apiClient.post<void>('/api/users/password-reset/confirm', {
+    return await apiClient.post<void>('/api/user-service/password-reset/confirm', {
       token,
       newPassword,
       confirmPassword,
@@ -190,17 +190,17 @@ export class UsersAPI {
 
   // Enable two-factor authentication
   static async enableTwoFactor(): Promise<ApiResponse<{ qrCode: string; secret: string }>> {
-    return await apiClient.post<{ qrCode: string; secret: string }>('/api/users/2fa/enable');
+    return await apiClient.post<{ qrCode: string; secret: string }>('/api/user-service/2fa/enable');
   }
 
   // Confirm two-factor authentication setup
   static async confirmTwoFactor(code: string): Promise<ApiResponse<{ backupCodes: string[] }>> {
-    return await apiClient.post<{ backupCodes: string[] }>('/api/users/2fa/confirm', { code });
+    return await apiClient.post<{ backupCodes: string[] }>('/api/user-service/2fa/confirm', { code });
   }
 
   // Disable two-factor authentication
   static async disableTwoFactor(password: string): Promise<ApiResponse<void>> {
-    return await apiClient.post<void>('/api/users/2fa/disable', { password });
+    return await apiClient.post<void>('/api/user-service/2fa/disable', { password });
   }
 
   // Get user activity log
@@ -227,7 +227,7 @@ export class UsersAPI {
       ipAddress: string;
       userAgent: string;
       createdAt: string;
-    }>>(`/api/users/activity?${params}`);
+    }>>(`/api/user-service/activity?${params}`);
   }
 
   // Get user sessions
@@ -250,17 +250,17 @@ export class UsersAPI {
       current: boolean;
       lastActivity: string;
       createdAt: string;
-    }[]>('/api/users/sessions');
+    }[]>('/api/user-service/sessions');
   }
 
   // Revoke user session
   static async revokeSession(sessionId: string): Promise<ApiResponse<void>> {
-    return await apiClient.delete<void>(`/api/users/sessions/${sessionId}`);
+    return await apiClient.delete<void>(`/api/user-service/sessions/${sessionId}`);
   }
 
   // Revoke all other sessions
   static async revokeAllOtherSessions(): Promise<ApiResponse<void>> {
-    return await apiClient.delete<void>('/api/users/sessions/others');
+    return await apiClient.delete<void>('/api/user-service/sessions/others');
   }
 
   // Update user avatar
@@ -268,7 +268,7 @@ export class UsersAPI {
     const formData = new FormData();
     formData.append('avatar', file);
 
-    return await apiClient.post<{ avatarUrl: string }>('/api/users/avatar', formData, {
+    return await apiClient.post<{ avatarUrl: string }>('/api/user-service/avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -277,7 +277,7 @@ export class UsersAPI {
 
   // Delete user avatar
   static async deleteAvatar(): Promise<ApiResponse<void>> {
-    return await apiClient.delete<void>('/api/users/avatar');
+    return await apiClient.delete<void>('/api/user-service/avatar');
   }
 }
 

@@ -5,6 +5,7 @@ import com.banking.accountsservice.dto.AccountResponse;
 import com.banking.accountsservice.dto.BalanceResponse;
 import com.banking.accountsservice.entity.Account;
 import com.banking.accountsservice.repository.AccountRepository;
+import io.opentelemetry.api.metrics.LongCounter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,9 @@ class AccountServiceTest {
 
     @Mock
     private AccountRepository accountRepository;
+
+    @Mock
+    private LongCounter createdAccountsCounter;
 
     @InjectMocks
     private AccountService accountService;

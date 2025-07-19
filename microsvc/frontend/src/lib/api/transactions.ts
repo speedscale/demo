@@ -56,7 +56,7 @@ export interface TransactionFilters {
 export class TransactionsAPI {
   // Get all transactions for the current user
   static async getTransactions(): Promise<ApiResponse<Transaction[]>> {
-    return await apiClient.get<Transaction[]>('/api/transactions');
+    return await apiClient.get<Transaction[]>('/api/transactions-service');
   }
 
   // Get paginated transactions
@@ -71,7 +71,7 @@ export class TransactionsAPI {
       sort,
     });
 
-    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions?${params}`);
+    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions-service?${params}`);
   }
 
   // Get filtered transactions
@@ -97,12 +97,12 @@ export class TransactionsAPI {
     if (filters.maxAmount) params.append('maxAmount', filters.maxAmount.toString());
     if (filters.description) params.append('description', filters.description);
 
-    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions?${params}`);
+    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions-service?${params}`);
   }
 
   // Get transaction by ID
   static async getTransaction(transactionId: number): Promise<ApiResponse<Transaction>> {
-    return await apiClient.get<Transaction>(`/api/transactions/${transactionId}`);
+    return await apiClient.get<Transaction>(`/api/transactions-service/${transactionId}`);
   }
 
   // Get transactions for a specific account
@@ -118,12 +118,12 @@ export class TransactionsAPI {
       sort,
     });
 
-    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/accounts/${accountId}/transactions?${params}`);
+    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/accounts-service/account/${accountId}/transactions?${params}`);
   }
 
   // Create new transaction
   static async createTransaction(transactionData: CreateTransactionRequest): Promise<ApiResponse<Transaction>> {
-    return await apiClient.post<Transaction>('/api/transactions', transactionData);
+    return await apiClient.post<Transaction>('/api/transactions-service', transactionData);
   }
 
   // Create deposit transaction
@@ -184,17 +184,17 @@ export class TransactionsAPI {
 
   // Cancel transaction (if pending)
   static async cancelTransaction(transactionId: number): Promise<ApiResponse<Transaction>> {
-    return await apiClient.patch<Transaction>(`/api/transactions/${transactionId}/cancel`);
+    return await apiClient.patch<Transaction>(`/api/transactions-service/${transactionId}/cancel`);
   }
 
   // Get transaction summary/statistics
   static async getTransactionSummary(): Promise<ApiResponse<TransactionSummary>> {
-    return await apiClient.get<TransactionSummary>('/api/transactions/summary');
+    return await apiClient.get<TransactionSummary>('/api/transactions-service/summary');
   }
 
   // Get transaction summary for a specific account
   static async getAccountTransactionSummary(accountId: number): Promise<ApiResponse<TransactionSummary>> {
-    return await apiClient.get<TransactionSummary>(`/api/accounts/${accountId}/transactions/summary`);
+    return await apiClient.get<TransactionSummary>(`/api/accounts-service/account/${accountId}/transactions/summary`);
   }
 
   // Get transactions by type
@@ -210,7 +210,7 @@ export class TransactionsAPI {
       sort: 'createdAt,desc',
     });
 
-    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions?${params}`);
+    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions-service?${params}`);
   }
 
   // Get transactions by status
@@ -226,17 +226,17 @@ export class TransactionsAPI {
       sort: 'createdAt,desc',
     });
 
-    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions?${params}`);
+    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions-service?${params}`);
   }
 
   // Get pending transactions
   static async getPendingTransactions(): Promise<ApiResponse<Transaction[]>> {
-    return await apiClient.get<Transaction[]>('/api/transactions?status=PENDING');
+    return await apiClient.get<Transaction[]>('/api/transactions-service?status=PENDING');
   }
 
   // Get recent transactions
   static async getRecentTransactions(limit: number = 10): Promise<ApiResponse<Transaction[]>> {
-    return await apiClient.get<Transaction[]>(`/api/transactions/recent?limit=${limit}`);
+    return await apiClient.get<Transaction[]>(`/api/transactions-service/recent?limit=${limit}`);
   }
 
   // Search transactions
@@ -251,7 +251,7 @@ export class TransactionsAPI {
       size: size.toString(),
     });
 
-    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions/search?${params}`);
+    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions-service/search?${params}`);
   }
 
   // Get transactions by date range
@@ -269,7 +269,7 @@ export class TransactionsAPI {
       sort: 'createdAt,desc',
     });
 
-    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions?${params}`);
+    return await apiClient.get<PaginatedResponse<Transaction>>(`/api/transactions-service?${params}`);
   }
 
   // Get monthly transaction report
@@ -277,7 +277,7 @@ export class TransactionsAPI {
     year: number,
     month: number
   ): Promise<ApiResponse<TransactionSummary>> {
-    return await apiClient.get<TransactionSummary>(`/api/transactions/reports/monthly?year=${year}&month=${month}`);
+    return await apiClient.get<TransactionSummary>(`/api/transactions-service/reports/monthly?year=${year}&month=${month}`);
   }
 
   // Export transactions
@@ -297,7 +297,7 @@ export class TransactionsAPI {
       if (filters.endDate) params.append('endDate', filters.endDate);
     }
 
-    return await apiClient.get<{ downloadUrl: string }>(`/api/transactions/export?${params}`);
+    return await apiClient.get<{ downloadUrl: string }>(`/api/transactions-service/export?${params}`);
   }
 }
 

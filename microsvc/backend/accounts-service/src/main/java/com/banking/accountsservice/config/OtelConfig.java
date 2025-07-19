@@ -3,16 +3,24 @@ package com.banking.accountsservice.config;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.Meter;
-import jakarta.enterprise.inject.Produces;
+import io.opentelemetry.api.trace.Tracer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 public class OtelConfig {
 
-    @Produces
+    @Bean
     public Meter meter(OpenTelemetry openTelemetry) {
         return openTelemetry.getMeter("accounts-service-meter");
     }
 
-    @Produces
+    @Bean
+    public Tracer tracer(OpenTelemetry openTelemetry) {
+        return openTelemetry.getTracer("accounts-service-tracer");
+    }
+
+    @Bean
     public LongCounter createdAccountsCounter(Meter meter) {
         return meter
                 .counterBuilder("accounts.created")

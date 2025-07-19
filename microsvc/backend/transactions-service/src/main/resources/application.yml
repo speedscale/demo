@@ -39,11 +39,6 @@ spring:
   main:
     web-application-type: servlet
 
-# External Service URLs
-accounts:
-  service:
-    url: http://localhost:8082
-
 # JWT Configuration
 jwt:
   secret: banking-app-super-secret-key-change-this-in-production-256-bit

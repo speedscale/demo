@@ -1,5 +1,5 @@
 # Multi-stage build for Next.js frontend
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -16,13 +16,13 @@ COPY . .
 RUN npm run build
 
 # Runtime image
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001 -G nodejs
+RUN addgroup --gid 1001 nodejs && \
+    adduser --uid 1001 --gid 1001 nextjs
 
 # Copy built application
 COPY --from=builder /app/public ./public

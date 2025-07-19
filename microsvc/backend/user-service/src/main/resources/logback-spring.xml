@@ -37,6 +37,8 @@
     <logger name="io.opentelemetry" level="INFO"/>
     
     <!-- Root logger -->
+    <logger name="org.springframework.boot.actuate.endpoint.web" level="WARN"/>
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>

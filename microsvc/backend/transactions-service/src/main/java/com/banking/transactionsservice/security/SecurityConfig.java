@@ -32,13 +32,9 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(authz -> authz
-                // Health check endpoint
-                .requestMatchers(HttpMethod.GET, "/api/transactions/health").permitAll()
-                
                 // Actuator endpoints
+                .requestMatchers(HttpMethod.GET, "/health").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
-                
-                // All other endpoints require authentication
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))

@@ -12,7 +12,7 @@ spring:
 # External Service URLs for Docker
 accounts:
   service:
-    url: http://accounts-service:8082
+    url: http://accounts-service:8080
 
 # OpenTelemetry Configuration for Docker
 otel:

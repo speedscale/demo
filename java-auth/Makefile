@@ -1,7 +1,12 @@
 # Java Authentication Microservice Makefile
 # Provides common development tasks and workflows
 
-.PHONY: help build test clean run dev up down logs lint format deps docker-build docker-run docker-clean
+# Version from git tags, with fallback to commit hash
+VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+REGISTRY?=gcr.io/speedscale-demos/java-auth:${VERSION}
+CLIENT_REGISTRY?=gcr.io/speedscale-demos/java-auth-client:${VERSION}
+
+.PHONY: help build test clean run dev up down logs lint format deps docker-build docker-run docker-clean docker-multi
 
 # Maven wrapper detection
 MVN := $(shell if [ -f ./mvnw ]; then echo "./mvnw"; else echo "mvn"; fi)
@@ -14,19 +19,19 @@ help: ## Show this help message
 
 # Development Commands
 build: ## Build the application JAR
-	$(MVN) clean package -DskipTests
+	cd server && $(MVN) clean package -DskipTests
 
 test: ## Run all tests
-	$(MVN) test
+	cd server && $(MVN) test
 
 test-coverage: ## Run tests with coverage report
-	$(MVN) clean test jacoco:report
+	cd server && $(MVN) clean test jacoco:report
 
 clean: ## Clean build artifacts
-	$(MVN) clean
+	cd server && $(MVN) clean
 
 run: ## Run the application locally (requires MySQL)
-	$(MVN) spring-boot:run
+	cd server && $(MVN) spring-boot:run
 
 # Docker Commands
 dev: up ## Alias for 'up' - start development environment
@@ -67,12 +72,18 @@ docker-clean: ## Remove application Docker images
 	docker rmi java-auth:latest || true
 	docker image prune -f
 
+docker-multi: ## Build and push multi-arch Docker images
+	@echo "Building and pushing multi-arch Docker image for server"
+	@docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${REGISTRY} .
+	@echo "Building and pushing multi-arch Docker image for client"
+	@docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${CLIENT_REGISTRY} ./client
+
 # Database Commands
 db-migrate: ## Run database migrations
-	$(MVN) flyway:migrate
+	cd server && $(MVN) flyway:migrate
 
 db-info: ## Show migration status
-	$(MVN) flyway:info
+	cd server && $(MVN) flyway:info
 
 db-reset: ## Reset database (WARNING: destroys data)
 	docker-compose exec mysql mysql -uroot -ppassword -e "DROP DATABASE IF EXISTS authdb; CREATE DATABASE authdb;"
@@ -80,16 +91,16 @@ db-reset: ## Reset database (WARNING: destroys data)
 
 # Code Quality Commands
 lint: ## Check code formatting
-	$(MVN) spotless:check
+	cd server && $(MVN) spotless:check
 
 format: ## Format code
-	$(MVN) spotless:apply
+	cd server && $(MVN) spotless:apply
 
 deps: ## Download dependencies
-	$(MVN) dependency:resolve
+	cd server && $(MVN) dependency:resolve
 
 deps-check: ## Check for dependency updates
-	$(MVN) versions:display-dependency-updates
+	cd server && $(MVN) versions:display-dependency-updates
 
 # API Commands
 api-docs: ## Open API documentation in browser
@@ -102,6 +113,22 @@ test-api: ## Test API endpoints (requires running application)
 		-H "Content-Type: application/json" \
 		-d '{"username":"demo","password":"password"}' | jq .
 	@echo "\nAPI documentation: http://localhost:8080/swagger-ui/index.html"
+
+# Client Commands
+client: ## Run auth client
+	@echo "Running auth client"
+	@./client/client
+
+client-docker-build: ## Build client Docker image
+	@echo "Building client Docker image"
+	docker build -t java-auth-client:latest ./client
+
+client-docker-run: ## Run client in Docker
+	@echo "Running client in Docker"
+	docker run --rm -e SERVER_URL=host.docker.internal:8080 java-auth-client:latest
+
+client-capture: export SERVER_URL=localhost:4143
+client-capture: client
 
 # Health and Status Commands
 health: ## Check application health
@@ -126,7 +153,19 @@ setup: ## Initial project setup
 
 # Utility Commands
 version: ## Show current version
-	@git describe --tags --always --dirty 2>/dev/null || echo "No version info available"
+	@echo "Server version: $(VERSION)"
+	@echo "Client version: $(VERSION)"
+	@echo "Registry: $(REGISTRY)"
+	@echo "Client Registry: $(CLIENT_REGISTRY)"
+
+tag: ## Create a new version tag
+	@if [ -z "$(v)" ]; then \
+		echo "Usage: make tag v=1.0.1"; \
+		exit 1; \
+	fi
+	@echo "Creating tag v$(v)..."
+	@git tag -a "v$(v)" -m "Release version $(v)"
+	@echo "Tag created. Push with: git push origin v$(v)"
 
 env-example: ## Create .env example file
 	@echo "Creating .env.example..."
@@ -147,90 +186,56 @@ env-example: ## Create .env example file
 	@echo ".env.example created. Copy to .env and configure for your environment."
 
 # Kubernetes Commands
-k8s-namespace: ## Create Kubernetes namespace
-	kubectl apply -f k8s/base/namespace.yaml
 
 k8s-deploy: ## Deploy to Kubernetes
 	@echo "Deploying Java Auth microservice to Kubernetes..."
-	kubectl apply -f k8s/base/namespace.yaml
-	kubectl apply -f k8s/base/mysql-secret.yaml
-	kubectl apply -f k8s/base/mysql-configmap.yaml
-	kubectl apply -f k8s/base/mysql-pv.yaml
-	kubectl apply -f k8s/base/mysql-pvc.yaml
-	kubectl apply -f k8s/base/mysql-deployment.yaml
-	kubectl apply -f k8s/base/mysql-service.yaml
-	@echo "Waiting for MySQL to be ready..."
-	kubectl wait --for=condition=ready pod -l app=mysql -n java-auth --timeout=120s
-	kubectl apply -f k8s/base/auth-configmap.yaml
-	kubectl apply -f k8s/base/auth-deployment.yaml
-	kubectl apply -f k8s/base/auth-service.yaml
-	kubectl apply -f k8s/base/ingress.yaml
+	kubectl apply -k k8s/base
 	@echo "Deployment complete!"
 	@echo "Run 'make k8s-status' to check deployment status"
 
-k8s-deploy-dev: ## Deploy to Kubernetes (dev environment)
-	kubectl apply -k k8s/overlays/dev
-
-k8s-deploy-staging: ## Deploy to Kubernetes (staging environment)
-	kubectl apply -k k8s/overlays/staging
-
-k8s-deploy-prod: ## Deploy to Kubernetes (production environment)
-	kubectl apply -k k8s/overlays/prod
+k8s-deploy-simple: ## Deploy to Kubernetes (simplified)
+	kubectl apply -k k8s/base
 
 k8s-undeploy: ## Remove from Kubernetes
 	@echo "Removing Java Auth microservice from Kubernetes..."
-	kubectl delete -f k8s/base/ingress.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/auth-service.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/auth-deployment.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/auth-configmap.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/mysql-service.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/mysql-deployment.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/mysql-pvc.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/mysql-pv.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/mysql-configmap.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/mysql-secret.yaml --ignore-not-found=true
-	kubectl delete -f k8s/base/namespace.yaml --ignore-not-found=true
+	kubectl delete -k k8s/base --ignore-not-found=true
 	@echo "Undeployment complete!"
 
 k8s-status: ## Check Kubernetes deployment status
-	@echo "=== Namespace ==="
-	kubectl get namespace java-auth
-	@echo "\n=== Pods ==="
-	kubectl get pods -n java-auth
+	@echo "=== Pods ==="
+	kubectl get pods -l app.kubernetes.io/name=java-auth
 	@echo "\n=== Services ==="
-	kubectl get services -n java-auth
-	@echo "\n=== Ingress ==="
-	kubectl get ingress -n java-auth
+	kubectl get services -l app.kubernetes.io/name=java-auth
 	@echo "\n=== PersistentVolumeClaims ==="
-	kubectl get pvc -n java-auth
+	kubectl get pvc -l app.kubernetes.io/name=java-auth
 
 k8s-logs: ## Show application logs from Kubernetes
-	kubectl logs -l app=java-auth -n java-auth -f
+	kubectl logs -l app=java-auth -f
 
 k8s-logs-mysql: ## Show MySQL logs from Kubernetes
-	kubectl logs -l app=mysql -n java-auth -f
+	kubectl logs -l app=mysql -f
 
 k8s-port-forward: ## Port forward to access the service locally
 	@echo "Port forwarding java-auth service to localhost:8080..."
-	kubectl port-forward -n java-auth service/java-auth-service 8080:80
+	kubectl port-forward service/java-auth-service 8080:80
 
 k8s-mysql-port-forward: ## Port forward MySQL for local access
 	@echo "Port forwarding MySQL service to localhost:3307..."
-	kubectl port-forward -n java-auth service/mysql-service 3307:3306
+	kubectl port-forward service/mysql-service 3307:3306
 
 k8s-exec: ## Execute into the application pod
-	$(eval POD := $(shell kubectl get pods -n java-auth -l app=java-auth -o jsonpath='{.items[0].metadata.name}'))
-	kubectl exec -it -n java-auth $(POD) -- /bin/bash
+	$(eval POD := $(shell kubectl get pods -l app=java-auth -o jsonpath='{.items[0].metadata.name}'))
+	kubectl exec -it $(POD) -- /bin/bash
 
 k8s-mysql-exec: ## Execute into the MySQL pod
-	$(eval POD := $(shell kubectl get pods -n java-auth -l app=mysql -o jsonpath='{.items[0].metadata.name}'))
-	kubectl exec -it -n java-auth $(POD) -- mysql -u root -p
+	$(eval POD := $(shell kubectl get pods -l app=mysql -o jsonpath='{.items[0].metadata.name}'))
+	kubectl exec -it $(POD) -- mysql -u root -p
 
 k8s-describe: ## Describe application deployment
-	kubectl describe deployment java-auth -n java-auth
+	kubectl describe deployment java-auth
 
-k8s-events: ## Show recent events in the namespace
-	kubectl get events -n java-auth --sort-by=.metadata.creationTimestamp
+k8s-events: ## Show recent events
+	kubectl get events --field-selector involvedObject.name=java-auth --sort-by=.metadata.creationTimestamp
 
 # CI/CD helpers (future use)
 ci-build: ## CI build command

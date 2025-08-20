@@ -40,5 +40,16 @@ services:
       mysql:
         condition: service_healthy
         
+  auth-client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: auth-client
+    restart: always
+    environment:
+      SERVER_URL: auth-service:8080
+    depends_on:
+      - auth-service
+        
 volumes:
   mysql-data:

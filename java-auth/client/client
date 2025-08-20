@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+SERVER_URL=${SERVER_URL:-"localhost:8080"}
+accessToken=""
+refreshToken=""
+
+echo "Java Auth Client - Server URL: $SERVER_URL"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+login() {
+    echo -e "${RED}Logging in...${NC}"
+    response=$(curl -s -X POST -H "Content-Type: application/json" \
+        -d '{"username": "demo", "password": "password"}' \
+        "${SERVER_URL}/api/auth/login")
+    
+    accessToken=$(echo "$response" | jq -r .accessToken)
+    refreshToken=$(echo "$response" | jq -r .refreshToken)
+    
+    if [[ "$accessToken" != "null" ]]; then
+        echo -e "${GREEN}Login successful${NC}"
+        echo -e "${BLUE}Access token: ${accessToken:0:20}...${NC}"
+        echo -e "${BLUE}Refresh token: ${refreshToken:0:20}...${NC}"
+    else
+        echo -e "${RED}Login failed: $response${NC}"
+        exit 1
+    fi
+    echo
+}
+
+validate_token() {
+    echo -e "${YELLOW}Validating token...${NC}"
+    response=$(curl -s -X POST -H "Content-Type: application/json" \
+        -H "Authorization: Bearer ${accessToken}" \
+        -d "{\"token\": \"${accessToken}\"}" \
+        "${SERVER_URL}/api/auth/validate")
+    
+    valid=$(echo "$response" | jq -r .valid)
+    username=$(echo "$response" | jq -r .username)
+    
+    if [[ "$valid" == "true" ]]; then
+        echo -e "${GREEN}Token is valid for user: $username${NC}"
+    else
+        echo -e "${RED}Token validation failed: $response${NC}"
+    fi
+    echo
+}
+
+refresh_token() {
+    echo -e "${YELLOW}Refreshing token...${NC}"
+    response=$(curl -s -X POST -H "Content-Type: application/json" \
+        -d "{\"refreshToken\": \"${refreshToken}\"}" \
+        "${SERVER_URL}/api/auth/refresh")
+    
+    newAccessToken=$(echo "$response" | jq -r .accessToken)
+    newRefreshToken=$(echo "$response" | jq -r .refreshToken)
+    
+    if [[ "$newAccessToken" != "null" ]]; then
+        echo -e "${GREEN}Token refreshed successfully${NC}"
+        echo -e "${BLUE}New access token: ${newAccessToken:0:20}...${NC}"
+        echo -e "${BLUE}New refresh token: ${newRefreshToken:0:20}...${NC}"
+        accessToken=$newAccessToken
+        refreshToken=$newRefreshToken
+    else
+        echo -e "${RED}Token refresh failed: $response${NC}"
+        # Re-login if refresh fails
+        echo -e "${YELLOW}Re-authenticating...${NC}"
+        login
+    fi
+    echo
+}
+
+test_protected_endpoint() {
+    echo -e "${YELLOW}Testing protected endpoint...${NC}"
+    response=$(curl -s -w "\n%{http_code}" -X GET \
+        -H "Authorization: Bearer ${accessToken}" \
+        "${SERVER_URL}/api/auth/user")
+    
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | head -n-1)
+    
+    if [[ "$http_code" == "200" ]]; then
+        echo -e "${GREEN}Protected endpoint access successful${NC}"
+        echo -e "${BLUE}User data: $body${NC}"
+    else
+        echo -e "${RED}Protected endpoint access failed (HTTP $http_code): $body${NC}"
+    fi
+    echo
+}
+
+random_sleep() {
+    sleep_time=$((1 + RANDOM % 3))
+    echo -e "${BLUE}Sleeping for $sleep_time seconds...${NC}"
+    sleep $sleep_time
+    echo
+}
+
+# Alternative users for variety
+login_random_user() {
+    users=("demo" "admin" "testuser")
+    passwords=("password" "adminpass" "testpass")
+    idx=$((RANDOM % ${#users[@]}))
+    
+    echo -e "${RED}Logging in as ${users[$idx]}...${NC}"
+    response=$(curl -s -X POST -H "Content-Type: application/json" \
+        -d "{\"username\": \"${users[$idx]}\", \"password\": \"${passwords[$idx]}\"}" \
+        "${SERVER_URL}/api/auth/login")
+    
+    accessToken=$(echo "$response" | jq -r .accessToken)
+    refreshToken=$(echo "$response" | jq -r .refreshToken)
+    
+    if [[ "$accessToken" != "null" ]]; then
+        echo -e "${GREEN}Login successful as ${users[$idx]}${NC}"
+    else
+        echo -e "${YELLOW}Login failed for ${users[$idx]}, using default user${NC}"
+        login
+    fi
+    echo
+}
+
+# Main loop
+echo -e "${GREEN}Starting Java Auth Client...${NC}"
+echo "=================================="
+echo
+
+# Initial login
+login
+
+i=0
+while true; do
+    echo -e "${YELLOW}=== Iteration $((i+1)) ===${NC}"
+    
+    # Validate token every iteration
+    validate_token
+    random_sleep
+    
+    # Test protected endpoint
+    test_protected_endpoint
+    random_sleep
+    
+    # Refresh token every 5 iterations
+    if [[ $((i % 5)) == 4 ]]; then
+        refresh_token
+        random_sleep
+    fi
+    
+    # Re-login with random user every 10 iterations
+    if [[ $((i % 10)) == 9 ]]; then
+        login_random_user
+        random_sleep
+    fi
+    
+    i=$((i+1))
+    
+    # Add a separator for readability
+    echo "=================================="
+    echo
+done

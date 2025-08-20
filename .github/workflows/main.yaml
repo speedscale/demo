@@ -22,6 +22,17 @@ jobs:
         credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    - name: Test java service
+      run: |
+        cd java/server && mvn test
+    - name: Test java-auth service
+      run: |
+        cd java-auth/server && mvn test
     - name: build
       run: |
         gcloud auth configure-docker

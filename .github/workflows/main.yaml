@@ -27,3 +27,4 @@ jobs:
         gcloud auth configure-docker
         cd java && make docker-multi
         cd ../node && make docker-multi
+        cd ../java-auth && make docker-multi

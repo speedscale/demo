@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-auth-client
+  labels:
+    app: java-auth-client
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-auth-client
+  template:
+    metadata:
+      labels:
+        app: java-auth-client
+        version: v1
+    spec:
+      containers:
+      - name: java-auth-client
+        image: gcr.io/speedscale-demos/java-auth-client:1.0.1
+        imagePullPolicy: Always
+        env:
+        - name: SERVER_URL
+          value: "java-auth-service:80"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      restartPolicy: Always

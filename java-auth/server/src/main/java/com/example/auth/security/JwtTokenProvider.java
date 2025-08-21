@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
@@ -19,7 +19,7 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
     
-    private Key getSigningKey() {
+    private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
     
@@ -28,29 +28,29 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
         
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .subject(username)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
                 .compact();
     }
     
     public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
         
         return claims.getSubject();
     }
     
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
             return true;
         } catch (SecurityException ex) {
             log.error("Invalid JWT signature");
@@ -67,11 +67,11 @@ public class JwtTokenProvider {
     }
     
     public Date getExpirationDateFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
         
         return claims.getExpiration();
     }

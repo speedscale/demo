@@ -1,4 +1,4 @@
-VERSION?=1.0.4
+VERSION?=$(shell cat ../VERSION 2>/dev/null || echo "1.0.4")
 REGISTRY?=gcr.io/speedscale-demos/node-server:${VERSION}
 NAMESPACE?=default
 

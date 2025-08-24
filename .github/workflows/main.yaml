@@ -47,6 +47,7 @@ jobs:
     - name: build
       run: |
         gcloud auth configure-docker
-        cd java && make docker-multi
-        cd ../node && make docker-multi
-        cd ../java-auth && make docker-multi
+        VERSION=$(cat VERSION)
+        cd java && make docker-multi VERSION=$VERSION
+        cd ../node && make docker-multi VERSION=$VERSION
+        cd ../java-auth && make docker-multi VERSION=$VERSION

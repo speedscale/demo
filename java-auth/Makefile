@@ -2,11 +2,12 @@
 # Provides common development tasks and workflows
 
 # Version from git tags, with fallback to commit hash
-VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+VERSION?=$(shell cat ../VERSION 2>/dev/null || git describe --tags --always --dirty 2>/dev/null || echo "dev")
 REGISTRY?=gcr.io/speedscale-demos/java-auth:${VERSION}
 CLIENT_REGISTRY?=gcr.io/speedscale-demos/java-auth-client:${VERSION}
 
 .PHONY: help build test clean run dev up down logs lint format deps docker-build docker-run docker-clean docker-multi
+# Note: version and tag targets removed - use root Makefile for version management
 
 # Maven wrapper detection
 MVN := $(shell if [ -f ./mvnw ]; then echo "./mvnw"; else echo "mvn"; fi)
@@ -53,19 +54,16 @@ logs-db: ## Show database logs only
 
 # Docker Image Commands
 docker-build: ## Build Docker image with version tag
-	$(eval VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "latest"))
 	docker build -t java-auth:$(VERSION) .
 	docker tag java-auth:$(VERSION) java-auth:latest
 	@echo "Built image: java-auth:$(VERSION)"
 
 docker-build-prod: ## Build production Docker image with optimizations
-	$(eval VERSION := $(shell git describe --tags --always 2>/dev/null || echo "latest"))
 	docker build -t java-auth:$(VERSION) --target=production .
 	docker tag java-auth:$(VERSION) java-auth:latest
 	@echo "Built production image: java-auth:$(VERSION)"
 
 docker-run: ## Run application container only (requires external MySQL)
-	$(eval VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "latest"))
 	docker run -p 8080:8080 --env-file .env java-auth:$(VERSION)
 
 docker-clean: ## Remove application Docker images
@@ -152,20 +150,7 @@ setup: ## Initial project setup
 	@echo "Setup complete! Run 'make status' to verify."
 
 # Utility Commands
-version: ## Show current version
-	@echo "Server version: $(VERSION)"
-	@echo "Client version: $(VERSION)"
-	@echo "Registry: $(REGISTRY)"
-	@echo "Client Registry: $(CLIENT_REGISTRY)"
-
-tag: ## Create a new version tag
-	@if [ -z "$(v)" ]; then \
-		echo "Usage: make tag v=1.0.1"; \
-		exit 1; \
-	fi
-	@echo "Creating tag v$(v)..."
-	@git tag -a "v$(v)" -m "Release version $(v)"
-	@echo "Tag created. Push with: git push origin v$(v)"
+# Note: version and tag commands are now centralized in the root Makefile
 
 env-example: ## Create .env example file
 	@echo "Creating .env.example..."

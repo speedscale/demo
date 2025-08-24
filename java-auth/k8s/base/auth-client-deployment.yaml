@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: java-auth-client
-        image: gcr.io/speedscale-demos/java-auth-client:v1.0.9
+        image: gcr.io/speedscale-demos/java-auth-client:1.0.9
         imagePullPolicy: Always
         env:
         - name: SERVER_URL

@@ -1,0 +1,270 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+SERVER_URL=${SERVER_URL:-"localhost:8080"}
+accessToken=""
+refreshToken=""
+
+echo "Java Auth Client - Server URL: $SERVER_URL"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+register() {
+    local username="$1"
+    local password="$2"
+    local email="$3"
+    
+    echo -e "${YELLOW}Registering user: $username${NC}"
+    response=$(curl -s -w "\n%{http_code}" -X POST -H "Content-Type: application/json" \
+        -d "{\"username\": \"$username\", \"password\": \"$password\", \"email\": \"$email\"}" \
+        "${SERVER_URL}/api/auth/register")
+    
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | head -n-1)
+    
+    if [[ "$http_code" != "200" && "$http_code" != "201" ]]; then
+        echo -e "${YELLOW}Registration failed for $username (HTTP $http_code), trying login: $body${NC}"
+        return 1
+    fi
+    
+    # Validate JSON response before parsing
+    if ! echo "$body" | jq empty 2>/dev/null; then
+        echo -e "${RED}Invalid JSON response from server: $body${NC}"
+        return 1
+    fi
+    
+    accessToken=$(echo "$body" | jq -r .accessToken)
+    refreshToken=$(echo "$body" | jq -r .refreshToken)
+    
+    if [[ "$accessToken" != "null" && "$accessToken" != "" ]]; then
+        echo -e "${GREEN}Registration successful for $username${NC}"
+        echo -e "${BLUE}Access token: ${accessToken:0:20}...${NC}"
+        echo -e "${BLUE}Refresh token: ${refreshToken:0:20}...${NC}"
+    else
+        echo -e "${YELLOW}Registration failed for $username (missing tokens), trying login: $body${NC}"
+        return 1
+    fi
+    echo
+}
+
+login() {
+    local username="$1"
+    local password="$2"
+    
+    echo -e "${RED}Logging in as $username...${NC}"
+    response=$(curl -s -w "\n%{http_code}" -X POST -H "Content-Type: application/json" \
+        -d "{\"username\": \"$username\", \"password\": \"$password\"}" \
+        "${SERVER_URL}/api/auth/login")
+    
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | head -n-1)
+    
+    if [[ "$http_code" == "401" ]]; then
+        echo -e "${RED}Login failed for $username: Invalid credentials (HTTP 401)${NC}"
+        return 1
+    elif [[ "$http_code" != "200" ]]; then
+        echo -e "${RED}Login failed for $username (HTTP $http_code): $body${NC}"
+        return 1
+    fi
+    
+    # Validate JSON response before parsing
+    if ! echo "$body" | jq empty 2>/dev/null; then
+        echo -e "${RED}Invalid JSON response from server: $body${NC}"
+        return 1
+    fi
+    
+    accessToken=$(echo "$body" | jq -r .accessToken)
+    refreshToken=$(echo "$body" | jq -r .refreshToken)
+    
+    if [[ "$accessToken" != "null" && "$accessToken" != "" ]]; then
+        echo -e "${GREEN}Login successful for $username${NC}"
+        echo -e "${BLUE}Access token: ${accessToken:0:20}...${NC}"
+        echo -e "${BLUE}Refresh token: ${refreshToken:0:20}...${NC}"
+    else
+        echo -e "${RED}Login failed for $username: Missing tokens in response${NC}"
+        return 1
+    fi
+    echo
+}
+
+login_or_register() {
+    # Generate a random user for this session
+    local user_id=$((RANDOM % 1000))
+    local username="user$user_id"
+    local password="password123"
+    local email="user$user_id@example.com"
+    
+    # 50% chance to register first, then login
+    if [[ $((RANDOM % 2)) == 0 ]]; then
+        echo -e "${BLUE}Flow: Register then login${NC}"
+        if ! register "$username" "$password" "$email"; then
+            # Registration failed (user exists), fall back to login
+            login "$username" "$password"
+        fi
+    else
+        echo -e "${BLUE}Flow: Direct login with existing user${NC}"
+        # Use one of the predefined users
+        local existing_users=("demo" "admin" "testuser")
+        local existing_passwords=("password" "password123" "password123")
+        local idx=$((RANDOM % ${#existing_users[@]}))
+        login "${existing_users[$idx]}" "${existing_passwords[$idx]}"
+    fi
+}
+
+validate_token() {
+    echo -e "${YELLOW}Validating token...${NC}"
+    response=$(curl -s -w "\n%{http_code}" -X POST -H "Content-Type: application/json" \
+        -H "Authorization: Bearer ${accessToken}" \
+        -d "{\"token\": \"${accessToken}\"}" \
+        "${SERVER_URL}/api/auth/validate")
+    
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | head -n-1)
+    
+    if [[ "$http_code" == "401" ]]; then
+        echo -e "${RED}Token validation failed: Unauthorized (HTTP 401) - Token may be expired or invalid${NC}"
+        return 1
+    elif [[ "$http_code" != "200" ]]; then
+        echo -e "${RED}Token validation failed (HTTP $http_code): $body${NC}"
+        return 1
+    fi
+    
+    # Validate JSON response before parsing
+    if ! echo "$body" | jq empty 2>/dev/null; then
+        echo -e "${RED}Invalid JSON response from server: $body${NC}"
+        return 1
+    fi
+    
+    valid=$(echo "$body" | jq -r .valid)
+    username=$(echo "$body" | jq -r .username)
+    
+    if [[ "$valid" == "true" ]]; then
+        echo -e "${GREEN}Token is valid for user: $username${NC}"
+    else
+        echo -e "${RED}Token validation failed: $body${NC}"
+        return 1
+    fi
+    echo
+}
+
+refresh_token() {
+    echo -e "${YELLOW}Refreshing token...${NC}"
+    response=$(curl -s -w "\n%{http_code}" -X POST -H "Content-Type: application/json" \
+        -d "{\"refreshToken\": \"${refreshToken}\"}" \
+        "${SERVER_URL}/api/auth/refresh")
+    
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | head -n-1)
+    
+    if [[ "$http_code" == "401" ]]; then
+        echo -e "${RED}Token refresh failed: Unauthorized (HTTP 401) - Refresh token may be expired${NC}"
+        echo -e "${YELLOW}Re-authenticating...${NC}"
+        login_or_register
+        return $?
+    elif [[ "$http_code" != "200" ]]; then
+        echo -e "${RED}Token refresh failed (HTTP $http_code): $body${NC}"
+        echo -e "${YELLOW}Re-authenticating...${NC}"
+        login_or_register
+        return $?
+    fi
+    
+    # Validate JSON response before parsing
+    if ! echo "$body" | jq empty 2>/dev/null; then
+        echo -e "${RED}Invalid JSON response from server: $body${NC}"
+        echo -e "${YELLOW}Re-authenticating...${NC}"
+        login_or_register
+        return $?
+    fi
+    
+    newAccessToken=$(echo "$body" | jq -r .accessToken)
+    newRefreshToken=$(echo "$body" | jq -r .refreshToken)
+    
+    if [[ "$newAccessToken" != "null" && "$newAccessToken" != "" ]]; then
+        echo -e "${GREEN}Token refreshed successfully${NC}"
+        echo -e "${BLUE}New access token: ${newAccessToken:0:20}...${NC}"
+        echo -e "${BLUE}New refresh token: ${newRefreshToken:0:20}...${NC}"
+        accessToken=$newAccessToken
+        refreshToken=$newRefreshToken
+    else
+        echo -e "${RED}Token refresh failed: Missing tokens in response${NC}"
+        echo -e "${YELLOW}Re-authenticating...${NC}"
+        login_or_register
+        return $?
+    fi
+    echo
+}
+
+test_protected_endpoint() {
+    echo -e "${YELLOW}Testing protected endpoint...${NC}"
+    response=$(curl -s -w "\n%{http_code}" -X GET \
+        -H "Authorization: Bearer ${accessToken}" \
+        "${SERVER_URL}/api/auth/user")
+    
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | head -n-1)
+    
+    if [[ "$http_code" == "200" ]]; then
+        echo -e "${GREEN}Protected endpoint access successful${NC}"
+        echo -e "${BLUE}User data: $body${NC}"
+    else
+        echo -e "${RED}Protected endpoint access failed (HTTP $http_code): $body${NC}"
+    fi
+    echo
+}
+
+random_sleep() {
+    sleep_time=$((1 + RANDOM % 3))
+    echo -e "${BLUE}Sleeping for $sleep_time seconds...${NC}"
+    sleep $sleep_time
+    echo
+}
+
+# Alternative users for variety
+login_random_user() {
+    echo -e "${BLUE}Re-authenticating with different user...${NC}"
+    login_or_register
+}
+
+# Main loop
+echo -e "${GREEN}Starting Java Auth Client...${NC}"
+echo "=================================="
+echo
+
+# Initial login or registration
+login_or_register
+
+i=0
+while true; do
+    echo -e "${YELLOW}=== Iteration $((i+1)) ===${NC}"
+    
+    # Validate token every iteration
+    validate_token
+    random_sleep
+    
+    # Test protected endpoint
+    test_protected_endpoint
+    random_sleep
+    
+    # Refresh token every 5 iterations
+    if [[ $((i % 5)) == 4 ]]; then
+        refresh_token
+        random_sleep
+    fi
+    
+    # Re-login with random user every 10 iterations
+    if [[ $((i % 10)) == 9 ]]; then
+        login_random_user
+        random_sleep
+    fi
+    
+    i=$((i+1))
+    
+    # Add a separator for readability
+    echo "=================================="
+    echo
+done

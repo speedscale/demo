@@ -33,7 +33,7 @@ public class AuditServiceImpl implements AuditService {
                     .eventStatus(eventStatus)
                     .ipAddress(getClientIp(request))
                     .userAgent(request.getHeader("User-Agent"))
-                    .details(details)
+                    .eventDetails(details)
                     .build();
             
             auditLogRepository.save(auditLog);

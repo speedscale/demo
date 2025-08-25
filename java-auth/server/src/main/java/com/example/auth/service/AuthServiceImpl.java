@@ -54,7 +54,8 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));
         user.setEnabled(true);
         
-        User savedUser = userRepository.save(user);
+        userRepository.save(user);
+        User savedUser = user;
         log.info("User registered successfully: {}", savedUser.getUsername());
         
         return savedUser;

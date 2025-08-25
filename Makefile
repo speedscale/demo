@@ -39,6 +39,7 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' 's|gcr.io/speedscale-demos/node-server:[v]*[0-9.]*|gcr.io/speedscale-demos/node-server:v$(VERSION)|g' node/manifest.yaml
 	@echo "Updating Maven pom.xml files..."
 	@sed -i '' '/<artifactId>auth<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/server/pom.xml
+	@sed -i '' '/<artifactId>auth-client<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/client/pom.xml
 	@sed -i '' '/<artifactId>server<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java/server/pom.xml
 	@sed -i '' '/<artifactId>jwt-generator<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/scripts/pom.xml
 	@echo "Updating Node package.json..."
@@ -72,6 +73,12 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 		echo "  ✅ java-auth/server/pom.xml: $$VERSION_IN_AUTH"; \
 	else \
 		echo "  ❌ java-auth/server/pom.xml: $$VERSION_IN_AUTH (expected $$VERSION_FILE)"; \
+	fi; \
+	VERSION_IN_CLIENT=$$(grep -A1 '<artifactId>auth-client</artifactId>' java-auth/client/pom.xml | grep '<version>' | sed 's/.*<version>//g' | sed 's/<\/version>.*//g' | xargs); \
+	if [ "$$VERSION_IN_CLIENT" = "$$VERSION_FILE" ]; then \
+		echo "  ✅ java-auth/client/pom.xml: $$VERSION_IN_CLIENT"; \
+	else \
+		echo "  ❌ java-auth/client/pom.xml: $$VERSION_IN_CLIENT (expected $$VERSION_FILE)"; \
 	fi; \
 	VERSION_IN_SERVER=$$(grep -A1 '<artifactId>server</artifactId>' java/server/pom.xml | grep '<version>' | sed 's/.*<version>//g' | sed 's/<\/version>.*//g' | xargs); \
 	if [ "$$VERSION_IN_SERVER" = "$$VERSION_FILE" ]; then \

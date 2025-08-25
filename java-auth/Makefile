@@ -8,13 +8,13 @@ help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\\033[36m%-15s\\033[0m %s\\n", $$1, $$2}'
 
 build: ## Build the application
-	cd ../server && mvn clean package -DskipTests
+	cd server && mvn clean package -DskipTests
 
 test: ## Run tests
-	cd ../server && mvn test
+	cd server && mvn test
 
 run: ## Run locally (needs MySQL)
-	cd ../server && mvn spring-boot:run
+	cd server && mvn spring-boot:run
 
 up: ## Start with Docker Compose
 	docker-compose up -d
@@ -23,12 +23,12 @@ down: ## Stop containers
 	docker-compose down
 
 client: ## Run test client
-	../client/client
+	./client/client
 
 docker-build: ## Build Docker images
-	docker build -t java-auth:$(VERSION) ../server
-	docker build -t java-auth-client:$(VERSION) ../client
+	docker build -t java-auth:$(VERSION) ./server
+	docker build -t java-auth-client:$(VERSION) ./client
 
 docker-multi: ## Build and push multi-arch images
-	docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${REGISTRY} -f ../server/Dockerfile ../server
-	docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${CLIENT_REGISTRY} -f ../client/Dockerfile ../client
+	docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${REGISTRY} -f ./server/Dockerfile ./server
+	docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${CLIENT_REGISTRY} -f ./client/Dockerfile ./client

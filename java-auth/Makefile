@@ -30,5 +30,5 @@ docker-build: ## Build Docker images
 	docker build -t java-auth-client:$(VERSION) ./client
 
 docker-multi: ## Build and push multi-arch images
-	docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${REGISTRY} ./server
-	docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${CLIENT_REGISTRY} ./client
+	docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${REGISTRY} -f ./server/Dockerfile ./server
+	docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${CLIENT_REGISTRY} -f ./client/Dockerfile ./client

@@ -56,8 +56,8 @@ make k8s-undeploy    # Remove from Kubernetes
 
 ## 🐳 Container Images
 
-- **Server**: `gcr.io/speedscale-demos/java-auth:1.0.10`
-- **Client**: `gcr.io/speedscale-demos/java-auth:1.0.10`
+- **Server**: `gcr.io/speedscale-demos/java-auth:1.0.11`
+- **Client**: `gcr.io/speedscale-demos/java-auth:1.0.11`
 
 ## ✅ Completed Tasks
 

@@ -54,3 +54,47 @@ make release VERSION=2.0.0
 ### Manual Version File
 
 You can also manually edit the `VERSION` file and run `make update-version VERSION=$(cat VERSION)` to sync all files.
+
+## Project Structure and Makefiles
+
+Each project directory contains its own `Makefile` for local development convenience:
+
+- **`java/Makefile`** - Java service development commands
+- **`java-auth/Makefile`** - Java Auth service development commands  
+- **`node/Makefile`** - Node service development commands
+
+### Root vs Project Makefiles
+
+The **root Makefile** provides centralized commands that delegate to project Makefiles:
+
+```bash
+# Root commands (work from repository root)
+make docker-java-auth      # Builds java-auth Docker images
+make build-java-auth       # Builds java-auth application  
+make test-java-auth        # Runs java-auth tests
+
+# Project commands (work from project directory)
+cd java-auth
+make local                 # Run service locally
+make compose              # Run with Docker Compose
+make client               # Run test client
+make kube                 # Deploy to Kubernetes
+```
+
+### Quick Start Pattern
+
+For development, you can work directly in project directories:
+
+```bash
+cd java-auth
+make help                 # See all available commands
+make local               # Start the service locally
+make client             # Test with client
+```
+
+Or use root commands for CI/automation:
+
+```bash
+make build-java-auth     # Build from root
+make docker-java-auth    # Build and push images from root
+```

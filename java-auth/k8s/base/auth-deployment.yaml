@@ -7,7 +7,7 @@ metadata:
     app: java-auth
     version: v1
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: java-auth
@@ -23,7 +23,7 @@ spec:
         command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;']
       containers:
       - name: java-auth
-        image: gcr.io/speedscale-demos/java-auth:1.0.9
+        image: gcr.io/speedscale-demos/java-auth:1.0.10
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

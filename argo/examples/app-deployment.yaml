@@ -1,0 +1,31 @@
+# Example: k8s/base/deployment.yaml
+# Copy this to your app repo and customize
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: your-app-name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: your-app-name
+  template:
+    metadata:
+      labels:
+        app: your-app-name
+    spec:
+      containers:
+      - name: your-app-name
+        image: your-app-name:latest  # Update this!
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"

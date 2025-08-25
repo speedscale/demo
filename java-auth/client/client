@@ -14,24 +14,75 @@ BLUE='\033[0;34m'
 YELLOW='\033[0;33m'
 NC='\033[0m'
 
-login() {
-    echo -e "${RED}Logging in...${NC}"
+register() {
+    local username="$1"
+    local password="$2"
+    local email="$3"
+    
+    echo -e "${YELLOW}Registering user: $username${NC}"
     response=$(curl -s -X POST -H "Content-Type: application/json" \
-        -d '{"username": "demo", "password": "password"}' \
+        -d "{\"username\": \"$username\", \"password\": \"$password\", \"email\": \"$email\"}" \
+        "${SERVER_URL}/api/auth/register")
+    
+    accessToken=$(echo "$response" | jq -r .accessToken)
+    refreshToken=$(echo "$response" | jq -r .refreshToken)
+    
+    if [[ "$accessToken" != "null" ]]; then
+        echo -e "${GREEN}Registration successful for $username${NC}"
+        echo -e "${BLUE}Access token: ${accessToken:0:20}...${NC}"
+        echo -e "${BLUE}Refresh token: ${refreshToken:0:20}...${NC}"
+    else
+        echo -e "${YELLOW}Registration failed for $username (might already exist), trying login: $response${NC}"
+        return 1
+    fi
+    echo
+}
+
+login() {
+    local username="$1"
+    local password="$2"
+    
+    echo -e "${RED}Logging in as $username...${NC}"
+    response=$(curl -s -X POST -H "Content-Type: application/json" \
+        -d "{\"username\": \"$username\", \"password\": \"$password\"}" \
         "${SERVER_URL}/api/auth/login")
     
     accessToken=$(echo "$response" | jq -r .accessToken)
     refreshToken=$(echo "$response" | jq -r .refreshToken)
     
     if [[ "$accessToken" != "null" ]]; then
-        echo -e "${GREEN}Login successful${NC}"
+        echo -e "${GREEN}Login successful for $username${NC}"
         echo -e "${BLUE}Access token: ${accessToken:0:20}...${NC}"
         echo -e "${BLUE}Refresh token: ${refreshToken:0:20}...${NC}"
     else
-        echo -e "${RED}Login failed: $response${NC}"
+        echo -e "${RED}Login failed for $username: $response${NC}"
         exit 1
     fi
     echo
+}
+
+login_or_register() {
+    # Generate a random user for this session
+    local user_id=$((RANDOM % 1000))
+    local username="user$user_id"
+    local password="password123"
+    local email="user$user_id@example.com"
+    
+    # 50% chance to register first, then login
+    if [[ $((RANDOM % 2)) == 0 ]]; then
+        echo -e "${BLUE}Flow: Register then login${NC}"
+        if ! register "$username" "$password" "$email"; then
+            # Registration failed (user exists), fall back to login
+            login "$username" "$password"
+        fi
+    else
+        echo -e "${BLUE}Flow: Direct login with existing user${NC}"
+        # Use one of the predefined users
+        local existing_users=("demo" "admin" "testuser")
+        local existing_passwords=("password" "password123" "password123")
+        local idx=$((RANDOM % ${#existing_users[@]}))
+        login "${existing_users[$idx]}" "${existing_passwords[$idx]}"
+    fi
 }
 
 validate_token() {
@@ -103,25 +154,8 @@ random_sleep() {
 
 # Alternative users for variety
 login_random_user() {
-    users=("demo" "admin" "testuser")
-    passwords=("password" "adminpass" "testpass")
-    idx=$((RANDOM % ${#users[@]}))
-    
-    echo -e "${RED}Logging in as ${users[$idx]}...${NC}"
-    response=$(curl -s -X POST -H "Content-Type: application/json" \
-        -d "{\"username\": \"${users[$idx]}\", \"password\": \"${passwords[$idx]}\"}" \
-        "${SERVER_URL}/api/auth/login")
-    
-    accessToken=$(echo "$response" | jq -r .accessToken)
-    refreshToken=$(echo "$response" | jq -r .refreshToken)
-    
-    if [[ "$accessToken" != "null" ]]; then
-        echo -e "${GREEN}Login successful as ${users[$idx]}${NC}"
-    else
-        echo -e "${YELLOW}Login failed for ${users[$idx]}, using default user${NC}"
-        login
-    fi
-    echo
+    echo -e "${BLUE}Re-authenticating with different user...${NC}"
+    login_or_register
 }
 
 # Main loop
@@ -129,8 +163,8 @@ echo -e "${GREEN}Starting Java Auth Client...${NC}"
 echo "=================================="
 echo
 
-# Initial login
-login
+# Initial login or registration
+login_or_register
 
 i=0
 while true; do

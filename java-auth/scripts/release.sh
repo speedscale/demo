@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# DEPRECATED: This script is obsolete. Use the root Makefile's version management instead:
+#   cd ../.. && make bump-version
+#   cd ../.. && make update-version VERSION=x.y.z
+#
 # Release script for java-auth
 set -e
 
@@ -10,21 +14,21 @@ if [ -z "$1" ]; then
 fi
 
 VERSION=$1
-CURRENT_VERSION=$(cat VERSION 2>/dev/null || echo "1.0.0")
+CURRENT_VERSION=$(cat ../../VERSION 2>/dev/null || echo "1.0.0")
 
 echo "Current version: $CURRENT_VERSION"
 echo "New version: $VERSION"
 echo
 
-# Update VERSION file
-echo "$VERSION" > VERSION
+# Update VERSION file (DEPRECATED - managed by root Makefile)
+# echo "$VERSION" > VERSION
 
 # Update pom.xml - only update the project version, not dependencies
 sed -i.bak "0,/<version>.*<\/version>/s//<version>$VERSION<\/version>/" server/pom.xml
 rm server/pom.xml.bak
 
-# Update client VERSION if needed
-echo "$VERSION" > client/VERSION
+# Update client VERSION if needed (DEPRECATED - managed by root Makefile)
+# echo "$VERSION" > client/VERSION
 
 # Update documentation
 sed -i.bak "s/java-auth:.*\`/java-auth:$VERSION\`/g" IMPLEMENTATION_TASKS.md

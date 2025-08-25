@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: spd-demo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/speedscale/demo
+    targetRevision: HEAD
+    path: java-auth/k8s/base
+    kustomize:
+      namespace: spd-demo-auth
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: spd-demo-auth
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

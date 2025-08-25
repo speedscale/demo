@@ -5,6 +5,7 @@ import com.example.auth.model.User;
 import com.example.auth.service.AuditService;
 import com.example.auth.service.AuthService;
 import com.example.auth.service.TokenService;
+import org.springframework.security.core.Authentication;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -100,6 +101,52 @@ public class AuthController {
             log.error("Token refresh failed", e);
             throw e;
         }
+    }
+    
+    @PostMapping("/register")
+    @Operation(summary = "User registration", description = "Register a new user account")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "User registered successfully"),
+        @ApiResponse(responseCode = "400", description = "Bad request"),
+        @ApiResponse(responseCode = "409", description = "Username or email already exists")
+    })
+    public ResponseEntity<LoginResponse> register(
+            @Valid @RequestBody RegisterRequest registerRequest,
+            HttpServletRequest request) {
+        
+        log.info("Registration attempt for user: {}", registerRequest.getUsername());
+        
+        try {
+            User user = authService.register(registerRequest);
+            LoginResponse response = tokenService.createTokens(user);
+            
+            log.info("Registration successful for user: {}", user.getUsername());
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            log.error("Registration failed for user: {}", registerRequest.getUsername(), e);
+            throw e;
+        }
+    }
+    
+    @GetMapping("/user")
+    @Operation(summary = "Get current user", description = "Get current authenticated user information")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User information retrieved"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
+        log.debug("Getting user info for: {}", authentication.getName());
+        
+        User user = authService.findByUsername(authentication.getName());
+        
+        UserResponse response = new UserResponse();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setEmail(user.getEmail());
+        response.setEnabled(user.getEnabled());
+        
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/health")

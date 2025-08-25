@@ -1,5 +1,6 @@
 package com.example.auth.controller;
 
+import com.example.auth.config.TestSecurityConfig;
 import com.example.auth.dto.LoginRequest;
 import com.example.auth.dto.LoginResponse;
 import com.example.auth.model.User;
@@ -17,7 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import com.example.auth.security.SecurityConfig;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -26,8 +26,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = AuthController.class)
-@Import(SecurityConfig.class)
+@WebMvcTest(controllers = AuthController.class, 
+    excludeFilters = @org.springframework.context.annotation.ComponentScan.Filter(
+        type = org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE,
+        classes = {com.example.auth.security.JwtAuthenticationFilter.class}
+    )
+)
+@Import(TestSecurityConfig.class)
 @ActiveProfiles("test")
 class AuthControllerTest {
 
@@ -45,6 +50,9 @@ class AuthControllerTest {
 
     @MockBean
     private AuditService auditService;
+    
+    @MockBean
+    private com.example.auth.security.JwtTokenProvider jwtTokenProvider;
 
     private User testUser;
     private LoginRequest loginRequest;

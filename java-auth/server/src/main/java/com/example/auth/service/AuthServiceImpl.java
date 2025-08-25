@@ -1,6 +1,7 @@
 package com.example.auth.service;
 
 import com.example.auth.dto.LoginRequest;
+import com.example.auth.dto.RegisterRequest;
 import com.example.auth.exception.BadCredentialsException;
 import com.example.auth.exception.UserNotFoundException;
 import com.example.auth.model.User;
@@ -33,6 +34,30 @@ public class AuthServiceImpl implements AuthService {
         validateUserCredentials(loginRequest.getUsername(), loginRequest.getPassword());
         
         return user;
+    }
+    
+    @Override
+    public User register(RegisterRequest registerRequest) {
+        log.debug("Registering new user: {}", registerRequest.getUsername());
+        
+        if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
+        
+        if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
+        
+        User user = new User();
+        user.setUsername(registerRequest.getUsername());
+        user.setEmail(registerRequest.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setEnabled(true);
+        
+        User savedUser = userRepository.save(user);
+        log.info("User registered successfully: {}", savedUser.getUsername());
+        
+        return savedUser;
     }
     
     @Override

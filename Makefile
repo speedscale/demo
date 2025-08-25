@@ -33,8 +33,8 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@echo "Updating to version $(VERSION)..."
 	@echo "$(VERSION)" > VERSION
 	@echo "Updating Kubernetes manifests..."
-	@sed -i '' 's|gcr.io/speedscale-demos/java-auth:v[0-9.]*|gcr.io/speedscale-demos/java-auth:v$(VERSION)|g' java-auth/k8s/base/auth-deployment.yaml
-	@sed -i '' 's|gcr.io/speedscale-demos/java-auth-client:v[0-9.]*|gcr.io/speedscale-demos/java-auth-client:v$(VERSION)|g' java-auth/k8s/base/auth-client-deployment.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/java-auth:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth:$(VERSION)|g' java-auth/k8s/base/auth-deployment.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/java-auth-client:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth-client:$(VERSION)|g' java-auth/k8s/base/auth-client-deployment.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/java-server:[v]*[0-9.]*|gcr.io/speedscale-demos/java-server:v$(VERSION)|g' java/manifest.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/node-server:[v]*[0-9.]*|gcr.io/speedscale-demos/node-server:v$(VERSION)|g' node/manifest.yaml
 	@echo "Updating Maven pom.xml files..."
@@ -44,8 +44,8 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@echo "Updating Node package.json..."
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node/package.json
 	@echo "Updating documentation..."
-	@sed -i '' 's|gcr.io/speedscale-demos/java-auth[^:]*:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth:v$(VERSION)|g' java-auth/IMPLEMENTATION_TASKS.md
-	@sed -i '' 's|gcr.io/speedscale-demos/java-auth-client[^:]*:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth-client:v$(VERSION)|g' java-auth/IMPLEMENTATION_TASKS.md
+	@sed -i '' 's|gcr.io/speedscale-demos/java-auth[^:]*:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth:$(VERSION)|g' java-auth/IMPLEMENTATION_TASKS.md
+	@sed -i '' 's|gcr.io/speedscale-demos/java-auth-client[^:]*:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth-client:$(VERSION)|g' java-auth/IMPLEMENTATION_TASKS.md
 	@echo ""
 	@echo "✅ Version $(VERSION) updated across all files!"
 	@echo ""
@@ -57,12 +57,12 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 	echo "Expected version: $$VERSION_FILE"; \
 	echo ""; \
 	echo "Checking Kubernetes manifests:"; \
-	grep -n "image:.*gcr.io/speedscale-demos/.*:v" java-auth/k8s/base/auth-deployment.yaml java-auth/k8s/base/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml | \
+	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-deployment.yaml java-auth/k8s/base/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml | \
 	while read line; do \
-		if echo "$$line" | grep -q ":v$$VERSION_FILE"; then \
+		if echo "$$line" | grep -q ":$$VERSION_FILE" || echo "$$line" | grep -q ":v$$VERSION_FILE"; then \
 			echo "  ✅ $$line"; \
 		else \
-			echo "  ❌ $$line (expected v$$VERSION_FILE)"; \
+			echo "  ❌ $$line (expected $$VERSION_FILE or v$$VERSION_FILE)"; \
 		fi; \
 	done; \
 	echo ""; \

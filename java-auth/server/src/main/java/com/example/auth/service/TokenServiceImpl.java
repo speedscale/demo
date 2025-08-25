@@ -58,14 +58,14 @@ public class TokenServiceImpl implements TokenService {
                 .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
         
         if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(refreshToken);
+            refreshTokenRepository.deleteById(refreshToken.getId());
             throw new InvalidTokenException("Refresh token has expired");
         }
         
         User user = refreshToken.getUser();
         String newAccessToken = jwtTokenProvider.generateToken(user.getUsername());
         
-        refreshTokenRepository.delete(refreshToken);
+        refreshTokenRepository.deleteById(refreshToken.getId());
         RefreshToken newRefreshToken = createRefreshToken(user);
         
         return TokenRefreshResponse.builder()
@@ -113,6 +113,7 @@ public class TokenServiceImpl implements TokenService {
         refreshToken.setUser(user);
         refreshToken.setExpiresAt(LocalDateTime.now().plusSeconds(refreshTokenExpiration / 1000));
         
-        return refreshTokenRepository.save(refreshToken);
+        refreshTokenRepository.save(refreshToken);
+        return refreshToken;
     }
 }

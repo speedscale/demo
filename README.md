@@ -1,6 +1,38 @@
 # Speedscale Demos
 
-This repo contains different self contained demo apps in each subdirectory.
+This repository contains various self-contained demo applications that showcase different programming languages, frameworks, and deployment patterns. Each demo is designed to work with Speedscale's traffic recording, mocking, and replay capabilities.
+
+## Demo Projects
+
+### [Java](java/)
+A Spring Boot application that integrates with external APIs (SpaceX and US Treasury). Features JWT authentication, health checks, and comprehensive API endpoints for testing traffic capture and replay scenarios.
+
+### [Java Auth](java-auth/)
+A complete JWT-based authentication microservice built with Spring Boot and MySQL. Includes user registration, login, token validation, refresh tokens, and audit logging. Perfect for demonstrating secure API interactions and database traffic patterns.
+
+### [Node.js](node/)
+A Node.js Express application with multiple endpoints that call external APIs including GitHub, SpaceX, NASA, and httpbin. Includes comprehensive documentation for local, Docker, and Kubernetes deployment scenarios.
+
+### [Go](go/)
+An IP distance calculator service that uses the ipstack API to determine geographical distances between IP addresses. Demonstrates API integration patterns and mathematical calculations in Go.
+
+### [Python](python/)
+A Flask application that proxies SpaceX API data, providing a simple example of Python-based API integration suitable for traffic capture and replay testing.
+
+### [Node API](node-api/)
+A Node.js/Express IP distance API similar to the Go version, featuring ipstack integration, haversine distance calculations, and optional DynamoDB caching with AWS SDK v3.
+
+### [C#/.NET](csharp/)
+A .NET weather service API that demonstrates C# web application patterns and external service integration capabilities.
+
+### [NGINX](nginx/)
+A Kubernetes-based demo featuring multiple nginx services (gateway, payment, user) that simulate a microservices architecture. Perfect for demonstrating service mesh traffic patterns.
+
+### [ArgoCD](argo/)
+A GitOps deployment solution using ArgoCD for multi-cluster Kubernetes deployments. Shows how to manage application deployments across different cluster environments.
+
+### [AWS Services](aws/)
+Contains AWS-specific demos including DynamoDB integration examples, demonstrating cloud service integration patterns.
 
 ## Version Management
 

@@ -16,9 +16,13 @@ spec:
         app: java-auth-client
         version: v1
     spec:
+      initContainers:
+      - name: wait-for-java-auth
+        image: busybox:1.35
+        command: ['sh', '-c', 'until wget -q --spider http://java-auth-service:80/actuator/health/readiness; do echo waiting for java-auth service; sleep 5; done;']
       containers:
       - name: java-auth-client
-        image: gcr.io/speedscale-demos/java-auth-client:1.0.9
+        image: gcr.io/speedscale-demos/java-auth-client:1.0.10
         imagePullPolicy: Always
         env:
         - name: SERVER_URL

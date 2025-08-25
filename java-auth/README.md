@@ -59,12 +59,32 @@ export JWT_SECRET=your-secret-key-here
 3. Build and run:
 ```bash
 mvn clean package
-java -jar target/auth-0.0.1-SNAPSHOT.jar
+java -jar target/auth-*.jar
 ```
 
 ## API Endpoints
 
 ### Authentication
+
+#### Register
+- **POST** `/api/auth/register`
+- Request:
+```json
+{
+  "username": "newuser",
+  "email": "newuser@example.com",
+  "password": "password123"
+}
+```
+- Response:
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzUxMi...",
+  "refreshToken": "550e8400-e29b-41d4-a716-446655440000",
+  "tokenType": "Bearer",
+  "expiresIn": 3600
+}
+```
 
 #### Login
 - **POST** `/api/auth/login`
@@ -120,14 +140,28 @@ java -jar target/auth-0.0.1-SNAPSHOT.jar
 }
 ```
 
+#### Get Current User (Protected)
+- **GET** `/api/auth/user`
+- Headers: `Authorization: Bearer <accessToken>`
+- Response:
+```json
+{
+  "id": 1,
+  "username": "testuser",
+  "email": "testuser@example.com",
+  "enabled": true
+}
+```
+
 ## Test Users
 
-The following test users are created by default (password: `password123`):
-- `admin` - Administrator account
-- `testuser` - Regular user
-- `johndoe` - Regular user
-- `janedoe` - Regular user
-- `disableduser` - Disabled account
+The following test users are created by default:
+- `demo` - Demo account (password: `password`)
+- `admin` - Administrator account (password: `password123`)
+- `testuser` - Regular user (password: `password123`)
+- `johndoe` - Regular user (password: `password123`)
+- `janedoe` - Regular user (password: `password123`)
+- `disableduser` - Disabled account (password: `password123`)
 
 ## API Documentation
 
@@ -222,10 +256,31 @@ make health        # Check application health
 make api-docs      # Instructions to open API documentation
 ```
 
+#### Client Testing
+```bash
+make client              # Run auth client
+make client-docker-build # Build client Docker image
+make client-docker-run   # Run client in Docker
+```
+
+#### Kubernetes Deployment
+```bash
+make k8s-deploy          # Deploy to Kubernetes
+make k8s-status          # Check deployment status
+make k8s-logs            # Show application logs
+make k8s-port-forward    # Port forward service to localhost:8080
+make k8s-undeploy        # Remove from Kubernetes
+```
+
 #### Utilities
 ```bash
-make version       # Show current version
 make env-example   # Create .env.example file
+```
+
+Note: For version management, use the root Makefile:
+```bash
+cd ../.. && make version      # Show current version
+cd ../.. && make bump-version # Bump to next patch version
 ```
 
 ### Manual Commands

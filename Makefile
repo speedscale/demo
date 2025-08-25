@@ -44,9 +44,6 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' '/<artifactId>jwt-generator<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/scripts/pom.xml
 	@echo "Updating Node package.json..."
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node/package.json
-	@echo "Updating documentation..."
-	@sed -i '' 's|gcr.io/speedscale-demos/java-auth[^:]*:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth:$(VERSION)|g' java-auth/IMPLEMENTATION_TASKS.md
-	@sed -i '' 's|gcr.io/speedscale-demos/java-auth-client[^:]*:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth-client:$(VERSION)|g' java-auth/IMPLEMENTATION_TASKS.md
 	@echo ""
 	@echo "✅ Version $(VERSION) updated across all files!"
 	@echo ""

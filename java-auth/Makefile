@@ -1,8 +1,9 @@
-VERSION?=$(shell cat ../VERSION 2>/dev/null || echo "dev")
+VERSION?=$(shell cat ../VERSION 2>/dev/null || echo "1.0.0")
 REGISTRY?=gcr.io/speedscale-demos/java-auth:${VERSION}
 CLIENT_REGISTRY?=gcr.io/speedscale-demos/java-auth-client:${VERSION}
+NAMESPACE?=default
 
-.PHONY: help build test run up down client docker-build docker-multi
+.PHONY: help build test run up down client local compose kube docker-build docker-multi
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\\033[36m%-15s\\033[0m %s\\n", $$1, $$2}'
@@ -13,8 +14,10 @@ build: ## Build the application
 test: ## Run tests
 	cd server && mvn test
 
-run: ## Run locally (needs MySQL)
+local: ## Run locally (needs MySQL)
 	cd server && mvn spring-boot:run
+
+run: local ## Alias for local
 
 up: ## Start with Docker Compose
 	docker-compose up -d
@@ -22,10 +25,18 @@ up: ## Start with Docker Compose
 down: ## Stop containers
 	docker-compose down
 
+compose: up ## Alias for up
+
 client: ## Run test client
 	./client/client
 
-docker-build: ## Build Docker images
+kube: ## Deploy to Kubernetes
+	kubectl -n ${NAMESPACE} apply -k k8s/base
+
+kube-clean: ## Remove from Kubernetes
+	kubectl -n ${NAMESPACE} delete -k k8s/base
+
+docker-build: ## Build Docker images locally
 	docker build -t java-auth:$(VERSION) ./server
 	docker build -t java-auth-client:$(VERSION) ./client
 

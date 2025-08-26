@@ -8,7 +8,7 @@ RUN mvn clean package -DskipTests
 
 # Runtime stage
 FROM amazoncorretto:20
-RUN yum update -y && yum install -y curl && yum clean all
+RUN yum update -y && yum install -y curl shadow-utils && yum clean all
 RUN groupadd -g 1001 spring && useradd -u 1001 -g spring -m spring
 USER spring:spring
 WORKDIR /app

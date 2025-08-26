@@ -13,26 +13,26 @@ import java.util.Optional;
 @Repository
 public interface AuditLogRepository {
     
-    @Select("SELECT id, user_id, event_type, event_details, ip_address, created_at FROM audit_logs WHERE user_id = #{userId} ORDER BY created_at DESC LIMIT #{limit} OFFSET #{offset}")
+    @Select("SELECT id, user_id, username, event_type, event_status, details as eventDetails, ip_address, user_agent, created_at FROM audit_logs WHERE user_id = #{userId} ORDER BY created_at DESC LIMIT #{limit} OFFSET #{offset}")
     List<AuditLog> findByUserIdPaginated(@Param("userId") Long userId, @Param("offset") int offset, @Param("limit") int limit);
     
-    @Select("SELECT id, user_id, event_type, event_details, ip_address, created_at FROM audit_logs WHERE event_type = #{eventType}")
+    @Select("SELECT id, user_id, username, event_type, event_status, details as eventDetails, ip_address, user_agent, created_at FROM audit_logs WHERE event_type = #{eventType}")
     List<AuditLog> findByEventType(AuditEventType eventType);
     
-    @Select("SELECT id, user_id, event_type, event_details, ip_address, created_at FROM audit_logs WHERE created_at BETWEEN #{startDate} AND #{endDate}")
+    @Select("SELECT id, user_id, username, event_type, event_status, details as eventDetails, ip_address, user_agent, created_at FROM audit_logs WHERE created_at BETWEEN #{startDate} AND #{endDate}")
     List<AuditLog> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
     
-    @Select("SELECT id, user_id, event_type, event_details, ip_address, created_at FROM audit_logs WHERE user_id = #{userId} AND event_type = #{eventType} AND created_at > #{after}")
+    @Select("SELECT id, user_id, username, event_type, event_status, details as eventDetails, ip_address, user_agent, created_at FROM audit_logs WHERE user_id = #{userId} AND event_type = #{eventType} AND created_at > #{after}")
     List<AuditLog> findByUserIdAndEventTypeAndCreatedAtAfter(Long userId, AuditEventType eventType, LocalDateTime after);
     
-    @Insert("INSERT INTO audit_logs (user_id, event_type, event_details, ip_address, created_at) VALUES (#{userId}, #{eventType}, #{eventDetails}, #{ipAddress}, NOW())")
+    @Insert("INSERT INTO audit_logs (user_id, username, event_type, event_status, details, ip_address, user_agent, created_at) VALUES (#{userId}, #{username}, #{eventType}, #{eventStatus}, #{eventDetails, typeHandler=com.example.auth.config.JsonTypeHandler}, #{ipAddress}, #{userAgent}, NOW())")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int save(AuditLog auditLog);
     
-    @Select("SELECT id, user_id, event_type, event_details, ip_address, created_at FROM audit_logs WHERE id = #{id}")
+    @Select("SELECT id, user_id, username, event_type, event_status, details as eventDetails, ip_address, user_agent, created_at FROM audit_logs WHERE id = #{id}")
     Optional<AuditLog> findById(Long id);
     
-    @Select("SELECT id, user_id, event_type, event_details, ip_address, created_at FROM audit_logs")
+    @Select("SELECT id, user_id, username, event_type, event_status, details as eventDetails, ip_address, user_agent, created_at FROM audit_logs")
     List<AuditLog> findAll();
     
     @Delete("DELETE FROM audit_logs WHERE id = #{id}")

@@ -21,7 +21,7 @@ services:
       
   auth-service:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile
     container_name: auth-service
     restart: always

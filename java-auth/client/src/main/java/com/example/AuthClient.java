@@ -33,7 +33,7 @@ public class AuthClient {
         }
     }
     
-    public void run() throws InterruptedException {
+    public void run() throws InterruptedException, IOException {
         try {
             // Initial login
             login();

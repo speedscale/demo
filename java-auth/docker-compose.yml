@@ -47,7 +47,7 @@ services:
     container_name: auth-client
     restart: always
     environment:
-      SERVER_URL: auth-service:8080
+      SERVER_URL: http://auth-service:8080
     depends_on:
       - auth-service
         

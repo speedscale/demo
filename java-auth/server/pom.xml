@@ -92,6 +92,13 @@
             <version>2.5.0</version>
         </dependency>
 
+        <!-- Janino for Logback conditional processing -->
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <version>3.1.11</version>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

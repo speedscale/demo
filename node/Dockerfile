@@ -1,42 +1,39 @@
+# syntax=docker/dockerfile:1.7
 ################################################################################
 # BUILDER IMAGE
 ################################################################################
+FROM node:20-buster-slim AS build
 
-FROM node:20-buster-slim
+# Keep npm from reading any baked-in .npmrc in the image
+ENV NPM_CONFIG_USERCONFIG=/tmp/empty-npmrc
 
-ARG VERSION
+# Workdir
+WORKDIR /app
 
-# ------------------------------------------------------------------------------
-# Define and create working directory
-# ------------------------------------------------------------------------------
+# Install deps with only the manifests for better caching
+COPY package*.json ./
 
-ENV APP_HOME=/app
-RUN mkdir -p ${APP_HOME}
-WORKDIR ${APP_HOME}
+# Make sure we talk to the public registry (and nothing else)
+RUN npm config set registry https://registry.npmjs.org/ \
+ && npm config delete '//npm.pkg.github.com/:_authToken' || true \
+ && npm config list \
+ && npm ci --no-audit --fund=false
 
-# ------------------------------------------------------------------------------
-# Copy source code
-# ------------------------------------------------------------------------------
-
+# Now copy the rest of the app
 COPY . .
 
-# ------------------------------------------------------------------------------
-# Build
-# ------------------------------------------------------------------------------
-
-RUN npm install
-
-# non root - a non-root user with read-only fs
-# ARG APP_USER=1001
-
-WORKDIR ${APP_HOME}
+# Build step (optional if your app needs it)
+# RUN npm run build
 
 # ------------------------------------------------------------------------------
-# Define user, exposed ports, additional env vars, entrypoint and cmd
+# RUNTIME STAGE (optional; keeps image small)
 # ------------------------------------------------------------------------------
+FROM node:20-buster-slim
 
-# USER ${APP_USER}
+WORKDIR /app
+
+# Copy node_modules and source from build stage
+COPY --from=build /app /app
 
 EXPOSE 3000
-
 CMD ["npm", "start"]

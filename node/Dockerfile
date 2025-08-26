@@ -2,7 +2,7 @@
 # BUILDER IMAGE
 ################################################################################
 
-FROM node:18-buster-slim
+FROM node:20-buster-slim
 
 ARG VERSION
 

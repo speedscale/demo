@@ -14,7 +14,7 @@
     "global-agent": "^3.0.0",
     "got": "^13.0.0",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.1"
   },
   "type": "module"
 }

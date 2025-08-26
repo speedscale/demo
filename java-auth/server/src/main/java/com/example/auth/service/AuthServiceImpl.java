@@ -8,7 +8,6 @@ import com.example.auth.model.User;
 import com.example.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthServiceImpl implements AuthService {
     
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     
     @Override
     public User authenticate(LoginRequest loginRequest) {
@@ -51,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setPasswordHash(registerRequest.getPassword());
         user.setEnabled(true);
         
         userRepository.save(user);
@@ -77,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
     public void validateUserCredentials(String username, String password) {
         User user = findByUsername(username);
         
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+        if (!password.equals(user.getPasswordHash())) {
             log.warn("Invalid password attempt for user: {}", username);
             throw new BadCredentialsException("Invalid username or password");
         }

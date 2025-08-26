@@ -7,7 +7,7 @@
     
     <groupId>com.example.auth.scripts</groupId>
     <artifactId>jwt-generator</artifactId>
-    <version>1.1.4</version>
+    <version>1.1.6</version>
     <packaging>jar</packaging>
     
     <properties>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+    
+    <!-- Define a filter to exclude health check endpoints -->
+    <appender name="CONSOLE_FILTERED" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>HEALTH_CHECK</marker>
+            </evaluator>
+            <onMatch>DENY</onMatch>
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+        <!-- Additional filter to exclude actuator endpoints by message content -->
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator>
+                <expression>
+                    return message.contains("/actuator/health") || 
+                           message.contains("GET /actuator/health");
+                </expression>
+            </evaluator>
+            <onMatch>DENY</onMatch>
+            <onMismatch>NEUTRAL</onMismatch>
+        </filter>
+    </appender>
+    
+    <!-- Root logger configuration -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE_FILTERED"/>
+    </root>
+    
+    <!-- Keep debug logging for authentication and security -->
+    <logger name="com.example.auth" level="DEBUG"/>
+    <logger name="org.springframework.security" level="DEBUG"/>
+    
+    <!-- Reduce noise from specific Spring components -->
+    <logger name="org.springframework.web.filter" level="WARN"/>
+    <logger name="org.apache.catalina.core" level="WARN"/>
+    <logger name="org.springframework.boot.actuate" level="WARN"/>
+    
+    <!-- SQL logging (when needed) -->
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+    <logger name="org.hibernate.type" level="TRACE"/>
+</configuration>

@@ -86,7 +86,7 @@ public class AuthClient {
                 
                 // Sleep between iterations
                 try {
-                    Thread.sleep(2000 + random.nextInt(3000)); // 2-5 seconds
+                    Thread.sleep(10000 + random.nextInt(15000)); // 10-25 seconds
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     System.out.println("Client interrupted, shutting down gracefully...");
@@ -125,7 +125,7 @@ public class AuthClient {
             attempts++;
             System.out.println("Server not ready, waiting... (" + attempts + "/" + maxAttempts + ")");
             try {
-                Thread.sleep(2000);
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;

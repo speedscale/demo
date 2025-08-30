@@ -1,0 +1,67 @@
+name: Java Auth CI
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'java-auth/**'
+      - '.github/workflows/java-auth-ci.yml'
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - 'java-auth/**'
+      - '.github/workflows/java-auth-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    
+    - name: Build Auth Server
+      working-directory: java-auth/server
+      run: mvn clean package -DskipTests
+    
+    - name: Build Auth Client
+      working-directory: java-auth/client
+      run: mvn clean package
+    
+    - name: Run Server Tests
+      working-directory: java-auth/server
+      run: mvn test
+    
+    - name: Upload Server JAR
+      uses: actions/upload-artifact@v4
+      with:
+        name: auth-server-jar
+        path: java-auth/server/target/*.jar
+        retention-days: 30
+    
+    - name: Upload Client JAR
+      uses: actions/upload-artifact@v4
+      with:
+        name: auth-client-jar
+        path: java-auth/client/target/*.jar
+        retention-days: 30
+    
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: java-auth/server/target/surefire-reports/
+        retention-days: 7

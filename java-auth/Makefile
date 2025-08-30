@@ -20,10 +20,10 @@ local: ## Run locally (needs MySQL)
 run: local ## Alias for local
 
 up: ## Start with Docker Compose
-	docker-compose up -d
+	docker compose up -d
 
 down: ## Stop containers
-	docker-compose down
+	docker compose down
 
 compose: up ## Alias for up
 

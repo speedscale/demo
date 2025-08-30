@@ -1,9 +1,9 @@
 # Java Authentication Microservice
 
-[![CI](https://github.com/${{ github.repository }}/actions/workflows/ci.yml/badge.svg)](https://github.com/${{ github.repository }}/actions/workflows/ci.yml)
-[![Docker Build](https://github.com/${{ github.repository }}/actions/workflows/docker.yml/badge.svg)](https://github.com/${{ github.repository }}/actions/workflows/docker.yml)
-[![CD](https://github.com/${{ github.repository }}/actions/workflows/cd.yml/badge.svg)](https://github.com/${{ github.repository }}/actions/workflows/cd.yml)
-[![Release](https://github.com/${{ github.repository }}/actions/workflows/release.yml/badge.svg)](https://github.com/${{ github.repository }}/actions/workflows/release.yml)
+[![CI](https://github.com/speedscale/demo/actions/workflows/ci.yml/badge.svg)](https://github.com/speedscale/demo/actions/workflows/ci.yml)
+[![Docker Build](https://github.com/speedscale/demo/actions/workflows/docker.yml/badge.svg)](https://github.com/speedscale/demo/actions/workflows/docker.yml)
+[![CD](https://github.com/speedscale/demo/actions/workflows/cd.yml/badge.svg)](https://github.com/speedscale/demo/actions/workflows/cd.yml)
+[![Release](https://github.com/speedscale/demo/actions/workflows/release.yml/badge.svg)](https://github.com/speedscale/demo/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Spring Boot microservice providing JWT-based authentication with MySQL database backend.
@@ -32,7 +32,7 @@ A Spring Boot microservice providing JWT-based authentication with MySQL databas
 1. Clone the repository
 2. Run the application:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 The service will be available at `http://localhost:8080`

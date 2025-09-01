@@ -17,10 +17,10 @@ function initializeDemoData() {
   // Create some demo users with realistic IDs
   const demoUsers = [
     { id: 'sarah-martinez', email: 'sarah.martinez@example.com', name: 'Sarah Martinez' },
-    { id: 'david-kim', email: 'david.kim@example.com', name: 'David Kim' },
-    { id: 'emma-thompson', email: 'emma.thompson@example.com', name: 'Emma Thompson' },
-    { id: 'alex-rodriguez', email: 'alex.rodriguez@example.com', name: 'Alex Rodriguez' },
-    { id: 'jessica-brown', email: 'jessica.brown@example.com', name: 'Jessica Brown' }
+    { id: 'dkim', email: 'david.kim@example.com', name: 'David Kim' },
+    { id: 'emma', email: 'emma.thompson@example.com', name: 'Emma Thompson' },
+    { id: 'arod', email: 'alex.rodriguez@example.com', name: 'Alex Rodriguez' },
+    { id: 'jess', email: 'jessica.brown@example.com', name: 'Jessica Brown' }
   ];
   
   demoUsers.forEach(user => {

@@ -29,7 +29,7 @@ The server will run on port 8080 by default.
 - `POST /auth/login` - Login with email/password, returns JWT token
 
 ### Users
-- `GET /users/:userId` - Get user profile (requires JWT)
+- `GET /users/me` - Get the current user's profile (requires JWT)
 
 ### Orders  
 - `POST /orders` - Create new order, returns unique order ID
@@ -54,8 +54,10 @@ The server will run on port 8080 by default.
 
 ## Demo Users
 
-- sarah.martinez@example.com / password123 (ID: sarah-martinez)
-- david.kim@example.com / password123 (ID: david-kim)
-- emma.thompson@example.com / password123 (ID: emma-thompson)
-- alex.rodriguez@example.com / password123 (ID: alex-rodriguez)
-- jessica.brown@example.com / password123 (ID: jessica-brown)
+| Email | Username | Password |
+| --- | --- | --- |
+| sarah.martinez@example.com | sarah-martinez | password123 |
+| david.kim@example.com | dkim | password123 |
+| emma.thompson@example.com | emma | password123 |
+| alex.rodriguez@example.com | arod | password123 |
+| jessica.brown@example.com | jess | password123 |

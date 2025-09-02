@@ -12,8 +12,8 @@ echo "Demonstrates smart_replace_recorded for dynamic order IDs"
 echo "Two users creating orders - IDs must be tracked correctly"
 echo
 
-# User A: Create and retrieve order
-echo "Step 1a: UserA (Sarah) creates order"
+# Step 1: Login both users first
+echo "Step 1a: Login as UserA (Sarah)"
 LOGIN_A=$(curl -s -X POST $BASE_URL/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"sarah.martinez@example.com","password":"password123"}')
@@ -22,7 +22,21 @@ TOKEN_A=$(echo $LOGIN_A | grep -o '"token":"[^"]*' | cut -d'"' -f4)
 USER_A=$(echo $LOGIN_A | grep -o '"userId":"[^"]*' | cut -d'"' -f4)
 
 echo "   - Logged in as: $USER_A"
+echo
 
+echo "Step 1b: Login as UserB (David)"
+LOGIN_B=$(curl -s -X POST $BASE_URL/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"david.kim@example.com","password":"password123"}')
+
+TOKEN_B=$(echo $LOGIN_B | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+USER_B=$(echo $LOGIN_B | grep -o '"userId":"[^"]*' | cut -d'"' -f4)
+
+echo "   - Logged in as: $USER_B"
+echo
+
+# Step 2: Create orders
+echo "Step 2a: UserA (Sarah) creates order"
 ORDER_A=$(curl -s -X POST $BASE_URL/orders \
   -H "Authorization: Bearer $TOKEN_A" \
   -H "Content-Type: application/json" \
@@ -36,19 +50,8 @@ ORDER_A=$(curl -s -X POST $BASE_URL/orders \
 
 ORDER_A_ID=$(echo $ORDER_A | grep -o '"orderId":"[^"]*' | cut -d'"' -f4)
 echo "   - Created order: $ORDER_A_ID"
-echo
 
-# User B: Create and retrieve order  
-echo "Step 1b: UserB (David) creates order"
-LOGIN_B=$(curl -s -X POST $BASE_URL/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"david.kim@example.com","password":"password123"}')
-
-TOKEN_B=$(echo $LOGIN_B | grep -o '"token":"[^"]*' | cut -d'"' -f4)
-USER_B=$(echo $LOGIN_B | grep -o '"userId":"[^"]*' | cut -d'"' -f4)
-
-echo "   - Logged in as: $USER_B"
-
+echo "Step 2b: UserB (David) creates order"
 ORDER_B=$(curl -s -X POST $BASE_URL/orders \
   -H "Authorization: Bearer $TOKEN_B" \
   -H "Content-Type: application/json" \
@@ -64,14 +67,14 @@ ORDER_B_ID=$(echo $ORDER_B | grep -o '"orderId":"[^"]*' | cut -d'"' -f4)
 echo "   - Created order: $ORDER_B_ID"
 echo
 
-# Step 2: Retrieve orders
-echo "Step 2a: UserA retrieves their order"
-curl -s -X GET $BASE_URL/orders/$ORDER_A_ID \
+# Step 3: Retrieve orders
+echo "Step 3a: UserA retrieves their order"
+curl -s -X GET "$BASE_URL/orders?orderId=$ORDER_A_ID" \
   -H "Authorization: Bearer $TOKEN_A" | jq .
 echo
 
-echo "Step 2b: UserB retrieves their order"
-curl -s -X GET $BASE_URL/orders/$ORDER_B_ID \
+echo "Step 3b: UserB retrieves their order"
+curl -s -X GET "$BASE_URL/orders?orderId=$ORDER_B_ID" \
   -H "Authorization: Bearer $TOKEN_B" | jq .
 
 echo

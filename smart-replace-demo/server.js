@@ -133,9 +133,9 @@ app.post('/orders', authenticateToken, (req, res) => {
   });
 });
 
-app.get('/orders/:orderId', authenticateToken, (req, res) => {
-  console.log(`[${new Date().toISOString()}] GET /orders/${req.params.orderId} - Requested by: ${req.user.email}`);
-  const { orderId } = req.params;
+app.get('/orders', authenticateToken, (req, res) => {
+  console.log(`[${new Date().toISOString()}] GET /orders?orderId=${req.query.orderId} - Requested by: ${req.user.email}`);
+  const { orderId } = req.query;
   const order = orders.get(orderId);
   
   if (!order) {
@@ -165,7 +165,7 @@ app.listen(PORT, () => {
   console.log('  GET  /users/me         - Get own profile (requires auth)');
   console.log('  GET  /users/:userId    - Get user profile (requires auth)');
   console.log('  POST /orders           - Create new order (requires auth)');
-  console.log('  GET  /orders/:orderId  - Get order details (requires auth)');
+  console.log('  GET  /orders?orderId=ID - Get order details (requires auth)');
   console.log('  GET  /health           - Health check');
   console.log('\nDemo users:');
   console.log('  sarah.martinez@example.com / password123 (ID: sarah-martinez)');

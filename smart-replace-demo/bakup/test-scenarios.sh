@@ -4,46 +4,49 @@
 # This script demonstrates the 3 smart replace use cases
 
 BASE_URL="http://localhost:8080"
-TOKEN=""
 
 echo "=== Smart Replace Demo Test Scenarios ==="
 echo
 
-# Scenario 1: Smart Replace - JWT Token
-echo "1. Testing JWT token replacement (smart_replace)"
-echo "   - Login to get JWT token"
-
-# Login
-LOGIN_RESPONSE=$(curl -s -X POST $BASE_URL/auth/login \
+# Step 1: Login both users first
+echo "Step 1a: Login as UserA (Sarah)"
+LOGIN_A=$(curl -s -X POST $BASE_URL/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"sarah.martinez@example.com","password":"password123"}')
 
-TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"token":"[^"]*' | cut -d'"' -f4)
-USER_ID=$(echo $LOGIN_RESPONSE | grep -o '"userId":"[^"]*' | cut -d'"' -f4)
+TOKEN_A=$(echo $LOGIN_A | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+USER_A=$(echo $LOGIN_A | grep -o '"userId":"[^"]*' | cut -d'"' -f4)
 
-echo "   - Got token: ${TOKEN:0:20}..."
-echo "   - User ID: $USER_ID"
-
-# Use token to get profile
-echo "   - Getting user profile with token"
-curl -s -X GET $BASE_URL/users/$USER_ID \
-  -H "Authorization: Bearer $TOKEN" | jq .
-
+echo "   - Got token: ${TOKEN_A:0:20}..."
+echo "   - User ID: $USER_A"
 echo
-echo "2. Testing bulk user ID replacement (smart_replace_csv)"
-echo "   - Would normally export user IDs to CSV and map to test IDs"
-echo "   - Example CSV:"
-echo "     sarah-martinez,test-sarah-martinez"
-echo "     david-kim,test-david-kim"
-echo "     emma-thompson,test-emma-thompson"
 
+echo "Step 1b: Login as UserB (David)"
+LOGIN_B=$(curl -s -X POST $BASE_URL/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"david.kim@example.com","password":"password123"}')
+
+TOKEN_B=$(echo $LOGIN_B | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+USER_B=$(echo $LOGIN_B | grep -o '"userId":"[^"]*' | cut -d'"' -f4)
+
+echo "   - Got token: ${TOKEN_B:0:20}..."
+echo "   - User ID: $USER_B"
 echo
-echo "3. Testing dynamic order ID replacement (smart_replace_recorded)"
-echo "   - Creating new order"
 
-# Create order
-ORDER_RESPONSE=$(curl -s -X POST $BASE_URL/orders \
-  -H "Authorization: Bearer $TOKEN" \
+# Step 2: Use tokens for various operations
+echo "Step 2a: UserA gets their profile (JWT token replacement demo)"
+curl -s -X GET $BASE_URL/users/$USER_A \
+  -H "Authorization: Bearer $TOKEN_A" | jq .
+echo
+
+echo "Step 2b: UserB gets their profile (shows different JWT tokens)"
+curl -s -X GET $BASE_URL/users/$USER_B \
+  -H "Authorization: Bearer $TOKEN_B" | jq .
+echo
+
+echo "Step 3a: UserA creates an order (dynamic order ID demo)"
+ORDER_A=$(curl -s -X POST $BASE_URL/orders \
+  -H "Authorization: Bearer $TOKEN_A" \
   -H "Content-Type: application/json" \
   -d '{
     "items": [
@@ -53,13 +56,34 @@ ORDER_RESPONSE=$(curl -s -X POST $BASE_URL/orders \
     "totalAmount": 46.97
   }')
 
-ORDER_ID=$(echo $ORDER_RESPONSE | grep -o '"orderId":"[^"]*' | cut -d'"' -f4)
-echo "   - Created order: $ORDER_ID"
+ORDER_A_ID=$(echo $ORDER_A | grep -o '"orderId":"[^"]*' | cut -d'"' -f4)
+echo "   - Created order: $ORDER_A_ID"
 
-# Get order details
-echo "   - Getting order details"
-curl -s -X GET $BASE_URL/orders/$ORDER_ID \
-  -H "Authorization: Bearer $TOKEN" | jq .
+echo "Step 3b: UserB creates an order (another dynamic order ID)"
+ORDER_B=$(curl -s -X POST $BASE_URL/orders \
+  -H "Authorization: Bearer $TOKEN_B" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "items": [
+      {"product": "Laptop", "quantity": 1, "price": 999.99},
+      {"product": "Mouse", "quantity": 2, "price": 15.99}
+    ],
+    "totalAmount": 1031.97
+  }')
+
+ORDER_B_ID=$(echo $ORDER_B | grep -o '"orderId":"[^"]*' | cut -d'"' -f4)
+echo "   - Created order: $ORDER_B_ID"
+echo
+
+# Step 4: Retrieve orders
+echo "Step 4a: UserA retrieves their order"
+curl -s -X GET "$BASE_URL/orders?orderId=$ORDER_A_ID" \
+  -H "Authorization: Bearer $TOKEN_A" | jq .
+echo
+
+echo "Step 4b: UserB retrieves their order"
+curl -s -X GET "$BASE_URL/orders?orderId=$ORDER_B_ID" \
+  -H "Authorization: Bearer $TOKEN_B" | jq .
 
 echo
 echo "=== Test Scenarios Complete ==="

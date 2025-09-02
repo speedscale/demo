@@ -47,11 +47,6 @@ The server will run on port 8080 by default.
 2. Create CSV mapping old IDs → new test IDs
 3. Smart replace CSV will handle all replacements
 
-### 3. Smart Replace Recorded - Dynamic Order IDs
-1. Create order (returns dynamic order ID)
-2. Get order details using that ID
-3. Smart replace recorded will sync the IDs during replay
-
 ## Demo Users
 
 | Email | Username | Password |

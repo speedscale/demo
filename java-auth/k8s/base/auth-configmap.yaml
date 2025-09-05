@@ -2,7 +2,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: auth-config
-  namespace: java-auth
 data:
   SPRING_PROFILES_ACTIVE: "production"
   SPRING_DATASOURCE_URL: "jdbc:mysql://mysql-service:3306/auth_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"

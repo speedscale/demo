@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: java-auth
-  namespace: java-auth
   labels:
     app: java-auth
     version: v1

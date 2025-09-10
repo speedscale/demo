@@ -21,7 +21,7 @@ spec:
               path: /api/health
               port: http
           ports:
-            - containerPort: 3000
+            - containerPort: 8080
               name: http
           resources:
             requests:
@@ -42,6 +42,6 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: 3000
+      targetPort: 8080
   selector:
     app: smart-replace-demo

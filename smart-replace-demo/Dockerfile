@@ -32,5 +32,5 @@ WORKDIR /app
 # Copy node_modules and source from build stage
 COPY --from=build /app /app
 
-EXPOSE 3000
+EXPOSE 8080
 CMD ["npm", "start"]

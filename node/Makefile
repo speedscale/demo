@@ -2,6 +2,11 @@ VERSION?=$(shell cat ../VERSION 2>/dev/null || echo "1.0.4")
 REGISTRY?=gcr.io/speedscale-demos/node-server:${VERSION}
 NAMESPACE?=default
 
+.PHONY: build
+build:
+	@echo "Building Node server"
+	@npm install
+
 .PHONY: docker-multi
 docker-multi:
 	@echo "Building and pushing multi-arch Docker image"

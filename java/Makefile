@@ -2,6 +2,11 @@ VERSION?=$(shell cat ../VERSION 2>/dev/null || echo "1.0.6")
 REGISTRY?=gcr.io/speedscale-demos/java-server:${VERSION}
 NAMESPACE?=default
 
+.PHONY: build
+build:
+	@echo "Building Java server"
+	@cd server && ./mvnw clean package -DskipTests
+
 .PHONY: local
 local:
 	@echo "Running java locally"

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smart-replace-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smart-replace-demo
+  template:
+    metadata:
+      labels:
+        app: smart-replace-demo
+    spec:
+      containers:
+        - name: smart-replace-demo
+          image: gcr.io/speedscale-demos/smart-replace-demo:v1.1.7
+          imagePullPolicy: Always
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+          ports:
+            - containerPort: 3000
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smart-replace-demo
+  labels:
+    app: smart-replace-demo
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+  selector:
+    app: smart-replace-demo

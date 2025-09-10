@@ -37,6 +37,7 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' 's|gcr.io/speedscale-demos/java-auth-client:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth-client:$(VERSION)|g' java-auth/k8s/base/auth-client-deployment.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/java-server:[v]*[0-9.]*|gcr.io/speedscale-demos/java-server:v$(VERSION)|g' java/manifest.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/node-server:[v]*[0-9.]*|gcr.io/speedscale-demos/node-server:v$(VERSION)|g' node/manifest.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/smart-replace-demo:[v]*[0-9.]*|gcr.io/speedscale-demos/smart-replace-demo:v$(VERSION)|g' smart-replace-demo/manifest.yaml
 	@echo "Updating Maven pom.xml files..."
 	@sed -i '' '/<artifactId>auth<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/server/pom.xml
 	@sed -i '' '/<artifactId>auth-client<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/client/pom.xml
@@ -44,6 +45,7 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' '/<artifactId>jwt-generator<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/scripts/pom.xml
 	@echo "Updating Node package.json..."
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node/package.json
+	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' smart-replace-demo/package.json
 	@echo ""
 	@echo "✅ Version $(VERSION) updated across all files!"
 	@echo ""
@@ -55,7 +57,7 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 	echo "Expected version: $$VERSION_FILE"; \
 	echo ""; \
 	echo "Checking Kubernetes manifests:"; \
-	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-deployment.yaml java-auth/k8s/base/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml | \
+	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-deployment.yaml java-auth/k8s/base/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml | \
 	while read line; do \
 		if echo "$$line" | grep -q ":$$VERSION_FILE" || echo "$$line" | grep -q ":v$$VERSION_FILE"; then \
 			echo "  ✅ $$line"; \
@@ -96,6 +98,12 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 		echo "  ✅ node/package.json: $$VERSION_IN_PKG"; \
 	else \
 		echo "  ❌ node/package.json: $$VERSION_IN_PKG (expected $$VERSION_FILE)"; \
+	fi; \
+	VERSION_IN_SMART_PKG=$$(grep -o '"version": "[0-9.]*"' smart-replace-demo/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
+	if [ "$$VERSION_IN_SMART_PKG" = "$$VERSION_FILE" ]; then \
+		echo "  ✅ smart-replace-demo/package.json: $$VERSION_IN_SMART_PKG"; \
+	else \
+		echo "  ❌ smart-replace-demo/package.json: $$VERSION_IN_SMART_PKG (expected $$VERSION_FILE)"; \
 	fi
 
 bump-version: ## Bump to next patch version and update all files
@@ -118,7 +126,10 @@ build-java-auth: ## Build Java Auth project
 build-node: ## Build Node project
 	cd node && make build
 
-build-all: build-java build-java-auth build-node ## Build all projects
+build-smart-replace-demo: ## Build Smart Replace Demo project
+	cd smart-replace-demo && make build
+
+build-all: build-java build-java-auth build-node build-smart-replace-demo ## Build all projects
 
 # Docker build targets with centralized version
 docker-java: ## Build and push Java Docker image
@@ -130,7 +141,10 @@ docker-java-auth: ## Build and push Java Auth Docker images
 docker-node: ## Build and push Node Docker image
 	cd node && make docker-multi VERSION=$(VERSION)
 
-docker-all: docker-java docker-java-auth docker-node ## Build and push all Docker images
+docker-smart-replace-demo: ## Build and push Smart Replace Demo Docker image
+	cd smart-replace-demo && make docker-multi VERSION=$(VERSION)
+
+docker-all: docker-java docker-java-auth docker-node docker-smart-replace-demo ## Build and push all Docker images
 
 # Test targets
 test-java: ## Test Java project

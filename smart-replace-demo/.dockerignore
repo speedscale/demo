@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.DS_Store
+proxymock
+bakup
+docs
+test-*.sh
+demo-users.csv
+Makefile
+manifest.yaml
+Dockerfile
+.dockerignore

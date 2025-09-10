@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1.7
+################################################################################
+# BUILDER IMAGE
+################################################################################
+FROM node:20-alpine AS build
+
+# Keep npm from reading any baked-in .npmrc in the image
+ENV NPM_CONFIG_USERCONFIG=/tmp/empty-npmrc
+
+# Workdir
+WORKDIR /app
+
+# Install deps with only the manifests for better caching
+COPY package*.json ./
+
+# Make sure we talk to the public registry (and nothing else)
+RUN npm config set registry https://registry.npmjs.org/ \
+ && npm config delete '//npm.pkg.github.com/:_authToken' || true \
+ && npm config list \
+ && npm ci --no-audit --fund=false
+
+# Now copy the rest of the app
+COPY . .
+
+# ------------------------------------------------------------------------------
+# RUNTIME STAGE (keeps image small)
+# ------------------------------------------------------------------------------
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy node_modules and source from build stage
+COPY --from=build /app /app
+
+EXPOSE 3000
+CMD ["npm", "start"]

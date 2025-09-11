@@ -6,11 +6,3 @@ resources:
   - auth-deployment.yaml
   - auth-service.yaml
 
-labels:
-  - pairs:
-      app.kubernetes.io/name: java-auth
-      app.kubernetes.io/instance: java-auth
-      app.kubernetes.io/component: auth-server
-      app.kubernetes.io/part-of: java-auth-system
-      app.kubernetes.io/managed-by: kustomize
-    includeSelectors: true

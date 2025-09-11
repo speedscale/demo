@@ -30,9 +30,15 @@ spec:
           protocol: TCP
         env:
         - name: SPRING_DATASOURCE_USERNAME
-          value: "auth_user"
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_USER
         - name: SPRING_DATASOURCE_PASSWORD
-          value: "auth123!@#"
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_PASSWORD
         - name: JWT_SECRET
           value: "your-256-bit-secret-key-for-jwt-signing-in-production"
         envFrom:

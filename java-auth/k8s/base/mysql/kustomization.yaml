@@ -9,11 +9,3 @@ resources:
   - mysql-deployment.yaml
   - mysql-service.yaml
 
-labels:
-  - pairs:
-      app.kubernetes.io/name: mysql
-      app.kubernetes.io/instance: java-auth-mysql
-      app.kubernetes.io/component: database
-      app.kubernetes.io/part-of: java-auth-system
-      app.kubernetes.io/managed-by: kustomize
-    includeSelectors: true

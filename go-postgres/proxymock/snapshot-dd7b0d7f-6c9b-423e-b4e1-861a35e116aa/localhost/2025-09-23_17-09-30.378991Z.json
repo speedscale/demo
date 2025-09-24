@@ -1,0 +1,86 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-09-23T17:09:30.378991Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "file": "recorded-2025-09-23_17-08-34.895798Z/localhost/2025-09-23_17-09-30.378991Z.json",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.857",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "4",
+    "source": "goproxy"
+  },
+  "uuid": "Jg/hJdRPSNK2NylhxG7Ogg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "tech": "Postgres",
+  "network_address": "localhost:5432",
+  "command": "Query",
+  "location": ";",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "query": {
+        "query": ";"
+      }
+    },
+    "response": {
+      "query": {
+        "messages": [
+          {
+            "empty": {}
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:;": {
+      "id": "SQL:;",
+      "tokens": [
+        {
+          "uuid": "Jg/hJdRPSNK2NylhxG7Ogg==",
+          "token": {
+            "location": "postgres.request.query.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "Ow=="
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UXVlcnk=",
+    "postgres:query": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-09-23T17:09:30.378619Z",
+    "downstream": {
+      "established": "2025-09-23T17:09:30.373047Z",
+      "ipAddress": "127.0.0.1",
+      "port": 49316,
+      "bytesSent": "7"
+    },
+    "upstream": {
+      "established": "2025-09-23T17:09:30.373638Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "11"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Query",
+    "postgres:query": ""
+  }
+}

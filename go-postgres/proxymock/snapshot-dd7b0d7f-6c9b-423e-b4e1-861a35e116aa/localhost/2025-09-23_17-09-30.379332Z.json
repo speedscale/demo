@@ -1,0 +1,99 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-09-23T17:09:30.379332Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "file": "recorded-2025-09-23_17-08-34.895798Z/localhost/2025-09-23_17-09-30.379332Z.json",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.857",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "7",
+    "source": "goproxy"
+  },
+  "uuid": "aR4AUZeBStOtcML2oshk/Q==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "tech": "Postgres",
+  "network_address": "localhost:5432",
+  "command": "Query",
+  "location": "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, first_name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, email VARCHAR(100) UNIQUE NOT NULL, username VARCHAR(50) UNIQUE NOT NULL, age INTEGER, phone VARCHAR(20), address TEXT, city VARCHAR(50), country VARCHAR(50), job_title VARCHAR(100), department VARCHAR(50), salary INTEGER, hire_date TIMESTAMP, is_active BOOLEAN DEFAULT true)",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "query": {
+        "query": "\n\tCREATE TABLE IF NOT EXISTS users (\n\t\tid SERIAL PRIMARY KEY,\n\t\tfirst_name VARCHAR(50) NOT NULL,\n\t\tlast_name VARCHAR(50) NOT NULL,\n\t\temail VARCHAR(100) UNIQUE NOT NULL,\n\t\tusername VARCHAR(50) UNIQUE NOT NULL,\n\t\tage INTEGER,\n\t\tphone VARCHAR(20),\n\t\taddress TEXT,\n\t\tcity VARCHAR(50),\n\t\tcountry VARCHAR(50),\n\t\tjob_title VARCHAR(100),\n\t\tdepartment VARCHAR(50),\n\t\tsalary INTEGER,\n\t\thire_date TIMESTAMP,\n\t\tis_active BOOLEAN DEFAULT true\n\t)"
+      }
+    },
+    "response": {
+      "query": {
+        "messages": [
+          {
+            "notice": {
+              "severity": "NOTICE",
+              "severityUnlocalized": "NOTICE",
+              "code": "42P07",
+              "msg": "relation \"users\" already exists, skipping",
+              "file": "parse_utilcmd.c",
+              "line": 210,
+              "routine": "transformCreateStmt"
+            }
+          },
+          {
+            "complete": {
+              "tag": "CREATE TABLE"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, first_name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, email VARCHAR(100) UNIQUE NOT NULL, username VARCHAR(50) UNIQUE NOT NULL, age INTEGER, phone VARCHAR(20), address TEXT, city VARCHAR(50), country VARCHAR(50), job_title VARCHAR(100), department VARCHAR(50), salary INTEGER, hire_date TIMESTAMP, is_active BOOLEAN DEFAULT true)": {
+      "id": "SQL:CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, first_name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, email VARCHAR(100) UNIQUE NOT NULL, username VARCHAR(50) UNIQUE NOT NULL, age INTEGER, phone VARCHAR(20), address TEXT, city VARCHAR(50), country VARCHAR(50), job_title VARCHAR(100), department VARCHAR(50), salary INTEGER, hire_date TIMESTAMP, is_active BOOLEAN DEFAULT true)",
+      "tokens": [
+        {
+          "uuid": "aR4AUZeBStOtcML2oshk/Q==",
+          "token": {
+            "location": "postgres.request.query.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "Q1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgdXNlcnMgKGlkIFNFUklBTCBQUklNQVJZIEtFWSwgZmlyc3RfbmFtZSBWQVJDSEFSKDUwKSBOT1QgTlVMTCwgbGFzdF9uYW1lIFZBUkNIQVIoNTApIE5PVCBOVUxMLCBlbWFpbCBWQVJDSEFSKDEwMCkgVU5JUVVFIE5PVCBOVUxMLCB1c2VybmFtZSBWQVJDSEFSKDUwKSBVTklRVUUgTk9UIE5VTEwsIGFnZSBJTlRFR0VSLCBwaG9uZSBWQVJDSEFSKDIwKSwgYWRkcmVzcyBURVhULCBjaXR5IFZBUkNIQVIoNTApLCBjb3VudHJ5IFZBUkNIQVIoNTApLCBqb2JfdGl0bGUgVkFSQ0hBUigxMDApLCBkZXBhcnRtZW50IFZBUkNIQVIoNTApLCBzYWxhcnkgSU5URUdFUiwgaGlyZV9kYXRlIFRJTUVTVEFNUCwgaXNfYWN0aXZlIEJPT0xFQU4gREVGQVVMVCB0cnVlKQ=="
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UXVlcnk=",
+    "postgres:query": "Q1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgdXNlcnMgKCBpZCBTRVJJQUwgUFJJTUFSWSBLRVksIGZpcnN0X25hbWUgVkFSQ0hBUiAoIDUwICkgTk9UIE5VTEwsIGxhc3RfbmFtZSBWQVJDSEFSICggNTAgKSBOT1QgTlVMTCwgZW1haWwgVkFSQ0hBUiAoIDEwMCApIFVOSVFVRSBOT1QgTlVMTCwgdXNlcm5hbWUgVkFSQ0hBUiAoIDUwICkgVU5JUVVFIE5PVCBOVUxMLCBhZ2UgSU5URUdFUiwgcGhvbmUgVkFSQ0hBUiAoIDIwICksIGFkZHJlc3MgVEVYVCwgY2l0eSBWQVJDSEFSICggNTAgKSwgY291bnRyeSBWQVJDSEFSICggNTAgKSwgam9iX3RpdGxlIFZBUkNIQVIgKCAxMDAgKSwgZGVwYXJ0bWVudCBWQVJDSEFSICggNTAgKSwgc2FsYXJ5IElOVEVHRVIsIGhpcmVfZGF0ZSBUSU1FU1RBTVAsIGlzX2FjdGl2ZSBCT09MRUFOIERFRkFVTFQgdHJ1ZSAp"
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-09-23T17:09:30.378619Z",
+    "downstream": {
+      "established": "2025-09-23T17:09:30.373047Z",
+      "ipAddress": "127.0.0.1",
+      "port": 49316,
+      "bytesSent": "719"
+    },
+    "upstream": {
+      "established": "2025-09-23T17:09:30.373638Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "150"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Query",
+    "postgres:query": "CREATE TABLE IF NOT EXISTS users ( id SERIAL PRIMARY KEY, first_name VARCHAR ( 50 ) NOT NULL, last_name VARCHAR ( 50 ) NOT NULL, email VARCHAR ( 100 ) UNIQUE NOT NULL, username VARCHAR ( 50 ) UNIQUE NOT NULL, age INTEGER, phone VARCHAR ( 20 ), address TEXT, city VARCHAR ( 50 ), country VARCHAR ( 50 ), job_title VARCHAR ( 100 ), department VARCHAR ( 50 ), salary INTEGER, hire_date TIMESTAMP, is_active BOOLEAN DEFAULT true )"
+  }
+}

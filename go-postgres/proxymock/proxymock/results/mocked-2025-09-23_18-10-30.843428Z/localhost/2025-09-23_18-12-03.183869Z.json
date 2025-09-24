@@ -1,0 +1,523 @@
+{
+  "msgType": "rrpair",
+  "resource": "responder",
+  "ts": "2025-09-23T18:12:03.183869Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "file": "snapshot-dd7b0d7f-6c9b-423e-b4e1-861a35e116aa/localhost/2025-09-23_17-10-14.929844Z.json",
+    "match": "HIT",
+    "msgNum": "21",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "undefined",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "21",
+    "source": "responder"
+  },
+  "uuid": "gssrBiwYRvyaSadNWjyZtQ==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "tech": "Postgres",
+  "network_address": "localhost:5432",
+  "command": "Query",
+  "location": "SELECT id, first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active FROM users",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "query": {
+        "query": "SELECT id, first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active FROM users"
+      }
+    },
+    "response": {
+      "query": {
+        "messages": [
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "id",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 1,
+                  "dataTypeOid": 23,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "first_name",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 2,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "last_name",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 3,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "email",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 4,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "username",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 5,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "age",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 6,
+                  "dataTypeOid": 23,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "phone",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 7,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 24
+                },
+                {
+                  "name": "address",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 8,
+                  "dataTypeOid": 25,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "city",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 9,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "country",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 10,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "job_title",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 11,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 104
+                },
+                {
+                  "name": "department",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 12,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "salary",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 13,
+                  "dataTypeOid": 23,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "hire_date",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 14,
+                  "dataTypeOid": 1114,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "is_active",
+                  "tableOid": 16389,
+                  "tableAttributeNumber": 15,
+                  "dataTypeOid": 16,
+                  "dataTypeSize": 1,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          },
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "1"
+                },
+                {
+                  "asString": "John"
+                },
+                {
+                  "asString": "Doe"
+                },
+                {
+                  "asString": "john.doe@example.com"
+                },
+                {
+                  "asString": "johndoe"
+                },
+                {
+                  "asString": "30"
+                },
+                {
+                  "asString": "+1-555-0123"
+                },
+                {
+                  "asString": "123 Main St"
+                },
+                {
+                  "asString": "New York"
+                },
+                {
+                  "asString": "USA"
+                },
+                {
+                  "asString": "Software Engineer"
+                },
+                {
+                  "asString": "Engineering"
+                },
+                {
+                  "asString": "85000"
+                },
+                {
+                  "asString": "2020-03-15 00:00:00"
+                },
+                {
+                  "asString": "t"
+                }
+              ]
+            }
+          },
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "2"
+                },
+                {
+                  "asString": "Jane"
+                },
+                {
+                  "asString": "Smith"
+                },
+                {
+                  "asString": "jane.smith@example.com"
+                },
+                {
+                  "asString": "janesmith"
+                },
+                {
+                  "asString": "28"
+                },
+                {
+                  "asString": "+1-555-0124"
+                },
+                {
+                  "asString": "456 Oak Ave"
+                },
+                {
+                  "asString": "San Francisco"
+                },
+                {
+                  "asString": "USA"
+                },
+                {
+                  "asString": "Product Manager"
+                },
+                {
+                  "asString": "Product"
+                },
+                {
+                  "asString": "95000"
+                },
+                {
+                  "asString": "2021-07-22 00:00:00"
+                },
+                {
+                  "asString": "t"
+                }
+              ]
+            }
+          },
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "4"
+                },
+                {
+                  "asString": "Alice"
+                },
+                {
+                  "asString": "Brown"
+                },
+                {
+                  "asString": "alice.brown@example.com"
+                },
+                {
+                  "asString": "alicebrown"
+                },
+                {
+                  "asString": "32"
+                },
+                {
+                  "asString": "+1-555-0126"
+                },
+                {
+                  "asString": "321 Elm St"
+                },
+                {
+                  "asString": "Austin"
+                },
+                {
+                  "asString": "USA"
+                },
+                {
+                  "asString": "UX Designer"
+                },
+                {
+                  "asString": "Design"
+                },
+                {
+                  "asString": "78000"
+                },
+                {
+                  "asString": "2020-11-05 00:00:00"
+                },
+                {
+                  "asString": "t"
+                }
+              ]
+            }
+          },
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "5"
+                },
+                {
+                  "asString": "Charlie"
+                },
+                {
+                  "asString": "Wilson"
+                },
+                {
+                  "asString": "charlie.wilson@example.com"
+                },
+                {
+                  "asString": "charliewilson"
+                },
+                {
+                  "asString": "29"
+                },
+                {
+                  "asString": "+1-555-0127"
+                },
+                {
+                  "asString": "654 Maple Dr"
+                },
+                {
+                  "asString": "Denver"
+                },
+                {
+                  "asString": "USA"
+                },
+                {
+                  "asString": "Data Analyst"
+                },
+                {
+                  "asString": "Analytics"
+                },
+                {
+                  "asString": "70000"
+                },
+                {
+                  "asString": "2022-02-14 00:00:00"
+                },
+                {
+                  "asString": "f"
+                }
+              ]
+            }
+          },
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "6"
+                },
+                {
+                  "asString": "Sarah"
+                },
+                {
+                  "asString": "Connor"
+                },
+                {
+                  "asString": "sarah.connor@example.com"
+                },
+                {
+                  "asString": "sarahconnor"
+                },
+                {
+                  "asString": "35"
+                },
+                {
+                  "asString": "+1-555-0199"
+                },
+                {
+                  "asString": "789 Future St"
+                },
+                {
+                  "asString": "Los Angeles"
+                },
+                {
+                  "asString": "USA"
+                },
+                {
+                  "asString": "Security Specialist"
+                },
+                {
+                  "asString": "Security"
+                },
+                {
+                  "asString": "88000"
+                },
+                {
+                  "asString": "2023-05-15 00:00:00"
+                },
+                {
+                  "asString": "t"
+                }
+              ]
+            }
+          },
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "9"
+                },
+                {
+                  "asString": "Bob"
+                },
+                {
+                  "asString": "Johnson"
+                },
+                {
+                  "asString": "bob.johnson@example.com"
+                },
+                {
+                  "asString": "bobjohnson"
+                },
+                {
+                  "asString": "35"
+                },
+                {
+                  "asString": "+1-555-0125"
+                },
+                {
+                  "asString": "789 Pine Rd"
+                },
+                {
+                  "asString": "Seattle"
+                },
+                {
+                  "asString": "USA"
+                },
+                {
+                  "asString": "Senior Developer"
+                },
+                {
+                  "asString": "Engineering"
+                },
+                {
+                  "asString": "105000"
+                },
+                {
+                  "asString": "2019-01-10 00:00:00"
+                },
+                {
+                  "asString": "t"
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "SELECT 6"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:SELECT id, first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active FROM users": {
+      "id": "SQL:SELECT id, first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active FROM users",
+      "tokens": [
+        {
+          "uuid": "gssrBiwYRvyaSadNWjyZtQ==",
+          "token": {
+            "location": "postgres.request.query.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "U0VMRUNUIGlkLCBmaXJzdF9uYW1lLCBsYXN0X25hbWUsIGVtYWlsLCB1c2VybmFtZSwgYWdlLCBwaG9uZSwgYWRkcmVzcywgY2l0eSwgY291bnRyeSwgam9iX3RpdGxlLCBkZXBhcnRtZW50LCBzYWxhcnksIGhpcmVfZGF0ZSwgaXNfYWN0aXZlIEZST00gdXNlcnM="
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UXVlcnk=",
+    "postgres:query": "U0VMRUNUIGlkLCBmaXJzdF9uYW1lLCBsYXN0X25hbWUsIGVtYWlsLCB1c2VybmFtZSwgYWdlLCBwaG9uZSwgYWRkcmVzcywgY2l0eSwgY291bnRyeSwgam9iX3RpdGxlLCBkZXBhcnRtZW50LCBzYWxhcnksIGhpcmVfZGF0ZSwgaXNfYWN0aXZlIEZST00gdXNlcnM="
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-09-23T17:09:30.378619Z",
+    "downstream": {
+      "established": "2025-09-23T17:09:30.373047Z",
+      "ipAddress": "127.0.0.1",
+      "port": 49316,
+      "bytesSent": "3039"
+    },
+    "upstream": {
+      "established": "2025-09-23T17:09:30.373638Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "2269"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Query",
+    "postgres:query": "SELECT id, first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active FROM users"
+  },
+  "responderMatch": "HIT"
+}

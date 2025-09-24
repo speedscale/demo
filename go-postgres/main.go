@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -36,7 +37,19 @@ var db *sql.DB
 func main() {
 	var err error
 
-	connStr := "host=localhost port=5432 user=postgres dbname=postgres sslmode=disable"
+	// Get port from environment variable or use default
+	port := os.Getenv("PGPORT")
+	if port == "" {
+		port = "5432"
+	}
+
+	// Get user from environment variable or use default
+	user := os.Getenv("PGUSER")
+	if user == "" {
+		user = "postgres"
+	}
+
+	connStr := fmt.Sprintf("host=localhost port=%s user=%s dbname=postgres sslmode=disable", port, user)
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)

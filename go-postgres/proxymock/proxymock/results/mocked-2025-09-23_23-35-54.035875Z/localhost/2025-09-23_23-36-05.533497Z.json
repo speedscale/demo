@@ -1,0 +1,182 @@
+{
+  "msgType": "rrpair",
+  "resource": "responder",
+  "ts": "2025-09-23T23:36:05.533497Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "file": "snapshot-dd7b0d7f-6c9b-423e-b4e1-861a35e116aa/localhost/2025-09-23_17-09-30.38121Z.json",
+    "match": "HIT",
+    "msgNum": "8",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "undefined",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "8",
+    "source": "responder"
+  },
+  "uuid": "p5ESawuqQUyqsMYllrgQqg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "tech": "Postgres",
+  "network_address": "localhost:5432",
+  "command": "Execute Prepared Statement",
+  "location": "INSERT INTO users (first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) ON CONFLICT (email) DO NOTHING",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parameters": [
+            {
+              "asString": "Jane"
+            },
+            {
+              "asString": "Smith"
+            },
+            {
+              "asString": "jane.smith@example.com"
+            },
+            {
+              "asString": "janesmith"
+            },
+            {
+              "asString": "28"
+            },
+            {
+              "asString": "+1-555-0124"
+            },
+            {
+              "asString": "456 Oak Ave"
+            },
+            {
+              "asString": "San Francisco"
+            },
+            {
+              "asString": "USA"
+            },
+            {
+              "asString": "Product Manager"
+            },
+            {
+              "asString": "Product"
+            },
+            {
+              "asString": "95000"
+            },
+            {
+              "asString": "2021-07-22 00:00:00Z"
+            },
+            {
+              "asString": "true"
+            }
+          ],
+          "parseRequest": {
+            "query": "\n\tINSERT INTO users (first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active)\n\tVALUES\n\t\t($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)\n\tON CONFLICT (email) DO NOTHING"
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "complete": {
+              "tag": "INSERT 0 0"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "EMAIL:jane.smith@example.com": {
+      "id": "EMAIL:jane.smith@example.com",
+      "tokens": [
+        {
+          "uuid": "p5ESawuqQUyqsMYllrgQqg==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.parameters.2.asString",
+            "pattern": "DATA_PATTERN_EMAIL",
+            "replacementValue": "amFuZS5zbWl0aEBleGFtcGxlLmNvbQ=="
+          }
+        }
+      ]
+    },
+    "SQL:INSERT INTO users (first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) ON CONFLICT (email) DO NOTHING": {
+      "id": "SQL:INSERT INTO users (first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) ON CONFLICT (email) DO NOTHING",
+      "tokens": [
+        {
+          "uuid": "p5ESawuqQUyqsMYllrgQqg==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.parseRequest.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "SU5TRVJUIElOVE8gdXNlcnMgKGZpcnN0X25hbWUsIGxhc3RfbmFtZSwgZW1haWwsIHVzZXJuYW1lLCBhZ2UsIHBob25lLCBhZGRyZXNzLCBjaXR5LCBjb3VudHJ5LCBqb2JfdGl0bGUsIGRlcGFydG1lbnQsIHNhbGFyeSwgaGlyZV9kYXRlLCBpc19hY3RpdmUpIFZBTFVFUyAoJDEsICQyLCAkMywgJDQsICQ1LCAkNiwgJDcsICQ4LCAkOSwgJDEwLCAkMTEsICQxMiwgJDEzLCAkMTQpIE9OIENPTkZMSUNUIChlbWFpbCkgRE8gTk9USElORw=="
+          }
+        }
+      ]
+    },
+    "SQL_PORTAL_NAME:": {
+      "id": "SQL_PORTAL_NAME:",
+      "tokens": [
+        {
+          "uuid": "p5ESawuqQUyqsMYllrgQqg==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.portal",
+            "pattern": "DATA_PATTERN_SQL_PORTAL_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    },
+    "SQL_STATEMENT_NAME:": {
+      "id": "SQL_STATEMENT_NAME:",
+      "tokens": [
+        {
+          "uuid": "p5ESawuqQUyqsMYllrgQqg==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.parseRequest.name",
+            "pattern": "DATA_PATTERN_SQL_STATEMENT_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "SU5TRVJUIElOVE8gdXNlcnMgKCBmaXJzdF9uYW1lLCBsYXN0X25hbWUsIGVtYWlsLCB1c2VybmFtZSwgYWdlLCBwaG9uZSwgYWRkcmVzcywgY2l0eSwgY291bnRyeSwgam9iX3RpdGxlLCBkZXBhcnRtZW50LCBzYWxhcnksIGhpcmVfZGF0ZSwgaXNfYWN0aXZlICkgVkFMVUVTICggJDEsICQyLCAkMywgJDQsICQ1LCAkNiwgJDcsICQ4LCAkOSwgJDEwLCAkMTEsICQxMiwgJDEzLCAkMTQgKSBPTiBDT05GTElDVCAoIGVtYWlsICkgRE8gTk9USElORw==",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-09-23T17:09:30.378619Z",
+    "downstream": {
+      "established": "2025-09-23T17:09:30.373047Z",
+      "ipAddress": "127.0.0.1",
+      "port": 49316,
+      "bytesSent": "1692"
+    },
+    "upstream": {
+      "established": "2025-09-23T17:09:30.373638Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "362"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Execute Prepared Statement",
+    "postgres:portal": "",
+    "postgres:query": "INSERT INTO users ( first_name, last_name, email, username, age, phone, address, city, country, job_title, department, salary, hire_date, is_active ) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14 ) ON CONFLICT ( email ) DO NOTHING",
+    "postgres:query_name": ""
+  },
+  "responderMatch": "HIT"
+}

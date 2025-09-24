@@ -1,0 +1,125 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2025-09-23T17:10:50.791868Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "file": "recorded-2025-09-23_17-08-34.895798Z/localhost/2025-09-23_17-10-50.791868Z.json",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.3.857",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "85",
+    "source": "goproxy"
+  },
+  "uuid": "dt7EfbTcRamr2KIOPurrWQ==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "tech": "Postgres",
+  "network_address": "localhost:5432",
+  "command": "Describe Prepared Statement",
+  "location": "UPDATE users SET first_name = $1, last_name = $2, email = $3, username = $4, age = $5, phone = $6, address = $7, city = $8, country = $9, job_title = $10, department = $11, salary = $12, hire_date = $13, is_active = $14 WHERE id = $15",
+  "status": "OK",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PREPARED_STATEMENT",
+        "parseRequest": {
+          "query": "\n\tUPDATE users SET first_name=$1, last_name=$2, email=$3, username=$4, age=$5, phone=$6,\n\taddress=$7, city=$8, country=$9, job_title=$10, department=$11, salary=$12, hire_date=$13, is_active=$14\n\tWHERE id=$15"
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "parameterDescription": {
+              "parameterOids": [
+                1043,
+                1043,
+                1043,
+                1043,
+                23,
+                1043,
+                25,
+                1043,
+                1043,
+                1043,
+                1043,
+                23,
+                1114,
+                16,
+                23
+              ]
+            }
+          },
+          {
+            "noData": {}
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:UPDATE users SET first_name = $1, last_name = $2, email = $3, username = $4, age = $5, phone = $6, address = $7, city = $8, country = $9, job_title = $10, department = $11, salary = $12, hire_date = $13, is_active = $14 WHERE id = $15": {
+      "id": "SQL:UPDATE users SET first_name = $1, last_name = $2, email = $3, username = $4, age = $5, phone = $6, address = $7, city = $8, country = $9, job_title = $10, department = $11, salary = $12, hire_date = $13, is_active = $14 WHERE id = $15",
+      "tokens": [
+        {
+          "uuid": "dt7EfbTcRamr2KIOPurrWQ==",
+          "token": {
+            "location": "postgres.request.describe.parseRequest.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "VVBEQVRFIHVzZXJzIFNFVCBmaXJzdF9uYW1lID0gJDEsIGxhc3RfbmFtZSA9ICQyLCBlbWFpbCA9ICQzLCB1c2VybmFtZSA9ICQ0LCBhZ2UgPSAkNSwgcGhvbmUgPSAkNiwgYWRkcmVzcyA9ICQ3LCBjaXR5ID0gJDgsIGNvdW50cnkgPSAkOSwgam9iX3RpdGxlID0gJDEwLCBkZXBhcnRtZW50ID0gJDExLCBzYWxhcnkgPSAkMTIsIGhpcmVfZGF0ZSA9ICQxMywgaXNfYWN0aXZlID0gJDE0IFdIRVJFIGlkID0gJDE1"
+          }
+        }
+      ]
+    },
+    "SQL_STATEMENT_NAME:": {
+      "id": "SQL_STATEMENT_NAME:",
+      "tokens": [
+        {
+          "uuid": "dt7EfbTcRamr2KIOPurrWQ==",
+          "token": {
+            "location": "postgres.request.describe.parseRequest.name",
+            "pattern": "DATA_PATTERN_SQL_STATEMENT_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RGVzY3JpYmUgUHJlcGFyZWQgU3RhdGVtZW50",
+    "postgres:query": "VVBEQVRFIHVzZXJzIFNFVCBmaXJzdF9uYW1lID0gJDEsIGxhc3RfbmFtZSA9ICQyLCBlbWFpbCA9ICQzLCB1c2VybmFtZSA9ICQ0LCBhZ2UgPSAkNSwgcGhvbmUgPSAkNiwgYWRkcmVzcyA9ICQ3LCBjaXR5ID0gJDgsIGNvdW50cnkgPSAkOSwgam9iX3RpdGxlID0gJDEwLCBkZXBhcnRtZW50ID0gJDExLCBzYWxhcnkgPSAkMTIsIGhpcmVfZGF0ZSA9ICQxMywgaXNfYWN0aXZlID0gJDE0IFdIRVJFIGlkID0gJDE1",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-09-23T17:09:30.378619Z",
+    "downstream": {
+      "established": "2025-09-23T17:09:30.373047Z",
+      "ipAddress": "127.0.0.1",
+      "port": 49316,
+      "bytesSent": "4223"
+    },
+    "upstream": {
+      "established": "2025-09-23T17:09:30.373638Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5432,
+      "hostname": "localhost",
+      "bytesSent": "2826"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Describe Prepared Statement",
+    "postgres:query": "UPDATE users SET first_name = $1, last_name = $2, email = $3, username = $4, age = $5, phone = $6, address = $7, city = $8, country = $9, job_title = $10, department = $11, salary = $12, hire_date = $13, is_active = $14 WHERE id = $15",
+    "postgres:query_name": ""
+  }
+}

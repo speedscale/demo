@@ -1,0 +1,163 @@
+### Variables
+@port = 8080
+
+### Get all users
+GET http://localhost:{{port}}/users
+Content-Type: application/json
+
+###
+
+### Create a new user
+POST http://localhost:{{port}}/users
+Content-Type: application/json
+
+{
+  "first_name": "Sarah",
+  "last_name": "Connor",
+  "email": "sarah.connor@example.com",
+  "username": "sarahconnor",
+  "age": 35,
+  "phone": "+1-555-0199",
+  "address": "789 Future St",
+  "city": "Los Angeles",
+  "country": "USA",
+  "job_title": "Security Specialist",
+  "department": "Security",
+  "salary": 88000,
+  "hire_date": "2023-05-15T00:00:00Z",
+  "is_active": true
+}
+
+###
+
+### Create another user
+POST http://localhost:{{port}}/users
+Content-Type: application/json
+
+{
+  "first_name": "Mike",
+  "last_name": "Davis",
+  "email": "mike.davis@example.com",
+  "username": "mikedavis",
+  "age": 27,
+  "phone": "+1-555-0200",
+  "address": "456 Tech Blvd",
+  "city": "Boston",
+  "country": "USA",
+  "job_title": "Frontend Developer",
+  "department": "Engineering",
+  "salary": 75000,
+  "hire_date": "2023-08-01T00:00:00Z",
+  "is_active": true
+}
+
+###
+
+### Update user with ID 1
+PUT http://localhost:{{port}}/users/1
+Content-Type: application/json
+
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john.doe.updated@example.com",
+  "username": "johndoe",
+  "age": 31,
+  "phone": "+1-555-0123",
+  "address": "123 Main St Updated",
+  "city": "New York",
+  "country": "USA",
+  "job_title": "Senior Software Engineer",
+  "department": "Engineering",
+  "salary": 95000,
+  "hire_date": "2020-03-15T00:00:00Z",
+  "is_active": true
+}
+
+###
+
+### Update user with ID 2
+PUT http://localhost:{{port}}/users/2
+Content-Type: application/json
+
+{
+  "first_name": "Jane",
+  "last_name": "Smith",
+  "email": "jane.smith@example.com",
+  "username": "janesmith",
+  "age": 29,
+  "phone": "+1-555-0124",
+  "address": "456 Oak Ave",
+  "city": "San Francisco",
+  "country": "USA",
+  "job_title": "Senior Product Manager",
+  "department": "Product",
+  "salary": 110000,
+  "hire_date": "2021-07-22T00:00:00Z",
+  "is_active": true
+}
+
+###
+
+### Delete user with ID 5
+DELETE http://localhost:{{port}}/users/5
+Content-Type: application/json
+
+###
+
+### Delete user with ID 3
+DELETE http://localhost:{{port}}/users/3
+Content-Type: application/json
+
+###
+
+### Try to get a deleted user (should return 404)
+GET http://localhost:{{port}}/users/999
+Content-Type: application/json
+
+###
+
+### Try to update a non-existent user (should return 404)
+PUT http://localhost:{{port}}/users/999
+Content-Type: application/json
+
+{
+  "first_name": "Non",
+  "last_name": "Existent",
+  "email": "nonexistent@example.com",
+  "username": "nonexistent",
+  "age": 25,
+  "phone": "+1-555-9999",
+  "address": "999 Nowhere St",
+  "city": "Nowhere",
+  "country": "USA",
+  "job_title": "Ghost",
+  "department": "Phantom",
+  "salary": 0,
+  "hire_date": "2023-01-01T00:00:00Z",
+  "is_active": false
+}
+
+###
+
+### Try to delete a non-existent user (should return 404)
+DELETE http://localhost:{{port}}/users/999
+Content-Type: application/json
+
+###
+
+### Create user with invalid JSON (should return 400)
+POST http://localhost:{{port}}/users
+Content-Type: application/json
+
+{
+  "first_name": "Invalid"
+  "last_name": "User",
+  "email": "invalid@example.com"
+}
+
+###
+
+### Get all users again to see final state
+GET http://localhost:{{port}}/users
+Content-Type: application/json

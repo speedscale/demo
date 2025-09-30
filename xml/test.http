@@ -1,0 +1,13 @@
+### Test XML POST request
+POST http://localhost:4143/query
+Content-Type: application/xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<query>
+    <id>12345</id>
+    <type>user_data</type>
+    <filter>active_users</filter>
+</query>
+
+### Test GET request (should return Method Not Allowed)
+GET http://localhost:8080/query

@@ -3,6 +3,7 @@ require 'sinatra/json'
 require 'pg'
 require 'httparty'
 require 'json'
+require 'jwt'
 
 # Rate limiter for external API calls
 class RateLimiter
@@ -30,6 +31,45 @@ end
 
 # Initialize rate limiter for WorldTimeAPI
 $rate_limiter = RateLimiter.new(max_requests_per_second: 1)
+
+# JWT configuration
+JWT_SECRET = ENV['JWT_SECRET'] || 'development-secret-change-me'
+JWT_ALGORITHM = 'HS512'
+JWT_EXPIRATION = 15 * 60 # 15 minutes in seconds
+
+# JWT helper methods
+def generate_jwt(user_id)
+  payload = {
+    user_id: user_id,
+    exp: Time.now.to_i + JWT_EXPIRATION,
+    iat: Time.now.to_i
+  }
+  JWT.encode(payload, JWT_SECRET, JWT_ALGORITHM)
+end
+
+def verify_jwt(token)
+  JWT.decode(token, JWT_SECRET, true, { algorithm: JWT_ALGORITHM })[0]
+rescue JWT::DecodeError, JWT::ExpiredSignature => e
+  nil
+end
+
+# Authentication middleware
+def authenticate!
+  auth_header = request.env['HTTP_AUTHORIZATION']
+
+  unless auth_header && auth_header.start_with?('Bearer ')
+    halt 401, json({ error: 'Missing or invalid Authorization header' })
+  end
+
+  token = auth_header.sub('Bearer ', '')
+  payload = verify_jwt(token)
+
+  unless payload
+    halt 401, json({ error: 'Invalid or expired token' })
+  end
+
+  @current_user_id = payload['user_id']
+end
 
 # Database connection
 def db_connection
@@ -88,14 +128,44 @@ configure do
   end
 end
 
-# Health check endpoint
+# Health check endpoint (no auth required)
 get '/health' do
   status 200
   json({ status: 'healthy', timestamp: Time.now.iso8601 })
 end
 
+# Login endpoint (no auth required)
+post '/login' do
+  request.body.rewind
+  data = JSON.parse(request.body.read)
+
+  username = data['username']
+  password = data['password']
+
+  # Simple demo authentication - in production, validate against DB with bcrypt
+  # For demo purposes, accept any username with password "demo123"
+  if username && password == 'demo123'
+    token = generate_jwt(username)
+
+    json({
+      token: token,
+      expires_in: JWT_EXPIRATION,
+      user_id: username,
+      token_type: 'Bearer'
+    })
+  else
+    status 401
+    json({ error: 'Invalid credentials' })
+  end
+rescue JSON::ParserError
+  status 400
+  json({ error: 'Invalid JSON' })
+end
+
 # Get all tasks
 get '/tasks' do
+  authenticate!
+
   conn = db_connection
   result = conn.exec('SELECT * FROM tasks ORDER BY created_at DESC')
 
@@ -119,6 +189,8 @@ end
 
 # Get single task
 get '/tasks/:id' do
+  authenticate!
+
   conn = db_connection
   result = conn.exec_params('SELECT * FROM tasks WHERE id = $1', [params[:id]])
 
@@ -144,6 +216,8 @@ end
 
 # Create new task
 post '/tasks' do
+  authenticate!
+
   request.body.rewind
   data = JSON.parse(request.body.read)
 
@@ -174,6 +248,8 @@ end
 
 # Update task
 put '/tasks/:id' do
+  authenticate!
+
   request.body.rewind
   data = JSON.parse(request.body.read)
 
@@ -208,6 +284,8 @@ end
 
 # Delete task
 delete '/tasks/:id' do
+  authenticate!
+
   conn = db_connection
   result = conn.exec_params('DELETE FROM tasks WHERE id = $1 RETURNING id', [params[:id]])
 
@@ -224,6 +302,8 @@ end
 
 # Time conversion endpoint using WorldTimeAPI
 post '/api/time-convert' do
+  authenticate!
+
   request.body.rewind
   data = JSON.parse(request.body.read)
 

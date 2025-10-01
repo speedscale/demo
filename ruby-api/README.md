@@ -5,6 +5,7 @@ A Ruby microservice built with Sinatra that provides REST API endpoints for task
 ## Features
 
 - **RESTful API**: Full CRUD operations for task management
+- **JWT Authentication**: Secure token-based authentication with HS512
 - **PostgreSQL Database**: Persistent storage with automated initialization
 - **External API Integration**: WorldTimeAPI integration with built-in rate limiting
 - **Kubernetes Ready**: Complete k8s manifests with Kustomize support
@@ -128,24 +129,57 @@ kubectl delete -k .
 kubectl delete -k k8s/overlays/server-only/
 ```
 
+## Authentication
+
+The API uses **JWT (JSON Web Tokens)** with HS512 algorithm for authentication. All endpoints except `/health` and `/login` require a valid JWT token.
+
+### Login Flow
+
+1. **Obtain Token**: Call `/login` with credentials
+2. **Use Token**: Include token in `Authorization: Bearer <token>` header
+3. **Token Expires**: After 15 minutes
+4. **Refresh**: Login again to get a new token
+
+### Demo Credentials
+
+For demo purposes, any username works with password `demo123`:
+```json
+{
+  "username": "any-username",
+  "password": "demo123"
+}
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JWT_SECRET` | `development-secret-change-me` | JWT signing secret (use K8S secret in production) |
+
 ## API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/login` | Get JWT token | No |
 
 ### Task Management
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/health` | Health check endpoint |
-| `GET` | `/tasks` | List all tasks |
-| `GET` | `/tasks/:id` | Get a specific task |
-| `POST` | `/tasks` | Create a new task |
-| `PUT` | `/tasks/:id` | Update an existing task |
-| `DELETE` | `/tasks/:id` | Delete a task |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/health` | Health check endpoint | No |
+| `GET` | `/tasks` | List all tasks | **Yes** |
+| `GET` | `/tasks/:id` | Get a specific task | **Yes** |
+| `POST` | `/tasks` | Create a new task | **Yes** |
+| `PUT` | `/tasks/:id` | Update an existing task | **Yes** |
+| `DELETE` | `/tasks/:id` | Delete a task | **Yes** |
 
 ### External API Integration
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/time-convert` | Convert epoch timestamp using WorldTimeAPI |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/api/time-convert` | Convert epoch timestamp using WorldTimeAPI | **Yes** |
 
 ## Task Schema
 
@@ -163,15 +197,41 @@ kubectl delete -k k8s/overlays/server-only/
 
 ## API Examples
 
+### Login to get JWT token
+```bash
+curl -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "demo123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "token": "eyJhbGciOiJIUzUxMiJ9...",
+  "expires_in": 900,
+  "user_id": "testuser",
+  "token_type": "Bearer"
+}
+```
+
+**Save the token** and use it in subsequent requests.
+
 ### List all tasks
 ```bash
-curl http://localhost:3000/tasks
+TOKEN="eyJhbGciOiJIUzUxMiJ9..."
+
+curl http://localhost:3000/tasks \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Create a task
 ```bash
 curl -X POST http://localhost:3000/tasks \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "title": "New task",
     "description": "Task description",
@@ -184,6 +244,7 @@ curl -X POST http://localhost:3000/tasks \
 ```bash
 curl -X PUT http://localhost:3000/tasks/1 \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "title": "Updated task",
     "description": "Updated description",
@@ -194,13 +255,15 @@ curl -X PUT http://localhost:3000/tasks/1 \
 
 ### Delete a task
 ```bash
-curl -X DELETE http://localhost:3000/tasks/1
+curl -X DELETE http://localhost:3000/tasks/1 \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Convert epoch timestamp
 ```bash
 curl -X POST http://localhost:3000/api/time-convert \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "epoch": 1704067200,
     "timezone": "America/New_York"
@@ -285,6 +348,7 @@ ruby-api/
 | `DB_NAME` | `tasks_db` | Database name |
 | `DB_USER` | `postgres` | Database user |
 | `DB_PASSWORD` | - | Database password (required) |
+| `JWT_SECRET` | `development-secret-change-me` | JWT signing secret (must be set in production) |
 
 ## Dependencies
 
@@ -295,6 +359,7 @@ ruby-api/
 - `puma` (~> 6.4) - Web server
 - `json` (~> 2.7) - JSON handling
 - `rack` (~> 2.2) - Web server interface
+- `jwt` (~> 2.7) - JWT authentication
 
 ## Deployment Patterns
 

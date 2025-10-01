@@ -11,6 +11,8 @@ class TasksClient
     @base_url = ENV['SERVER_URL'] || 'http://ruby-server'
     @iteration = 0
     @task_ids = []
+    @token = nil
+    @token_expires_at = nil
 
     self.class.base_uri @base_url
     self.class.default_timeout 10
@@ -24,6 +26,9 @@ class TasksClient
   def run
     wait_for_server
 
+    # Login to get JWT token
+    login
+
     puts "\n✓ Server is ready! Starting traffic generation...\n"
 
     loop do
@@ -31,6 +36,9 @@ class TasksClient
       puts "\n=== Iteration #{@iteration} ==="
 
       begin
+        # Refresh token if needed (before expiration)
+        refresh_token_if_needed
+
         # Health check occasionally
         health_check if @iteration % 10 == 0
 
@@ -52,12 +60,51 @@ class TasksClient
 
       rescue => e
         puts "  ✗ Error in iteration #{@iteration}: #{e.message}"
+        # Try to re-login if auth error
+        login if e.message.include?('401')
         sleep 5
       end
     end
   end
 
   private
+
+  def login
+    puts "\n→ Logging in to get JWT token..."
+
+    response = self.class.post('/login',
+      headers: { 'Content-Type' => 'application/json' },
+      body: { username: 'client-user', password: 'demo123' }.to_json
+    )
+
+    if response.code == 200
+      data = response.parsed_response
+      @token = data['token']
+      @token_expires_at = Time.now + data['expires_in']
+      puts "  ✓ Logged in successfully (token expires in #{data['expires_in']}s)"
+    else
+      puts "  ✗ Login failed: #{response.code}"
+      exit 1
+    end
+  rescue => e
+    puts "  ✗ Login error: #{e.message}"
+    exit 1
+  end
+
+  def refresh_token_if_needed
+    # Refresh token 1 minute before expiration
+    if @token_expires_at && Time.now >= (@token_expires_at - 60)
+      puts "  → Token expiring soon, refreshing..."
+      login
+    end
+  end
+
+  def auth_headers
+    {
+      'Content-Type' => 'application/json',
+      'Authorization' => "Bearer #{@token}"
+    }
+  end
 
   def wait_for_server
     max_attempts = 60
@@ -103,7 +150,7 @@ class TasksClient
 
   def list_tasks
     puts "  → Listing tasks..."
-    response = self.class.get('/tasks')
+    response = self.class.get('/tasks', headers: auth_headers)
 
     if response.code == 200
       tasks = response.parsed_response
@@ -143,7 +190,7 @@ class TasksClient
     }
 
     response = self.class.post('/tasks',
-      headers: { 'Content-Type' => 'application/json' },
+      headers: auth_headers,
       body: task.to_json
     )
 
@@ -175,7 +222,7 @@ class TasksClient
     }
 
     response = self.class.put("/tasks/#{task_id}",
-      headers: { 'Content-Type' => 'application/json' },
+      headers: auth_headers,
       body: task.to_json
     )
 
@@ -197,7 +244,7 @@ class TasksClient
     task_id = @task_ids.sample
     puts "  → Deleting task #{task_id}..."
 
-    response = self.class.delete("/tasks/#{task_id}")
+    response = self.class.delete("/tasks/#{task_id}", headers: auth_headers)
 
     if response.code == 204
       @task_ids.delete(task_id)
@@ -233,7 +280,7 @@ class TasksClient
     }
 
     response = self.class.post('/api/time-convert',
-      headers: { 'Content-Type' => 'application/json' },
+      headers: auth_headers,
       body: payload.to_json
     )
 

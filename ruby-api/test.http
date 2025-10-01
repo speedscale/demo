@@ -1,28 +1,55 @@
 ### Variables
 @port = 3000
 @host = localhost
+@token =
 
-### Health Check
+### Health Check (No Auth Required)
 GET http://{{host}}:{{port}}/health
 Content-Type: application/json
 
 ###
 
-### Get all tasks
+### Login - Get JWT Token
+# @name login
+POST http://{{host}}:{{port}}/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "demo123"
+}
+
+###
+
+### Login - Invalid Credentials
+POST http://{{host}}:{{port}}/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "wrongpassword"
+}
+
+###
+
+### Get all tasks (Requires Auth - paste token from login response)
 GET http://{{host}}:{{port}}/tasks
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 ###
 
-### Get single task by ID
+### Get single task by ID (Requires Auth)
 GET http://{{host}}:{{port}}/tasks/1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 ###
 
-### Create a new task
+### Create a new task (Requires Auth)
 POST http://{{host}}:{{port}}/tasks
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "title": "Deploy Ruby API to production",
@@ -33,9 +60,10 @@ Content-Type: application/json
 
 ###
 
-### Create another task
+### Create another task (Requires Auth)
 POST http://{{host}}:{{port}}/tasks
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "title": "Write API documentation",
@@ -46,9 +74,10 @@ Content-Type: application/json
 
 ###
 
-### Update task with ID 1
+### Update task with ID 1 (Requires Auth)
 PUT http://{{host}}:{{port}}/tasks/1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "title": "Setup development environment - UPDATED",
@@ -59,9 +88,10 @@ Content-Type: application/json
 
 ###
 
-### Update task with ID 2
+### Update task with ID 2 (Requires Auth)
 PUT http://{{host}}:{{port}}/tasks/2
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "title": "Create API endpoints",
@@ -72,21 +102,24 @@ Content-Type: application/json
 
 ###
 
-### Delete task with ID 5
+### Delete task with ID 5 (Requires Auth)
 DELETE http://{{host}}:{{port}}/tasks/5
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 ###
 
-### Delete task with ID 4
+### Delete task with ID 4 (Requires Auth)
 DELETE http://{{host}}:{{port}}/tasks/4
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 ###
 
-### Time conversion - Convert epoch timestamp to America/New_York timezone
+### Time conversion - Convert epoch timestamp to America/New_York timezone (Requires Auth)
 POST http://{{host}}:{{port}}/api/time-convert
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "epoch": 1704067200,
@@ -95,9 +128,10 @@ Content-Type: application/json
 
 ###
 
-### Time conversion - Convert epoch timestamp to Europe/London timezone
+### Time conversion - Convert epoch timestamp to Europe/London timezone (Requires Auth)
 POST http://{{host}}:{{port}}/api/time-convert
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "epoch": 1609459200,
@@ -106,9 +140,10 @@ Content-Type: application/json
 
 ###
 
-### Time conversion - Convert epoch timestamp to Asia/Tokyo timezone
+### Time conversion - Convert epoch timestamp to Asia/Tokyo timezone (Requires Auth)
 POST http://{{host}}:{{port}}/api/time-convert
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "epoch": 1672531200,
@@ -117,9 +152,10 @@ Content-Type: application/json
 
 ###
 
-### Time conversion - Convert current timestamp (default timezone)
+### Time conversion - Convert current timestamp (default timezone) (Requires Auth)
 POST http://{{host}}:{{port}}/api/time-convert
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "epoch": 1735689600
@@ -130,12 +166,14 @@ Content-Type: application/json
 ### Error Test: Try to get a non-existent task (should return 404)
 GET http://{{host}}:{{port}}/tasks/999
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 ###
 
 ### Error Test: Try to update a non-existent task (should return 404)
 PUT http://{{host}}:{{port}}/tasks/999
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "title": "Non-existent task",
@@ -149,12 +187,14 @@ Content-Type: application/json
 ### Error Test: Try to delete a non-existent task (should return 404)
 DELETE http://{{host}}:{{port}}/tasks/999
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 ###
 
 ### Error Test: Create task with invalid JSON (should return 400)
 POST http://{{host}}:{{port}}/tasks
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "title": "Invalid task"
@@ -166,6 +206,7 @@ Content-Type: application/json
 ### Error Test: Time conversion without epoch (should return 400)
 POST http://{{host}}:{{port}}/api/time-convert
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "timezone": "America/New_York"
@@ -176,6 +217,7 @@ Content-Type: application/json
 ### Error Test: Time conversion with invalid JSON (should return 400)
 POST http://{{host}}:{{port}}/api/time-convert
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "epoch": 1704067200
@@ -187,6 +229,7 @@ Content-Type: application/json
 ### Rate Limit Test: Rapid time conversions (should hit rate limit after first request)
 POST http://{{host}}:{{port}}/api/time-convert
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "epoch": 1704067200,
@@ -197,6 +240,7 @@ Content-Type: application/json
 
 POST http://{{host}}:{{port}}/api/time-convert
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "epoch": 1704067200,
@@ -205,8 +249,29 @@ Content-Type: application/json
 
 ###
 
-### Get all tasks again to see final state
+### Auth Error Test: Call without token (should return 401)
 GET http://{{host}}:{{port}}/tasks
 Content-Type: application/json
+
+###
+
+### Auth Error Test: Call with invalid token (should return 401)
+GET http://{{host}}:{{port}}/tasks
+Content-Type: application/json
+Authorization: Bearer invalid-token-here
+
+###
+
+### Auth Error Test: Call with malformed Bearer header (should return 401)
+GET http://{{host}}:{{port}}/tasks
+Content-Type: application/json
+Authorization: InvalidFormat token-here
+
+###
+
+### Get all tasks again to see final state (With Auth)
+GET http://{{host}}:{{port}}/tasks
+Content-Type: application/json
+Authorization: Bearer {{token}}
 
 ###

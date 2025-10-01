@@ -45,6 +45,14 @@ jobs:
             path: node
             setup: node
             test_cmd: echo "No tests configured for node"
+          - name: ruby-api
+            path: ruby-api
+            setup: ruby
+            test_cmd: echo "No tests configured for ruby-api"
+          - name: ruby-client
+            path: ruby-api/client
+            setup: ruby
+            test_cmd: echo "No tests configured for ruby-client"
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -76,6 +84,14 @@ jobs:
       if: matrix.service.setup == 'node'
       working-directory: ${{ matrix.service.path }}
       run: npm ci
+
+    - name: Set up Ruby
+      if: matrix.service.setup == 'ruby'
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+        working-directory: ${{ matrix.service.path }}
 
     - name: Run tests
       working-directory: ${{ matrix.service.path }}
@@ -109,6 +125,12 @@ jobs:
           - name: smart-replace-demo
             path: smart-replace-demo
             build_cmd: make build
+          - name: ruby-api
+            path: ruby-api
+            build_cmd: make build
+          - name: ruby-client
+            path: ruby-api
+            build_cmd: make build-client
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -134,6 +156,14 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Set up Ruby
+      if: contains(matrix.service.name, 'ruby')
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+        working-directory: ${{ matrix.service.path }}
+
     - name: Build service
       working-directory: ${{ matrix.service.path }}
       run: ${{ matrix.service.build_cmd }}
@@ -155,7 +185,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [java, node, java-auth, smart-replace-demo]
+        service: [java, node, java-auth, smart-replace-demo, ruby-api]
     steps:
     - name: Checkout
       uses: actions/checkout@v4

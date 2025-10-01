@@ -1,0 +1,212 @@
+### Variables
+@port = 3000
+@host = localhost
+
+### Health Check
+GET http://{{host}}:{{port}}/health
+Content-Type: application/json
+
+###
+
+### Get all tasks
+GET http://{{host}}:{{port}}/tasks
+Content-Type: application/json
+
+###
+
+### Get single task by ID
+GET http://{{host}}:{{port}}/tasks/1
+Content-Type: application/json
+
+###
+
+### Create a new task
+POST http://{{host}}:{{port}}/tasks
+Content-Type: application/json
+
+{
+  "title": "Deploy Ruby API to production",
+  "description": "Deploy the new Ruby microservice to the production Kubernetes cluster",
+  "status": "pending",
+  "priority": 1
+}
+
+###
+
+### Create another task
+POST http://{{host}}:{{port}}/tasks
+Content-Type: application/json
+
+{
+  "title": "Write API documentation",
+  "description": "Create comprehensive API documentation using Swagger/OpenAPI",
+  "status": "in_progress",
+  "priority": 2
+}
+
+###
+
+### Update task with ID 1
+PUT http://{{host}}:{{port}}/tasks/1
+Content-Type: application/json
+
+{
+  "title": "Setup development environment - UPDATED",
+  "description": "Install Ruby 3.2, PostgreSQL 15, and all required dependencies",
+  "status": "completed",
+  "priority": 1
+}
+
+###
+
+### Update task with ID 2
+PUT http://{{host}}:{{port}}/tasks/2
+Content-Type: application/json
+
+{
+  "title": "Create API endpoints",
+  "description": "Implement CRUD operations for tasks - COMPLETED",
+  "status": "completed",
+  "priority": 2
+}
+
+###
+
+### Delete task with ID 5
+DELETE http://{{host}}:{{port}}/tasks/5
+Content-Type: application/json
+
+###
+
+### Delete task with ID 4
+DELETE http://{{host}}:{{port}}/tasks/4
+Content-Type: application/json
+
+###
+
+### Time conversion - Convert epoch timestamp to America/New_York timezone
+POST http://{{host}}:{{port}}/api/time-convert
+Content-Type: application/json
+
+{
+  "epoch": 1704067200,
+  "timezone": "America/New_York"
+}
+
+###
+
+### Time conversion - Convert epoch timestamp to Europe/London timezone
+POST http://{{host}}:{{port}}/api/time-convert
+Content-Type: application/json
+
+{
+  "epoch": 1609459200,
+  "timezone": "Europe/London"
+}
+
+###
+
+### Time conversion - Convert epoch timestamp to Asia/Tokyo timezone
+POST http://{{host}}:{{port}}/api/time-convert
+Content-Type: application/json
+
+{
+  "epoch": 1672531200,
+  "timezone": "Asia/Tokyo"
+}
+
+###
+
+### Time conversion - Convert current timestamp (default timezone)
+POST http://{{host}}:{{port}}/api/time-convert
+Content-Type: application/json
+
+{
+  "epoch": 1735689600
+}
+
+###
+
+### Error Test: Try to get a non-existent task (should return 404)
+GET http://{{host}}:{{port}}/tasks/999
+Content-Type: application/json
+
+###
+
+### Error Test: Try to update a non-existent task (should return 404)
+PUT http://{{host}}:{{port}}/tasks/999
+Content-Type: application/json
+
+{
+  "title": "Non-existent task",
+  "description": "This task does not exist",
+  "status": "pending",
+  "priority": 1
+}
+
+###
+
+### Error Test: Try to delete a non-existent task (should return 404)
+DELETE http://{{host}}:{{port}}/tasks/999
+Content-Type: application/json
+
+###
+
+### Error Test: Create task with invalid JSON (should return 400)
+POST http://{{host}}:{{port}}/tasks
+Content-Type: application/json
+
+{
+  "title": "Invalid task"
+  "description": "Missing comma in JSON"
+}
+
+###
+
+### Error Test: Time conversion without epoch (should return 400)
+POST http://{{host}}:{{port}}/api/time-convert
+Content-Type: application/json
+
+{
+  "timezone": "America/New_York"
+}
+
+###
+
+### Error Test: Time conversion with invalid JSON (should return 400)
+POST http://{{host}}:{{port}}/api/time-convert
+Content-Type: application/json
+
+{
+  "epoch": 1704067200
+  "timezone": "America/New_York"
+}
+
+###
+
+### Rate Limit Test: Rapid time conversions (should hit rate limit after first request)
+POST http://{{host}}:{{port}}/api/time-convert
+Content-Type: application/json
+
+{
+  "epoch": 1704067200,
+  "timezone": "America/New_York"
+}
+
+###
+
+POST http://{{host}}:{{port}}/api/time-convert
+Content-Type: application/json
+
+{
+  "epoch": 1704067200,
+  "timezone": "America/New_York"
+}
+
+###
+
+### Get all tasks again to see final state
+GET http://{{host}}:{{port}}/tasks
+Content-Type: application/json
+
+###

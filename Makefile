@@ -38,6 +38,8 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' 's|gcr.io/speedscale-demos/java-server:[v]*[0-9.]*|gcr.io/speedscale-demos/java-server:v$(VERSION)|g' java/manifest.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/node-server:[v]*[0-9.]*|gcr.io/speedscale-demos/node-server:v$(VERSION)|g' node/manifest.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/smart-replace-demo:[v]*[0-9.]*|gcr.io/speedscale-demos/smart-replace-demo:v$(VERSION)|g' smart-replace-demo/manifest.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/ruby-api:[v]*[0-9.]*|gcr.io/speedscale-demos/ruby-api:v$(VERSION)|g' ruby-api/k8s/base/ruby-server/ruby-deployment.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/ruby-client:[v]*[0-9.]*|gcr.io/speedscale-demos/ruby-client:v$(VERSION)|g' ruby-api/k8s/base/ruby-client/client-deployment.yaml
 	@echo "Updating Maven pom.xml files..."
 	@sed -i '' '/<artifactId>auth<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/server/pom.xml
 	@sed -i '' '/<artifactId>auth-client<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/client/pom.xml
@@ -57,7 +59,7 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 	echo "Expected version: $$VERSION_FILE"; \
 	echo ""; \
 	echo "Checking Kubernetes manifests:"; \
-	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-deployment.yaml java-auth/k8s/base/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml | \
+	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-deployment.yaml java-auth/k8s/base/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml ruby-api/k8s/base/ruby-server/ruby-deployment.yaml ruby-api/k8s/base/ruby-client/client-deployment.yaml | \
 	while read line; do \
 		if echo "$$line" | grep -q ":$$VERSION_FILE" || echo "$$line" | grep -q ":v$$VERSION_FILE"; then \
 			echo "  ✅ $$line"; \
@@ -129,7 +131,10 @@ build-node: ## Build Node project
 build-smart-replace-demo: ## Build Smart Replace Demo project
 	cd smart-replace-demo && make build
 
-build-all: build-java build-java-auth build-node build-smart-replace-demo ## Build all projects
+build-ruby: ## Build Ruby project
+	cd ruby-api && make build
+
+build-all: build-java build-java-auth build-node build-smart-replace-demo build-ruby ## Build all projects
 
 # Docker build targets with centralized version
 docker-java: ## Build and push Java Docker image
@@ -144,7 +149,10 @@ docker-node: ## Build and push Node Docker image
 docker-smart-replace-demo: ## Build and push Smart Replace Demo Docker image
 	cd smart-replace-demo && make docker-multi VERSION=$(VERSION)
 
-docker-all: docker-java docker-java-auth docker-node docker-smart-replace-demo ## Build and push all Docker images
+docker-ruby: ## Build and push Ruby Docker images (server and client)
+	cd ruby-api && make docker-all VERSION=$(VERSION)
+
+docker-all: docker-java docker-java-auth docker-node docker-smart-replace-demo docker-ruby ## Build and push all Docker images
 
 # Test targets
 test-java: ## Test Java project

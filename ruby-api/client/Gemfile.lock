@@ -1,0 +1,20 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    csv (3.3.5)
+    httparty (0.23.1)
+      csv
+      mini_mime (>= 1.0.0)
+      multi_xml (>= 0.5.2)
+    mini_mime (1.1.5)
+    multi_xml (0.6.0)
+
+PLATFORMS
+  aarch64-linux
+  arm64-darwin-22
+
+DEPENDENCIES
+  httparty (~> 0.21)
+
+BUNDLED WITH
+   2.2.33

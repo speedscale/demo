@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ruby-api-replay
+  labels:
+    app.kubernetes.io/name: ruby-api
+    app.kubernetes.io/variant: server-only

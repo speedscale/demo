@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ruby-client
+  labels:
+    app: ruby-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ruby-client
+  template:
+    metadata:
+      labels:
+        app: ruby-client
+    spec:
+      initContainers:
+        - name: wait-for-ruby-server
+          image: busybox:1.35
+          command:
+          - sh
+          - -c
+          - |
+            until nc -z ruby-server 80; do
+              echo "Waiting for Ruby server..."
+              sleep 2
+            done
+            echo "Ruby server is ready!"
+      containers:
+        - name: ruby-client
+          image: gcr.io/speedscale-demos/ruby-client:v1.1.7
+          imagePullPolicy: Always
+          env:
+            - name: SERVER_URL
+              value: "http://ruby-server"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+      restartPolicy: Always

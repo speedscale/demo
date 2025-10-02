@@ -185,7 +185,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [java, node, java-auth, smart-replace-demo, ruby-api]
+        include:
+          - service: java
+            path: java
+            target: docker-multi
+          - service: node
+            path: node
+            target: docker-multi
+          - service: java-auth
+            path: java-auth
+            target: docker-multi
+          - service: smart-replace-demo
+            path: smart-replace-demo
+            target: docker-multi
+          - service: ruby-api
+            path: ruby-api
+            target: docker-multi
+          - service: ruby-client
+            path: ruby-api
+            target: docker-client
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -212,5 +230,5 @@ jobs:
       run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
 
     - name: Build and push Docker image
-      working-directory: ${{ matrix.service }}
-      run: make docker-multi VERSION=${{ steps.version.outputs.version }}
+      working-directory: ${{ matrix.path }}
+      run: make ${{ matrix.target }} VERSION=${{ steps.version.outputs.version }}

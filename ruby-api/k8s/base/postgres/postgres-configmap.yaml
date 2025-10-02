@@ -5,7 +5,3 @@ metadata:
 data:
   POSTGRES_HOST: "postgres-service"
   POSTGRES_PORT: "5432"
-  init.sql: |
-    CREATE DATABASE IF NOT EXISTS tasks_db;
-    CREATE USER IF NOT EXISTS tasks_user WITH PASSWORD 'postgres123!@#';
-    GRANT ALL PRIVILEGES ON DATABASE tasks_db TO tasks_user;

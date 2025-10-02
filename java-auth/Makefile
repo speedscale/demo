@@ -1,6 +1,6 @@
 VERSION?=$(shell cat ../VERSION 2>/dev/null || echo "1.0.0")
-REGISTRY?=gcr.io/speedscale-demos/java-auth:${VERSION}
-CLIENT_REGISTRY?=gcr.io/speedscale-demos/java-auth-client:${VERSION}
+REGISTRY?=gcr.io/speedscale-demos/java-auth:v${VERSION}
+CLIENT_REGISTRY?=gcr.io/speedscale-demos/java-auth-client:v${VERSION}
 NAMESPACE?=default
 
 .PHONY: help build test run up down client local compose kube docker-build docker-multi

@@ -6,13 +6,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Gemfile and install gems
-COPY Gemfile Gemfile.lock* ./
-RUN bundle config set --local deployment 'true' && \
-    bundle config set --local without 'development test' && \
-    bundle install
+COPY Gemfile Gemfile.lock ./
+RUN bundle install --jobs 4 --retry 3
 
 # Production stage
 FROM ruby:3.2-slim
@@ -25,15 +24,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy gems from builder
-COPY --from=builder /app/vendor/bundle /app/vendor/bundle
-COPY --from=builder /usr/local/bundle/config /usr/local/bundle/config
+COPY --from=builder /usr/local/bundle /usr/local/bundle
 
 # Copy application code
 COPY . .
-
-# Set bundle path
-RUN bundle config set --local deployment 'true' && \
-    bundle config set --local without 'development test'
 
 EXPOSE 3000
 

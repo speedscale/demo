@@ -44,18 +44,29 @@ class TasksClient
 
         # Core CRUD operations
         list_tasks
+        sleep rand(1..3)
+
         create_random_task
+        sleep rand(1..3)
+
         update_random_task if @task_ids.any?
+        sleep rand(1..3)
 
         # Time conversion API
-        convert_time if @iteration % 3 == 0
+        if @iteration % 3 == 0
+          convert_time
+          sleep rand(1..3)
+        end
 
         # Delete occasionally
-        delete_random_task if @iteration % 7 == 0 && @task_ids.any?
+        if @iteration % 7 == 0 && @task_ids.any?
+          delete_random_task
+          sleep rand(1..3)
+        end
 
-        # Random sleep between requests
-        sleep_time = rand(2..5)
-        puts "  → Sleeping for #{sleep_time}s..."
+        # Random sleep between iterations
+        sleep_time = rand(5..10)
+        puts "  → Sleeping for #{sleep_time}s before next iteration..."
         sleep sleep_time
 
       rescue => e

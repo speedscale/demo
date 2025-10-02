@@ -332,7 +332,13 @@ post '/api/time-convert' do
     )
 
     if response.code == 200
-      api_data = JSON.parse(response.body)
+      # Parse API response
+      begin
+        api_data = response.parsed_response
+      rescue => parse_error
+        status 502
+        return json({ error: "Failed to parse external API response: #{parse_error.message}" })
+      end
 
       # Convert epoch to Time object
       converted_time = Time.at(epoch.to_i)

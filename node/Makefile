@@ -1,5 +1,5 @@
 VERSION?=$(shell cat ../VERSION 2>/dev/null || echo "1.0.4")
-REGISTRY?=gcr.io/speedscale-demos/node-server:${VERSION}
+REGISTRY?=gcr.io/speedscale-demos/node-server:v${VERSION}
 NAMESPACE?=default
 
 .PHONY: build

@@ -148,10 +148,11 @@ post '/login' do
     token = generate_jwt(username)
 
     json({
-      token: token,
+      access_token: token,
       expires_in: JWT_EXPIRATION,
       user_id: username,
-      token_type: 'Bearer'
+      token_type: 'Bearer',
+      scope: 'read write'
     })
   else
     status 401
@@ -167,7 +168,7 @@ get '/tasks' do
   authenticate!
 
   conn = db_connection
-  result = conn.exec('SELECT * FROM tasks ORDER BY created_at DESC')
+  result = conn.exec_params('SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC', ['pending'])
 
   tasks = result.map do |row|
     {
@@ -325,9 +326,10 @@ post '/api/time-convert' do
   end
 
   begin
-    # Call WorldTimeAPI
+    # Call WorldTimeAPI with unix timestamp
     response = HTTParty.get(
       "http://worldtimeapi.org/api/timezone/#{timezone}",
+      query: { unixtime: epoch },
       timeout: 5
     )
 

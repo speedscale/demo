@@ -248,8 +248,14 @@ rescue PG::Error => e
 end
 
 # Update task
-put '/tasks/:id' do
+put '/tasks' do
   authenticate!
+
+  task_id = params['id']
+  unless task_id
+    status 400
+    return json({ error: 'Missing required query parameter: id' })
+  end
 
   request.body.rewind
   data = JSON.parse(request.body.read)
@@ -257,7 +263,7 @@ put '/tasks/:id' do
   conn = db_connection
   result = conn.exec_params(
     'UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
-    [data['title'], data['description'], data['status'], data['priority'], params[:id]]
+    [data['title'], data['description'], data['status'], data['priority'], task_id]
   )
 
   if result.ntuples == 0

@@ -239,7 +239,7 @@ class TasksClient
       priority: priorities.sample
     }
 
-    response = self.class.put("/tasks/#{task_id}",
+    response = self.class.put("/tasks?id=#{task_id}",
       headers: auth_headers,
       body: task.to_json
     )

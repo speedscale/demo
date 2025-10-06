@@ -26,7 +26,7 @@ spec:
             echo "PostgreSQL is ready!"
       containers:
         - name: ruby-server
-          image: gcr.io/speedscale-demos/ruby-api:v1.2.0
+          image: gcr.io/speedscale-demos/ruby-api:v1.2.1
           imagePullPolicy: Always
           ports:
             - containerPort: 3000

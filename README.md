@@ -2,6 +2,9 @@
 
 This repository contains various self-contained demo applications that showcase different programming languages, frameworks, and deployment patterns. Each demo is designed to work with Speedscale's traffic recording, mocking, and replay capabilities.
 
+For contributor guidance, see [Repository Guidelines](AGENTS.md).
+
+
 ## Demo Projects
 
 ### [Java](java/)

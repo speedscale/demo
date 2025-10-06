@@ -13,6 +13,8 @@ class TasksClient
     @task_ids = []
     @token = nil
     @token_expires_at = nil
+    @user_ids = ['user1', 'user2', 'user3', 'user4', 'user5']
+    @current_user_index = 0
 
     self.class.base_uri @base_url
     self.class.default_timeout 10
@@ -20,6 +22,7 @@ class TasksClient
     puts "Ruby Tasks Client"
     puts "=" * 50
     puts "Server URL: #{@base_url}"
+    puts "Using multiple user IDs: #{@user_ids.join(', ')}"
     puts "=" * 50
   end
 
@@ -81,18 +84,22 @@ class TasksClient
   private
 
   def login
-    puts "\n→ Logging in to get JWT token..."
+    # Rotate through user IDs
+    current_user = @user_ids[@current_user_index]
+    @current_user_index = (@current_user_index + 1) % @user_ids.size
+
+    puts "\n→ Logging in as '#{current_user}' to get JWT token..."
 
     response = self.class.post('/login',
       headers: { 'Content-Type' => 'application/json' },
-      body: { username: 'client-user', password: 'demo123' }.to_json
+      body: { username: current_user, password: 'demo123' }.to_json
     )
 
     if response.code == 200
       data = response.parsed_response
-      @token = data['token']
+      @token = data['access_token']
       @token_expires_at = Time.now + data['expires_in']
-      puts "  ✓ Logged in successfully (token expires in #{data['expires_in']}s)"
+      puts "  ✓ Logged in as '#{current_user}' (token expires in #{data['expires_in']}s, scope: #{data['scope']})"
     else
       puts "  ✗ Login failed: #{response.code}"
       exit 1

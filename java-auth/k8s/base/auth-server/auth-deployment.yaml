@@ -22,7 +22,7 @@ spec:
         command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;']
       containers:
       - name: java-auth
-        image: gcr.io/speedscale-demos/java-auth:v1.2.2
+        image: gcr.io/speedscale-demos/java-auth:v1.2.3
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

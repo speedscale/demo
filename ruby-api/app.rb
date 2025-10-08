@@ -410,6 +410,66 @@ rescue JSON::ParserError
   json({ error: 'Invalid JSON' })
 end
 
+# Get project inspiration from GitHub API
+get '/api/project-inspiration' do
+  authenticate!
+
+  begin
+    # Call GitHub API to get popular Ruby repositories
+    response = HTTParty.get(
+      'https://api.github.com/search/repositories',
+      query: {
+        q: 'language:ruby stars:>1000',
+        sort: 'stars',
+        order: 'desc',
+        per_page: 5
+      },
+      headers: {
+        'User-Agent' => 'Ruby-Task-API-Demo',
+        'Accept' => 'application/vnd.github.v3+json'
+      },
+      timeout: 5
+    )
+
+    if response.code == 200
+      begin
+        github_data = response.parsed_response
+      rescue => parse_error
+        status 502
+        return json({ error: "Failed to parse GitHub API response: #{parse_error.message}" })
+      end
+
+      # Transform GitHub repos to project ideas
+      project_ideas = github_data['items'].map do |repo|
+        {
+          name: repo['name'],
+          description: repo['description'],
+          stars: repo['stargazers_count'],
+          language: repo['language'],
+          url: repo['html_url'],
+          owner: repo['owner']['login']
+        }
+      end
+
+      json({
+        source: 'GitHub API',
+        total_count: github_data['total_count'],
+        count: project_ideas.size,
+        projects: project_ideas
+      })
+    else
+      status 502
+      json({ error: "GitHub API returned status #{response.code}" })
+    end
+  rescue HTTParty::Error, Timeout::Error => e
+    status 502
+    json({ error: "Failed to reach GitHub API: #{e.message}" })
+  rescue => e
+    status 500
+    json({ error: "Internal error: #{e.message}" })
+  end
+end
+
 # Run the app
 if __FILE__ == $0
   Sinatra::Application.run!

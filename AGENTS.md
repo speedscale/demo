@@ -21,7 +21,8 @@
 ## Commit, PR & Versioning Workflow
 - Write imperative commit subjects with ticket references when available (`Standardize all Docker image tags to use v prefix (#87)`). Keep PRs scoped to one service, summarizing behavior changes and the local build/test commands you executed.
 - **Version management is Makefile-driven.** Never edit `VERSION`, manifests, `pom.xml`, or `package.json` by hand. Instead run:
-  - `make bump-version` for the next patch.
-  - `make update-version VERSION=x.y.z` for a planned release.
-  - `make validate-version` to ensure manifests, Maven, and Node packages align.
-- After version changes, commit every touched file (including the generated manifests) and mention the command sequence in the PR description. Finalize releases with `make release VERSION=x.y.z`, then push the branch and the annotated `vVERSION` tag once checks pass.
+  - `make bump-version` for the next patch (automatically increments from 1.2.1 → 1.2.2).
+  - `make update-version VERSION=x.y.z` for a planned release (e.g., `make update-version VERSION=2.0.0`).
+  - `make validate-version` to ensure manifests, Maven, and Node packages align with the VERSION file.
+- After version changes, commit every touched file (including the VERSION file and all generated manifests) and mention the command sequence in the PR description (e.g., "Ran `make bump-version` to update to v1.2.2"). Finalize releases with `make release VERSION=x.y.z`, then push the branch and the annotated `vVERSION` tag once checks pass.
+- **Important:** Always use `make bump-version` or `make update-version` from the repository root. These commands update VERSION, Kubernetes manifests, Maven pom.xml files, and Node package.json files in a single operation to maintain consistency across the entire demo repository.

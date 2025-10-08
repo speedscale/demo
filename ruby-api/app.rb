@@ -38,9 +38,10 @@ JWT_ALGORITHM = 'HS512'
 JWT_EXPIRATION = 15 * 60 # 15 minutes in seconds
 
 # JWT helper methods
-def generate_jwt(user_id)
+def generate_jwt(user_id, scope: 'read:tasks write:tasks')
   payload = {
     user_id: user_id,
+    scope: scope,
     exp: Time.now.to_i + JWT_EXPIRATION,
     iat: Time.now.to_i
   }
@@ -145,14 +146,43 @@ post '/login' do
   # Simple demo authentication - in production, validate against DB with bcrypt
   # For demo purposes, accept any username with password "demo123"
   if username && password == 'demo123'
-    token = generate_jwt(username)
+    # Assign timezone based on user
+    user_timezones = {
+      'user1' => 'America/New_York',
+      'user2' => 'Europe/London',
+      'user3' => 'Asia/Tokyo',
+      'user4' => 'America/Los_Angeles',
+      'user5' => 'Australia/Sydney'
+    }
+    timezone = user_timezones[username] || 'America/New_York'
+
+    # Call WorldTimeAPI to get current time for user's timezone
+    begin
+      if $rate_limiter.can_proceed?
+        response = HTTParty.get(
+          "http://worldtimeapi.org/api/timezone/#{timezone}",
+          timeout: 5
+        )
+
+        if response.code == 200
+          api_data = response.parsed_response
+          puts "  → Time check for #{username}: #{api_data['datetime']} (#{timezone})"
+        end
+      end
+    rescue => e
+      # Don't fail login if time API fails
+      puts "  ⚠ Time API error during login: #{e.message}"
+    end
+
+    scope = 'read:tasks write:tasks'
+    token = generate_jwt(username, scope: scope)
 
     json({
       access_token: token,
       expires_in: JWT_EXPIRATION,
       user_id: username,
       token_type: 'Bearer',
-      scope: 'read write'
+      scope: scope
     })
   else
     status 401
@@ -163,37 +193,35 @@ rescue JSON::ParserError
   json({ error: 'Invalid JSON' })
 end
 
-# Get all tasks
+# Get all tasks or single task
 get '/tasks' do
   authenticate!
 
-  conn = db_connection
-  result = conn.exec_params('SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC', ['pending'])
+  task_id = params[:id]
 
-  tasks = result.map do |row|
-    {
-      id: row['id'].to_i,
-      title: row['title'],
-      description: row['description'],
-      status: row['status'],
-      priority: row['priority'].to_i,
-      created_at: row['created_at'],
-      updated_at: row['updated_at']
-    }
+  # If no id parameter, return all tasks
+  unless task_id
+    conn = db_connection
+    result = conn.exec_params('SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC', ['pending'])
+
+    tasks = result.map do |row|
+      {
+        id: row['id'].to_i,
+        title: row['title'],
+        description: row['description'],
+        status: row['status'],
+        priority: row['priority'].to_i,
+        created_at: row['created_at'],
+        updated_at: row['updated_at']
+      }
+    end
+
+    return json tasks
   end
 
-  json tasks
-rescue PG::Error => e
-  status 500
-  json({ error: "Database error: #{e.message}" })
-end
-
-# Get single task
-get '/tasks/:id' do
-  authenticate!
-
+  # Get single task by id
   conn = db_connection
-  result = conn.exec_params('SELECT * FROM tasks WHERE id = $1', [params[:id]])
+  result = conn.exec_params('SELECT * FROM tasks WHERE id = $1', [task_id])
 
   if result.ntuples == 0
     status 404
@@ -290,11 +318,18 @@ rescue PG::Error => e
 end
 
 # Delete task
-delete '/tasks/:id' do
+delete '/tasks' do
   authenticate!
 
+  task_id = params[:id]
+
+  unless task_id
+    status 400
+    return json({ error: 'Missing required parameter: id' })
+  end
+
   conn = db_connection
-  result = conn.exec_params('DELETE FROM tasks WHERE id = $1 RETURNING id', [params[:id]])
+  result = conn.exec_params('DELETE FROM tasks WHERE id = $1 RETURNING id', [task_id])
 
   if result.ntuples == 0
     status 404

@@ -11,10 +11,8 @@ class TasksClient
     @base_url = ENV['SERVER_URL'] || 'http://ruby-server'
     @iteration = 0
     @task_ids = []
-    @token = nil
-    @token_expires_at = nil
     @user_ids = ['user1', 'user2', 'user3', 'user4', 'user5']
-    @current_user_index = 0
+    @tokens = {}
 
     self.class.base_uri @base_url
     self.class.default_timeout 10
@@ -29,8 +27,8 @@ class TasksClient
   def run
     wait_for_server
 
-    # Login to get JWT token
-    login
+    # Login all users at startup
+    login_all_users
 
     puts "\n✓ Server is ready! Starting traffic generation...\n"
 
@@ -39,13 +37,13 @@ class TasksClient
       puts "\n=== Iteration #{@iteration} ==="
 
       begin
-        # Refresh token if needed (before expiration)
-        refresh_token_if_needed
+        # Refresh tokens if needed (before expiration)
+        refresh_tokens_if_needed
 
         # Health check occasionally
         health_check if @iteration % 10 == 0
 
-        # Core CRUD operations
+        # Core CRUD operations (using random user)
         list_tasks
         sleep rand(1..3)
 
@@ -55,7 +53,7 @@ class TasksClient
         update_random_task if @task_ids.any?
         sleep rand(1..3)
 
-        # Time conversion API
+        # Time conversion API (client-initiated)
         if @iteration % 3 == 0
           convert_time
           sleep rand(1..3)
@@ -74,8 +72,8 @@ class TasksClient
 
       rescue => e
         puts "  ✗ Error in iteration #{@iteration}: #{e.message}"
-        # Try to re-login if auth error
-        login if e.message.include?('401')
+        # Try to re-login all users if auth error
+        login_all_users if e.message.include?('401')
         sleep 5
       end
     end
@@ -83,44 +81,59 @@ class TasksClient
 
   private
 
-  def login
-    # Rotate through user IDs
-    current_user = @user_ids[@current_user_index]
-    @current_user_index = (@current_user_index + 1) % @user_ids.size
+  def login_all_users
+    puts "\n→ Logging in all users to get JWT tokens..."
+    @user_ids.each do |user_id|
+      login_user(user_id)
+      sleep rand(0.5..1.5)
+    end
+  end
 
-    puts "\n→ Logging in as '#{current_user}' to get JWT token..."
+  def login_user(user_id)
+    puts "  → Logging in as '#{user_id}'..."
 
     response = self.class.post('/login',
       headers: { 'Content-Type' => 'application/json' },
-      body: { username: current_user, password: 'demo123' }.to_json
+      body: { username: user_id, password: 'demo123' }.to_json
     )
 
     if response.code == 200
       data = response.parsed_response
-      @token = data['access_token']
-      @token_expires_at = Time.now + data['expires_in']
-      puts "  ✓ Logged in as '#{current_user}' (token expires in #{data['expires_in']}s, scope: #{data['scope']})"
+      @tokens[user_id] = {
+        token: data['access_token'],
+        expires_at: Time.now + data['expires_in'],
+        scope: data['scope']
+      }
+      puts "    ✓ Logged in as '#{user_id}' (expires in #{data['expires_in']}s, scope: #{data['scope']})"
     else
-      puts "  ✗ Login failed: #{response.code}"
+      puts "    ✗ Login failed for '#{user_id}': #{response.code}"
       exit 1
     end
   rescue => e
-    puts "  ✗ Login error: #{e.message}"
+    puts "    ✗ Login error for '#{user_id}': #{e.message}"
     exit 1
   end
 
-  def refresh_token_if_needed
-    # Refresh token 1 minute before expiration
-    if @token_expires_at && Time.now >= (@token_expires_at - 60)
-      puts "  → Token expiring soon, refreshing..."
-      login
+  def refresh_tokens_if_needed
+    # Refresh tokens 1 minute before expiration
+    @tokens.each do |user_id, token_data|
+      if Time.now >= (token_data[:expires_at] - 60)
+        puts "  → Token for '#{user_id}' expiring soon, refreshing..."
+        login_user(user_id)
+      end
     end
   end
 
-  def auth_headers
+  def random_user
+    @user_ids.sample
+  end
+
+  def auth_headers(user_id = nil)
+    user_id ||= random_user
+    token = @tokens[user_id][:token]
     {
       'Content-Type' => 'application/json',
-      'Authorization' => "Bearer #{@token}"
+      'Authorization' => "Bearer #{token}"
     }
   end
 
@@ -262,7 +275,7 @@ class TasksClient
     task_id = @task_ids.sample
     puts "  → Deleting task #{task_id}..."
 
-    response = self.class.delete("/tasks/#{task_id}", headers: auth_headers)
+    response = self.class.delete("/tasks?id=#{task_id}", headers: auth_headers)
 
     if response.code == 204
       @task_ids.delete(task_id)

@@ -1,6 +1,6 @@
 {
   "name": "smart-replace-demo",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Demo API server for Speedscale Smart Replace features",
   "main": "server.js",
   "scripts": {

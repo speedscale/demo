@@ -59,6 +59,12 @@ class TasksClient
           sleep rand(1..3)
         end
 
+        # Get project inspiration occasionally
+        if @iteration % 5 == 0
+          get_project_inspiration
+          sleep rand(1..3)
+        end
+
         # Delete occasionally
         if @iteration % 7 == 0 && @task_ids.any?
           delete_random_task
@@ -325,6 +331,26 @@ class TasksClient
     end
   rescue => e
     puts "    ✗ Error converting time: #{e.message}"
+  end
+
+  def get_project_inspiration
+    puts "  → Getting project inspiration from GitHub API..."
+
+    response = self.class.get('/api/project-inspiration', headers: auth_headers)
+
+    if response.code == 200
+      result = response.parsed_response
+      puts "    ✓ Got #{result['count']} popular Ruby projects from #{result['source']}"
+      result['projects'].each do |project|
+        puts "      - #{project['name']} (⭐ #{project['stars']}) - #{project['description']&.slice(0, 60)}"
+      end
+    elsif response.code == 502
+      puts "    ✗ GitHub API unavailable: #{response.parsed_response['error']}"
+    else
+      puts "    ✗ Failed to get project inspiration: #{response.code}"
+    end
+  rescue => e
+    puts "    ✗ Error getting project inspiration: #{e.message}"
   end
 end
 

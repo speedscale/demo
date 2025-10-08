@@ -163,6 +163,13 @@ Authorization: Bearer {{token}}
 
 ###
 
+### Get project inspiration from GitHub API (Requires Auth)
+GET http://{{host}}:{{port}}/api/project-inspiration
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+###
+
 ### Error Test: Try to get a non-existent task (should return 404)
 GET http://{{host}}:{{port}}/tasks?id=999
 Content-Type: application/json

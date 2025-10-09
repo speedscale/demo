@@ -16,7 +16,7 @@ echo -e "${GREEN}Starting proxymock CI/CD integration for ruby-api${NC}"
 APP_PORT=${APP_PORT:-3000}
 PROXYMOCK_TRAFFIC_DIR=${PROXYMOCK_TRAFFIC_DIR:-"./proxymock/snapshot-f82bffb3-62ae-400a-aed4-f2cfba94630e"}
 PROXYMOCK_OUTPUT_DIR=${PROXYMOCK_OUTPUT_DIR:-"./proxymock/replayed-$(date +%Y-%m-%d_%H-%M-%S)"}
-APP_START_CMD=${APP_START_CMD:-"ruby app.rb"}
+APP_START_CMD=${APP_START_CMD:-"bundle exec ruby app.rb"}
 USE_MOCK_SERVER=${USE_MOCK_SERVER:-true}
 
 # Validate API key
@@ -101,8 +101,8 @@ if [ "$USE_MOCK_SERVER" = true ]; then
 
   # Start mock server in background
   proxymock mock \
-    --in-directory "$PROXYMOCK_TRAFFIC_DIR" \
-    --out-directory "$PROXYMOCK_OUTPUT_DIR-mock" \
+    --in "$PROXYMOCK_TRAFFIC_DIR" \
+    --out "$PROXYMOCK_OUTPUT_DIR-mock" \
     --log-to "$PROXYMOCK_OUTPUT_DIR-mock.log" &
 
   MOCK_PID=$!
@@ -155,8 +155,8 @@ echo "Output directory: $PROXYMOCK_OUTPUT_DIR"
 echo ""
 
 proxymock replay \
-  --in-directory "$PROXYMOCK_TRAFFIC_DIR" \
-  --out-directory "$PROXYMOCK_OUTPUT_DIR" \
+  --in "$PROXYMOCK_TRAFFIC_DIR" \
+  --out "$PROXYMOCK_OUTPUT_DIR" \
   --test-against "http://localhost:$APP_PORT" \
   --log-to "$PROXYMOCK_OUTPUT_DIR.log"
 

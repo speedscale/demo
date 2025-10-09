@@ -1,7 +1,7 @@
 ### Variables
 @port = 3000
 @host = localhost
-@token =
+@token = 
 
 ### Health Check (No Auth Required)
 GET http://{{host}}:{{port}}/health

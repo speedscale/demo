@@ -49,10 +49,6 @@ jobs:
             path: ruby-api
             setup: ruby
             test_cmd: chmod +x proxymock.sh && ./proxymock.sh
-          - name: ruby-client
-            path: ruby-api/client
-            setup: ruby
-            test_cmd: echo "No tests configured for ruby-client"
     steps:
     - name: Checkout
       uses: actions/checkout@v4

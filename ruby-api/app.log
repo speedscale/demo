@@ -1,0 +1,18 @@
+Calling `DidYouMean::SPELL_CHECKERS.merge!(error_name => spell_checker)' has been deprecated. Please call `DidYouMean.correct_error(error_name, spell_checker)' instead.
+Calling `DidYouMean::SPELL_CHECKERS.merge!(error_name => spell_checker)' has been deprecated. Please call `DidYouMean.correct_error(error_name, spell_checker)' instead.
+== Sinatra (v3.2.0) has taken the stage on 3000 for development with backup from Puma
+Database error: Speedscale: responder miss
+DETAIL:  QUERY: no snapshot match for signature: {"instance":"MA==","postgres:msg_type":"UXVlcnk=","postgres:query":"U0VMRUNUIGNvdW50ICggKiApIEZST00gdGFza3M="}
+Connected to PostgreSQL database!
+Puma starting in single mode...
+* Puma version: 6.6.1 ("Return to Forever")
+* Ruby version: ruby 3.2.6 (2024-10-30 revision 63aeb018eb) [arm64-darwin24]
+*  Min threads: 0
+*  Max threads: 5
+*  Environment: development
+*          PID: 23621
+* Listening on http://0.0.0.0:3000
+Use Ctrl-C to stop
+127.0.0.1 - - [09/Oct/2025:19:23:56 -0400] "GET /health HTTP/1.1" 200 60 0.0088
+- Gracefully stopping, waiting for requests to finish
+== Sinatra has ended his set (crowd applauds)

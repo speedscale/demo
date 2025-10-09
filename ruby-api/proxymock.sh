@@ -82,6 +82,11 @@ fi
 cleanup() {
   echo -e "\n${YELLOW}Cleaning up...${NC}"
 
+  if [ -n "$CLIENT_PID" ]; then
+    echo "Stopping client (PID: $CLIENT_PID)"
+    kill $CLIENT_PID 2>/dev/null || true
+  fi
+
   if [ -n "$APP_PID" ]; then
     echo "Stopping application (PID: $APP_PID)"
     kill $APP_PID 2>/dev/null || true
@@ -147,6 +152,25 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     exit 1
   fi
 done
+
+# Run client load test to generate traffic
+echo -e "${GREEN}Running client load test to generate traffic...${NC}"
+cd client
+export SERVER_URL=http://localhost:$APP_PORT
+bundle exec ruby client.rb > ../client.log 2>&1 &
+CLIENT_PID=$!
+cd ..
+
+# Run the client for 60 seconds to generate traffic
+echo "Running client for 60 seconds to generate traffic..."
+sleep 60
+
+# Stop the client
+echo "Stopping client..."
+kill $CLIENT_PID 2>/dev/null || true
+wait $CLIENT_PID 2>/dev/null || true
+
+echo -e "${GREEN}Client load test completed${NC}"
 
 # Run proxymock replay
 echo -e "${GREEN}Starting traffic replay...${NC}"

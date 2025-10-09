@@ -116,9 +116,10 @@ if [ "$USE_MOCK_SERVER" = true ]; then
   sleep 5
 
   # Set environment variables to use mock server
-  export HTTP_PROXY=http://localhost:4143
-  export HTTPS_PROXY=http://localhost:4143
-  export NO_PROXY=localhost,127.0.0.1
+  # NO_PROXY must include speedscale.com so proxymock can reach the API
+  export HTTP_PROXY=http://localhost:4140
+  export HTTPS_PROXY=http://localhost:4140
+  export NO_PROXY="localhost,127.0.0.1,.speedscale.com,speedscale.com"
 
   echo -e "${GREEN}Mock server started (PID: $MOCK_PID)${NC}"
 fi

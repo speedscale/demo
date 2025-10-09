@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # set the port your application will listen on, where traffic will be replayed
 APP_PORT=3000
@@ -17,8 +17,9 @@ LOAD_TEST_DURATION=60
 ###    SCRIPT BELOW     ###
 ###########################
 
-set -ex
-set -o pipefail 2>/dev/null || true
+set -e
+set -x
+set -o pipefail
 
 validate() {
   if [ -z "$SPEEDSCALE_API_KEY" ]; then

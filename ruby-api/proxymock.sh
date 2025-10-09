@@ -17,8 +17,12 @@ LOAD_TEST_DURATION=60
 ###    SCRIPT BELOW     ###
 ###########################
 
-set -ex
-set -o pipefail 2>/dev/null || true
+set -e
+set -x
+# Try to enable pipefail if available (bash/zsh), ignore if not (sh/dash)
+if command -v set > /dev/null 2>&1; then
+  set -o pipefail 2>/dev/null || :
+fi
 
 validate() {
   if [ -z "$SPEEDSCALE_API_KEY" ]; then

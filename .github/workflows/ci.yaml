@@ -48,7 +48,7 @@ jobs:
           - name: ruby-api
             path: ruby-api
             setup: ruby
-            test_cmd: bash proxymock.sh
+            test_cmd: sh proxymock.sh
     steps:
     - name: Checkout
       uses: actions/checkout@v4

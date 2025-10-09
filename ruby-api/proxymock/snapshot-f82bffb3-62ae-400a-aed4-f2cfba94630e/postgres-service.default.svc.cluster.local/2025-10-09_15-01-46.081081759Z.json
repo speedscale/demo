@@ -1,0 +1,63 @@
+{
+  "msgType": "rrpair",
+  "resource": "ruby-server",
+  "ts": "2025-10-09T15:01:46.081081759Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "4060",
+    "source": "goproxy"
+  },
+  "uuid": "+ws4zwIhT56RHS+XhpG3Tg==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Terminate",
+  "location": "N/A",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "terminate": {}
+    },
+    "response": {}
+  },
+  "signature": {
+    "postgres:msg_type": "VGVybWluYXRl"
+  },
+  "netinfo": {
+    "id": "534",
+    "startTime": "2025-10-09T15:00:24.199498304Z",
+    "downstream": {
+      "established": "2025-10-09T15:00:24.178671346Z",
+      "ipAddress": "10.244.0.233",
+      "port": 52414,
+      "bytesSent": "278"
+    },
+    "upstream": {
+      "established": "2025-10-09T15:00:24.179049346Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local",
+      "bytesSent": "410"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Terminate"
+  }
+}

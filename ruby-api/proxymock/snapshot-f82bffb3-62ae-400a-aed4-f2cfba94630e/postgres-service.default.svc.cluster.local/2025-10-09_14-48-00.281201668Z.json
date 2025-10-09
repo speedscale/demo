@@ -1,0 +1,132 @@
+{
+  "msgType": "rrpair",
+  "resource": "ruby-server",
+  "ts": "2025-10-09T14:48:00.281201668Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "1101",
+    "source": "goproxy"
+  },
+  "uuid": "uk8rq/R9RgWsR0K4K8ar5A==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Bind Statement Parameters",
+  "location": "SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "bind": {
+        "parameterFormatCodes": [
+          0
+        ],
+        "parameters": [
+          {
+            "asString": "pending"
+          }
+        ],
+        "resultFormatCodes": [
+          0
+        ],
+        "parseRequest": {
+          "query": "SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC",
+          "parameterOids": [
+            0
+          ]
+        }
+      }
+    },
+    "response": {
+      "bind": {
+        "complete": {}
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC": {
+      "id": "SQL:SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC",
+      "tokens": [
+        {
+          "uuid": "uk8rq/R9RgWsR0K4K8ar5A==",
+          "token": {
+            "location": "postgres.request.bind.parseRequest.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "U0VMRUNUICogRlJPTSB0YXNrcyBXSEVSRSBzdGF0dXMgPSAkMSBPUkRFUiBCWSBjcmVhdGVkX2F0IERFU0M="
+          }
+        }
+      ]
+    },
+    "SQL_PORTAL_NAME:": {
+      "id": "SQL_PORTAL_NAME:",
+      "tokens": [
+        {
+          "uuid": "uk8rq/R9RgWsR0K4K8ar5A==",
+          "token": {
+            "location": "postgres.request.bind.portal",
+            "pattern": "DATA_PATTERN_SQL_PORTAL_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    },
+    "SQL_STATEMENT_NAME:": {
+      "id": "SQL_STATEMENT_NAME:",
+      "tokens": [
+        {
+          "uuid": "uk8rq/R9RgWsR0K4K8ar5A==",
+          "token": {
+            "location": "postgres.request.bind.parseRequest.name",
+            "pattern": "DATA_PATTERN_SQL_STATEMENT_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "QmluZCBTdGF0ZW1lbnQgUGFyYW1ldGVycw==",
+    "postgres:portal": "",
+    "postgres:query": "U0VMRUNUICogRlJPTSB0YXNrcyBXSEVSRSBzdGF0dXMgPSAkMSBPUkRFUiBCWSBjcmVhdGVkX2F0IERFU0M=",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "170",
+    "startTime": "2025-10-09T14:48:00.277965085Z",
+    "downstream": {
+      "established": "2025-10-09T14:48:00.262489585Z",
+      "ipAddress": "10.244.0.233",
+      "port": 58958,
+      "bytesSent": "125"
+    },
+    "upstream": {
+      "established": "2025-10-09T14:48:00.262894335Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local",
+      "bytesSent": "387"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Bind Statement Parameters",
+    "postgres:portal": "",
+    "postgres:query": "SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC",
+    "postgres:query_name": ""
+  }
+}

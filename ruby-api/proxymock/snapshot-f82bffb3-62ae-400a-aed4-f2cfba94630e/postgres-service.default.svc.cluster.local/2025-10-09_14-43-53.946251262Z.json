@@ -1,0 +1,174 @@
+{
+  "msgType": "rrpair",
+  "resource": "ruby-server",
+  "ts": "2025-10-09T14:43:53.946251262Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "218",
+    "source": "goproxy"
+  },
+  "uuid": "+JSNvP41TAiA6RbhAk3RJQ==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Describe Portal",
+  "location": "UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "describe": {
+        "objectType": "OBJECT_TYPE_PORTAL",
+        "parseRequest": {
+          "query": "UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *",
+          "parameterOids": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "response": {
+      "describe": {
+        "messages": [
+          {
+            "rowDescription": {
+              "fields": [
+                {
+                  "name": "id",
+                  "tableOid": 16386,
+                  "tableAttributeNumber": 1,
+                  "dataTypeOid": 23,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "title",
+                  "tableOid": 16386,
+                  "tableAttributeNumber": 2,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 259
+                },
+                {
+                  "name": "description",
+                  "tableOid": 16386,
+                  "tableAttributeNumber": 3,
+                  "dataTypeOid": 25,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "status",
+                  "tableOid": 16386,
+                  "tableAttributeNumber": 4,
+                  "dataTypeOid": 1043,
+                  "dataTypeSize": 4294967295,
+                  "typeModifier": 54
+                },
+                {
+                  "name": "priority",
+                  "tableOid": 16386,
+                  "tableAttributeNumber": 5,
+                  "dataTypeOid": 23,
+                  "dataTypeSize": 4,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "created_at",
+                  "tableOid": 16386,
+                  "tableAttributeNumber": 6,
+                  "dataTypeOid": 1114,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                },
+                {
+                  "name": "updated_at",
+                  "tableOid": 16386,
+                  "tableAttributeNumber": 7,
+                  "dataTypeOid": 1114,
+                  "dataTypeSize": 8,
+                  "typeModifier": -1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *": {
+      "id": "SQL:UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *",
+      "tokens": [
+        {
+          "uuid": "+JSNvP41TAiA6RbhAk3RJQ==",
+          "token": {
+            "location": "postgres.request.describe.parseRequest.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "VVBEQVRFIHRhc2tzIFNFVCB0aXRsZSA9ICQxLCBkZXNjcmlwdGlvbiA9ICQyLCBzdGF0dXMgPSAkMywgcHJpb3JpdHkgPSAkNCwgdXBkYXRlZF9hdCA9IENVUlJFTlRfVElNRVNUQU1QIFdIRVJFIGlkID0gJDUgUkVUVVJOSU5HICo="
+          }
+        }
+      ]
+    },
+    "SQL_STATEMENT_NAME:": {
+      "id": "SQL_STATEMENT_NAME:",
+      "tokens": [
+        {
+          "uuid": "+JSNvP41TAiA6RbhAk3RJQ==",
+          "token": {
+            "location": "postgres.request.describe.parseRequest.name",
+            "pattern": "DATA_PATTERN_SQL_STATEMENT_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RGVzY3JpYmUgUG9ydGFs",
+    "postgres:query": "VVBEQVRFIHRhc2tzIFNFVCB0aXRsZSA9ICQxLCBkZXNjcmlwdGlvbiA9ICQyLCBzdGF0dXMgPSAkMywgcHJpb3JpdHkgPSAkNCwgdXBkYXRlZF9hdCA9IENVUlJFTlRfVElNRVNUQU1QIFdIRVJFIGlkID0gJDUgUkVUVVJOSU5HICo=",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "43",
+    "startTime": "2025-10-09T14:43:53.943821554Z",
+    "downstream": {
+      "established": "2025-10-09T14:43:53.925599471Z",
+      "ipAddress": "10.244.0.233",
+      "port": 43834,
+      "bytesSent": "306"
+    },
+    "upstream": {
+      "established": "2025-10-09T14:43:53.925877929Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local",
+      "bytesSent": "388"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Describe Portal",
+    "postgres:query": "UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *",
+    "postgres:query_name": ""
+  }
+}

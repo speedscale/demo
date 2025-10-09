@@ -1,0 +1,187 @@
+{
+  "msgType": "rrpair",
+  "resource": "ruby-server",
+  "ts": "2025-10-09T14:48:41.680096423Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "1256",
+    "source": "goproxy"
+  },
+  "uuid": "EIBzJEVoQU6KqLnBFfePXg==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Execute Prepared Statement",
+  "location": "UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parameterFormatCodes": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "parameters": [
+            {
+              "asString": "Updated task 3621 at 14:48:41"
+            },
+            {
+              "asString": "Updated by Ruby client - iteration 23"
+            },
+            {
+              "asString": "pending"
+            },
+            {
+              "asString": "1"
+            },
+            {
+              "asString": "3621"
+            }
+          ],
+          "resultFormatCodes": [
+            0
+          ],
+          "parseRequest": {
+            "query": "UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *",
+            "parameterOids": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "3621"
+                },
+                {
+                  "asString": "Updated task 3621 at 14:48:41"
+                },
+                {
+                  "asString": "Updated by Ruby client - iteration 23"
+                },
+                {
+                  "asString": "pending"
+                },
+                {
+                  "asString": "1"
+                },
+                {
+                  "asString": "2025-10-09 14:48:39.631219"
+                },
+                {
+                  "asString": "2025-10-09 14:48:41.673902"
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "UPDATE 1"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *": {
+      "id": "SQL:UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *",
+      "tokens": [
+        {
+          "uuid": "EIBzJEVoQU6KqLnBFfePXg==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.parseRequest.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "VVBEQVRFIHRhc2tzIFNFVCB0aXRsZSA9ICQxLCBkZXNjcmlwdGlvbiA9ICQyLCBzdGF0dXMgPSAkMywgcHJpb3JpdHkgPSAkNCwgdXBkYXRlZF9hdCA9IENVUlJFTlRfVElNRVNUQU1QIFdIRVJFIGlkID0gJDUgUkVUVVJOSU5HICo="
+          }
+        }
+      ]
+    },
+    "SQL_PORTAL_NAME:": {
+      "id": "SQL_PORTAL_NAME:",
+      "tokens": [
+        {
+          "uuid": "EIBzJEVoQU6KqLnBFfePXg==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.portal",
+            "pattern": "DATA_PATTERN_SQL_PORTAL_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    },
+    "SQL_STATEMENT_NAME:": {
+      "id": "SQL_STATEMENT_NAME:",
+      "tokens": [
+        {
+          "uuid": "EIBzJEVoQU6KqLnBFfePXg==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.parseRequest.name",
+            "pattern": "DATA_PATTERN_SQL_STATEMENT_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "VVBEQVRFIHRhc2tzIFNFVCB0aXRsZSA9ICQxLCBkZXNjcmlwdGlvbiA9ICQyLCBzdGF0dXMgPSAkMywgcHJpb3JpdHkgPSAkNCwgdXBkYXRlZF9hdCA9IENVUlJFTlRfVElNRVNUQU1QIFdIRVJFIGlkID0gJDUgUkVUVVJOSU5HICo=",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "191",
+    "startTime": "2025-10-09T14:48:41.673559173Z",
+    "downstream": {
+      "established": "2025-10-09T14:48:41.653567257Z",
+      "ipAddress": "10.244.0.233",
+      "port": 33826,
+      "bytesSent": "305"
+    },
+    "upstream": {
+      "established": "2025-10-09T14:48:41.654105757Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local",
+      "bytesSent": "387"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Execute Prepared Statement",
+    "postgres:portal": "",
+    "postgres:query": "UPDATE tasks SET title = $1, description = $2, status = $3, priority = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *",
+    "postgres:query_name": ""
+  }
+}

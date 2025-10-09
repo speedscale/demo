@@ -1,0 +1,182 @@
+{
+  "msgType": "rrpair",
+  "resource": "ruby-server",
+  "ts": "2025-10-09T14:46:06.937359379Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "682",
+    "source": "goproxy"
+  },
+  "uuid": "guXTY/YoQR6y5CbtQTfI3Q==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Execute Prepared Statement",
+  "location": "INSERT INTO tasks (title, description, status, priority) VALUES ($1, $2, $3, $4) RETURNING *",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parameterFormatCodes": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "parameters": [
+            {
+              "asString": "Fix critical bug #f222ba"
+            },
+            {
+              "asString": "Auto-generated task from Ruby client at 2025-10-09 14:46:06 +0000"
+            },
+            {
+              "asString": "completed"
+            },
+            {
+              "asString": "1"
+            }
+          ],
+          "resultFormatCodes": [
+            0
+          ],
+          "parseRequest": {
+            "query": "INSERT INTO tasks (title, description, status, priority) VALUES ($1, $2, $3, $4) RETURNING *",
+            "parameterOids": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "3611"
+                },
+                {
+                  "asString": "Fix critical bug #f222ba"
+                },
+                {
+                  "asString": "Auto-generated task from Ruby client at 2025-10-09 14:46:06 +0000"
+                },
+                {
+                  "asString": "completed"
+                },
+                {
+                  "asString": "1"
+                },
+                {
+                  "asString": "2025-10-09 14:46:06.9343"
+                },
+                {
+                  "asString": "2025-10-09 14:46:06.9343"
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "INSERT 0 1"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:INSERT INTO tasks (title, description, status, priority) VALUES ($1, $2, $3, $4) RETURNING *": {
+      "id": "SQL:INSERT INTO tasks (title, description, status, priority) VALUES ($1, $2, $3, $4) RETURNING *",
+      "tokens": [
+        {
+          "uuid": "guXTY/YoQR6y5CbtQTfI3Q==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.parseRequest.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "SU5TRVJUIElOVE8gdGFza3MgKHRpdGxlLCBkZXNjcmlwdGlvbiwgc3RhdHVzLCBwcmlvcml0eSkgVkFMVUVTICgkMSwgJDIsICQzLCAkNCkgUkVUVVJOSU5HICo="
+          }
+        }
+      ]
+    },
+    "SQL_PORTAL_NAME:": {
+      "id": "SQL_PORTAL_NAME:",
+      "tokens": [
+        {
+          "uuid": "guXTY/YoQR6y5CbtQTfI3Q==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.portal",
+            "pattern": "DATA_PATTERN_SQL_PORTAL_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    },
+    "SQL_STATEMENT_NAME:": {
+      "id": "SQL_STATEMENT_NAME:",
+      "tokens": [
+        {
+          "uuid": "guXTY/YoQR6y5CbtQTfI3Q==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.parseRequest.name",
+            "pattern": "DATA_PATTERN_SQL_STATEMENT_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "SU5TRVJUIElOVE8gdGFza3MgKCB0aXRsZSwgZGVzY3JpcHRpb24sIHN0YXR1cywgcHJpb3JpdHkgKSBWQUxVRVMgKCAkMSwgJDIsICQzLCAkNCApIFJFVFVSTklORyAq",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "111",
+    "startTime": "2025-10-09T14:46:06.934124588Z",
+    "downstream": {
+      "established": "2025-10-09T14:46:06.916944254Z",
+      "ipAddress": "10.244.0.233",
+      "port": 43794,
+      "bytesSent": "277"
+    },
+    "upstream": {
+      "established": "2025-10-09T14:46:06.917299963Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local",
+      "bytesSent": "410"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Execute Prepared Statement",
+    "postgres:portal": "",
+    "postgres:query": "INSERT INTO tasks ( title, description, status, priority ) VALUES ( $1, $2, $3, $4 ) RETURNING *",
+    "postgres:query_name": ""
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "msgType": "rrpair",
+  "resource": "ruby-server",
+  "ts": "2025-10-09T14:47:41.533497798Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "1049",
+    "source": "goproxy"
+  },
+  "uuid": "omGAUJDVSxeZqSGOrMhlPA==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Execute Prepared Statement",
+  "location": "SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "execute": {
+        "bindRequest": {
+          "parameterFormatCodes": [
+            0
+          ],
+          "parameters": [
+            {
+              "asString": "pending"
+            }
+          ],
+          "resultFormatCodes": [
+            0
+          ],
+          "parseRequest": {
+            "query": "SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC",
+            "parameterOids": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    "response": {
+      "execute": {
+        "messages": [
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "3617"
+                },
+                {
+                  "asString": "Updated task 3617 at 14:47:31"
+                },
+                {
+                  "asString": "Updated by Ruby client - iteration 19"
+                },
+                {
+                  "asString": "pending"
+                },
+                {
+                  "asString": "2"
+                },
+                {
+                  "asString": "2025-10-09 14:47:29.988534"
+                },
+                {
+                  "asString": "2025-10-09 14:47:32.017861"
+                }
+              ]
+            }
+          },
+          {
+            "dataRow": {
+              "values": [
+                {
+                  "asString": "3613"
+                },
+                {
+                  "asString": "Updated task 3613 at 14:47:19"
+                },
+                {
+                  "asString": "Updated by Ruby client - iteration 18"
+                },
+                {
+                  "asString": "pending"
+                },
+                {
+                  "asString": "1"
+                },
+                {
+                  "asString": "2025-10-09 14:46:32.290295"
+                },
+                {
+                  "asString": "2025-10-09 14:47:19.690375"
+                }
+              ]
+            }
+          },
+          {
+            "complete": {
+              "tag": "SELECT 2"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC": {
+      "id": "SQL:SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC",
+      "tokens": [
+        {
+          "uuid": "omGAUJDVSxeZqSGOrMhlPA==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.parseRequest.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "U0VMRUNUICogRlJPTSB0YXNrcyBXSEVSRSBzdGF0dXMgPSAkMSBPUkRFUiBCWSBjcmVhdGVkX2F0IERFU0M="
+          }
+        }
+      ]
+    },
+    "SQL_PORTAL_NAME:": {
+      "id": "SQL_PORTAL_NAME:",
+      "tokens": [
+        {
+          "uuid": "omGAUJDVSxeZqSGOrMhlPA==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.portal",
+            "pattern": "DATA_PATTERN_SQL_PORTAL_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    },
+    "SQL_STATEMENT_NAME:": {
+      "id": "SQL_STATEMENT_NAME:",
+      "tokens": [
+        {
+          "uuid": "omGAUJDVSxeZqSGOrMhlPA==",
+          "token": {
+            "location": "postgres.request.execute.bindRequest.parseRequest.name",
+            "pattern": "DATA_PATTERN_SQL_STATEMENT_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "RXhlY3V0ZSBQcmVwYXJlZCBTdGF0ZW1lbnQ=",
+    "postgres:portal": "",
+    "postgres:query": "U0VMRUNUICogRlJPTSB0YXNrcyBXSEVSRSBzdGF0dXMgPSAkMSBPUkRFUiBCWSBjcmVhdGVkX2F0IERFU0M=",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "162",
+    "startTime": "2025-10-09T14:47:41.497294590Z",
+    "downstream": {
+      "established": "2025-10-09T14:47:41.152102673Z",
+      "ipAddress": "10.244.0.233",
+      "port": 50740,
+      "bytesSent": "125"
+    },
+    "upstream": {
+      "established": "2025-10-09T14:47:41.152658173Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local",
+      "bytesSent": "552"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Execute Prepared Statement",
+    "postgres:portal": "",
+    "postgres:query": "SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC",
+    "postgres:query_name": ""
+  }
+}

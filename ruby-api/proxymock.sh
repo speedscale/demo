@@ -40,23 +40,11 @@ fi
 if ! command -v proxymock &> /dev/null; then
   echo -e "${YELLOW}proxymock not found. Installing...${NC}"
 
-  # Determine OS and architecture
-  OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-  ARCH=$(uname -m)
+  # Use the official install script
+  sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
 
-  case "$ARCH" in
-    x86_64)
-      ARCH="amd64"
-      ;;
-    aarch64|arm64)
-      ARCH="arm64"
-      ;;
-  esac
-
-  # Download and install proxymock
-  curl -fsSL "https://downloads.speedscale.com/proxymock/latest/proxymock-${OS}-${ARCH}" -o /tmp/proxymock
-  chmod +x /tmp/proxymock
-  sudo mv /tmp/proxymock /usr/local/bin/proxymock
+  # Add to PATH for current session
+  export PATH="$HOME/.speedscale:$PATH"
 
   echo -e "${GREEN}proxymock installed successfully${NC}"
 fi
@@ -75,6 +63,7 @@ fi
 echo -e "${GREEN}Found recorded traffic in: $PROXYMOCK_TRAFFIC_DIR${NC}"
 
 # Set up database environment variables for the app
+# When using mock server, these point to mock server proxy
 export DB_HOST=${DB_HOST:-localhost}
 export DB_PORT=${DB_PORT:-5432}
 export DB_NAME=${DB_NAME:-tasks_db}
@@ -82,8 +71,10 @@ export DB_USER=${DB_USER:-postgres}
 export DB_PASSWORD=${DB_PASSWORD:-postgres}
 export JWT_SECRET=${JWT_SECRET:-development-secret-change-me}
 
-# Start PostgreSQL if needed (local development)
-if [ "$USE_MOCK_SERVER" = false ]; then
+# Note about PostgreSQL
+if [ "$USE_MOCK_SERVER" = true ]; then
+  echo -e "${GREEN}Using proxymock mock server - PostgreSQL and external APIs will be mocked${NC}"
+else
   echo -e "${YELLOW}Note: USE_MOCK_SERVER=false, expecting real PostgreSQL at ${DB_HOST}:${DB_PORT}${NC}"
 fi
 

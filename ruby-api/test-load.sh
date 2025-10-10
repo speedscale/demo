@@ -43,8 +43,12 @@ run_load_test() {
   print_logs() {
     echo ""
     echo "=== Load Test Results ==="
-    # Show the last 25 lines for summary
-    tail -25 $LOAD_LOG_FILE
+    # Show the last 25 lines for summary if log file exists
+    if [ -f "$LOAD_LOG_FILE" ]; then
+      tail -25 $LOAD_LOG_FILE
+    else
+      echo "Log file not found - test may have failed early"
+    fi
   }
   trap print_logs EXIT
 
@@ -59,7 +63,7 @@ run_load_test() {
     --duration ${LOAD_TEST_DURATION}s \
     --fail-if "latency.p95 > 300" \
     --fail-if "latency.max > 600" \
-    -- $APP_COMMAND > /dev/null 2>&1
+    -- $APP_COMMAND
 }
 
 main() {

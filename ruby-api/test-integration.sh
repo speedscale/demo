@@ -41,7 +41,11 @@ run_integration_test() {
   print_logs() {
     echo ""
     echo "=== Integration Test Results ==="
-    tail -50 $INTEGRATION_LOG_FILE
+    if [ -f "$INTEGRATION_LOG_FILE" ]; then
+      tail -50 $INTEGRATION_LOG_FILE
+    else
+      echo "Log file not found - test may have failed early"
+    fi
   }
   trap print_logs EXIT
 
@@ -53,7 +57,7 @@ run_integration_test() {
     --test-against localhost:$APP_PORT \
     --log-to $INTEGRATION_LOG_FILE \
     --fail-if "requests.failed != 0" \
-    -- $APP_COMMAND > /dev/null 2>&1
+    -- $APP_COMMAND
 }
 
 main() {

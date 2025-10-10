@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # set the port your application will listen on, where traffic will be replayed
 APP_PORT=3000

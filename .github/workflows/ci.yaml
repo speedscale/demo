@@ -48,7 +48,7 @@ jobs:
           - name: ruby-api
             path: ruby-api
             setup: ruby
-            test_cmd: sh proxymock.sh
+            test_cmd: ./proxymock.sh
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -91,7 +91,6 @@ jobs:
 
     - name: Run tests
       working-directory: ${{ matrix.service.path }}
-      shell: sh
       env:
         SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
         DB_HOST: localhost

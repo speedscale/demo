@@ -59,8 +59,8 @@ run_load_test() {
     --in "$PROXYMOCK_IN_DIR" \
     --test-against localhost:$APP_PORT \
     --log-to $LOAD_LOG_FILE \
-    --vu $LOAD_TEST_VU \
-    --duration ${LOAD_TEST_DURATION}s \
+    --vus $LOAD_TEST_VU \
+    --for ${LOAD_TEST_DURATION}s \
     --fail-if "latency.p95 > 300" \
     --fail-if "latency.max > 600" \
     -- $APP_COMMAND

@@ -1,0 +1,193 @@
+{
+  "msgType": "rrpair",
+  "resource": "ruby-server",
+  "ts": "2025-10-09T14:53:17.114410718Z",
+  "l7protocol": "postgres",
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "2242",
+    "source": "goproxy"
+  },
+  "uuid": "4D8TD23RRVqzxd6J3QVN8Q==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Startup",
+  "location": "N/A",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "startup": {
+        "messages": [
+          {
+            "startup": {
+              "protocolVersion": 196608,
+              "parameters": {
+                "application_name": "app.rb",
+                "database": "tasks_db",
+                "user": "tasks_user"
+              }
+            }
+          },
+          {
+            "sasl": {
+              "mechanism": "SCRAM-SHA-256",
+              "data": "biwsbj0scj00ZUxlRTd0dERuTnFpWk9VaVV3SFNjVGw="
+            }
+          },
+          {
+            "sasl": {
+              "data": "Yz1iaXdzLHI9NGVMZUU3dHREbk5xaVpPVWlVd0hTY1RsMGxqZjIvRUdaQ0JxTzVpN2IwVzYrUkgxLHA9cGd5cGw4ZmdWYW5ReHprZlZtM203NWdEUG82OStSdHdRZm1tbTBqZjdjUT0="
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "startup": {
+        "messages": [
+          {
+            "sasl": {
+              "mechanisms": [
+                "SCRAM-SHA-256"
+              ]
+            }
+          },
+          {
+            "saslContinue": {
+              "data": "cj00ZUxlRTd0dERuTnFpWk9VaVV3SFNjVGwwbGpmMi9FR1pDQnFPNWk3YjBXNitSSDEscz13MUk1d0FZVWREbjg1VzJWNmlOdDdRPT0saT00MDk2"
+            }
+          },
+          {
+            "saslFinal": {
+              "data": "dj1iaVl2aGNHdGdOcEZ5VjFlYm5qdktGa0pXcy9WSkU3dDdGVkhuOW9FSXp3PQ=="
+            }
+          },
+          {
+            "authOk": {}
+          },
+          {
+            "parameterStatus": {
+              "name": "application_name",
+              "value": "app.rb"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "client_encoding",
+              "value": "UTF8"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "DateStyle",
+              "value": "ISO, MDY"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "default_transaction_read_only",
+              "value": "off"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "in_hot_standby",
+              "value": "off"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "integer_datetimes",
+              "value": "on"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "IntervalStyle",
+              "value": "postgres"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "is_superuser",
+              "value": "on"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "server_encoding",
+              "value": "UTF8"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "server_version",
+              "value": "15.14 (Debian 15.14-1.pgdg13+1)"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "session_authorization",
+              "value": "tasks_user"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "standard_conforming_strings",
+              "value": "on"
+            }
+          },
+          {
+            "parameterStatus": {
+              "name": "TimeZone",
+              "value": "Etc/UTC"
+            }
+          },
+          {
+            "backendKeyData": {
+              "processId": 152749,
+              "secretKey": 683515449
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "U3RhcnR1cA=="
+  },
+  "netinfo": {
+    "id": "329",
+    "startTime": "2025-10-09T14:53:17.137282843Z",
+    "downstream": {
+      "established": "2025-10-09T14:53:17.106072259Z",
+      "ipAddress": "10.244.0.233",
+      "port": 58740
+    },
+    "upstream": {
+      "established": "2025-10-09T14:53:17.106323134Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Startup"
+  }
+}

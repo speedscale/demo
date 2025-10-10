@@ -1,0 +1,132 @@
+{
+  "msgType": "rrpair",
+  "resource": "ruby-server",
+  "ts": "2025-10-09T14:55:28.735073542Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "2709",
+    "source": "goproxy"
+  },
+  "uuid": "7EcOd1GNSjWbRqgYkrskMA==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Bind Statement Parameters",
+  "location": "DELETE FROM tasks WHERE id = $1 RETURNING id",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "bind": {
+        "parameterFormatCodes": [
+          0
+        ],
+        "parameters": [
+          {
+            "asString": "3647"
+          }
+        ],
+        "resultFormatCodes": [
+          0
+        ],
+        "parseRequest": {
+          "query": "DELETE FROM tasks WHERE id = $1 RETURNING id",
+          "parameterOids": [
+            0
+          ]
+        }
+      }
+    },
+    "response": {
+      "bind": {
+        "complete": {}
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:DELETE FROM tasks WHERE id = $1 RETURNING id": {
+      "id": "SQL:DELETE FROM tasks WHERE id = $1 RETURNING id",
+      "tokens": [
+        {
+          "uuid": "7EcOd1GNSjWbRqgYkrskMA==",
+          "token": {
+            "location": "postgres.request.bind.parseRequest.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "REVMRVRFIEZST00gdGFza3MgV0hFUkUgaWQgPSAkMSBSRVRVUk5JTkcgaWQ="
+          }
+        }
+      ]
+    },
+    "SQL_PORTAL_NAME:": {
+      "id": "SQL_PORTAL_NAME:",
+      "tokens": [
+        {
+          "uuid": "7EcOd1GNSjWbRqgYkrskMA==",
+          "token": {
+            "location": "postgres.request.bind.portal",
+            "pattern": "DATA_PATTERN_SQL_PORTAL_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    },
+    "SQL_STATEMENT_NAME:": {
+      "id": "SQL_STATEMENT_NAME:",
+      "tokens": [
+        {
+          "uuid": "7EcOd1GNSjWbRqgYkrskMA==",
+          "token": {
+            "location": "postgres.request.bind.parseRequest.name",
+            "pattern": "DATA_PATTERN_SQL_STATEMENT_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "QmluZCBTdGF0ZW1lbnQgUGFyYW1ldGVycw==",
+    "postgres:portal": "",
+    "postgres:query": "REVMRVRFIEZST00gdGFza3MgV0hFUkUgaWQgPSAkMSBSRVRVUk5JTkcgaWQ=",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "392",
+    "startTime": "2025-10-09T14:55:28.729979834Z",
+    "downstream": {
+      "established": "2025-10-09T14:55:28.718193750Z",
+      "ipAddress": "10.244.0.233",
+      "port": 39536,
+      "bytesSent": "104"
+    },
+    "upstream": {
+      "established": "2025-10-09T14:55:28.718602542Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local",
+      "bytesSent": "73"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Bind Statement Parameters",
+    "postgres:portal": "",
+    "postgres:query": "DELETE FROM tasks WHERE id = $1 RETURNING id",
+    "postgres:query_name": ""
+  }
+}

@@ -45,14 +45,18 @@ jobs:
             path: node
             setup: node
             test_cmd: echo "No tests configured for node"
-          - name: ruby-api
+          - name: ruby-api-unit
             path: ruby-api
             setup: ruby
-            test_cmd: echo "No tests configured for ruby-api"
-          - name: ruby-client
-            path: ruby-api/client
+            test_cmd: ./test-unit.sh
+          - name: ruby-api-integration
+            path: ruby-api
             setup: ruby
-            test_cmd: echo "No tests configured for ruby-client"
+            test_cmd: ./test-integration.sh
+          - name: ruby-api-replay
+            path: ruby-api
+            setup: ruby
+            test_cmd: ./test-replay.sh
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -95,6 +99,15 @@ jobs:
 
     - name: Run tests
       working-directory: ${{ matrix.service.path }}
+      env:
+        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: tasks_db
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+        JWT_SECRET: test-secret-for-ci
+        USE_MOCK_SERVER: 'true'
       run: ${{ matrix.service.test_cmd }}
 
     - name: Upload test results
@@ -103,6 +116,16 @@ jobs:
       with:
         name: ${{ matrix.service.name }}-test-results
         path: ${{ matrix.service.path }}/target/surefire-reports/
+        retention-days: 7
+
+    - name: Upload proxymock logs
+      if: always() && startsWith(matrix.service.name, 'ruby-api-')
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.service.name }}-logs
+        path: |
+          ${{ matrix.service.path }}/proxymock/replayed-*
+          ${{ matrix.service.path }}/*.log
         retention-days: 7
 
   # Build matrix for different services

@@ -1,0 +1,103 @@
+{
+  "msgType": "rrpair",
+  "resource": "ruby-server",
+  "ts": "2025-10-09T14:42:45.578567759Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "7",
+    "source": "goproxy"
+  },
+  "uuid": "h+cjscXBQLGqzbij4db83g==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Query",
+  "location": "CREATE TABLE IF NOT EXISTS tasks (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50) DEFAULT 'pending', priority INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "query": {
+        "query": "    CREATE TABLE IF NOT EXISTS tasks (\n      id SERIAL PRIMARY KEY,\n      title VARCHAR(255) NOT NULL,\n      description TEXT,\n      status VARCHAR(50) DEFAULT 'pending',\n      priority INTEGER DEFAULT 1,\n      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n    )\n"
+      }
+    },
+    "response": {
+      "query": {
+        "messages": [
+          {
+            "notice": {
+              "severity": "NOTICE",
+              "severityUnlocalized": "NOTICE",
+              "code": "42P07",
+              "msg": "relation \"tasks\" already exists, skipping",
+              "file": "parse_utilcmd.c",
+              "line": 207,
+              "routine": "transformCreateStmt"
+            }
+          },
+          {
+            "complete": {
+              "tag": "CREATE TABLE"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:CREATE TABLE IF NOT EXISTS tasks (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50) DEFAULT 'pending', priority INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)": {
+      "id": "SQL:CREATE TABLE IF NOT EXISTS tasks (id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50) DEFAULT 'pending', priority INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
+      "tokens": [
+        {
+          "uuid": "h+cjscXBQLGqzbij4db83g==",
+          "token": {
+            "location": "postgres.request.query.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "Q1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgdGFza3MgKGlkIFNFUklBTCBQUklNQVJZIEtFWSwgdGl0bGUgVkFSQ0hBUigyNTUpIE5PVCBOVUxMLCBkZXNjcmlwdGlvbiBURVhULCBzdGF0dXMgVkFSQ0hBUig1MCkgREVGQVVMVCAncGVuZGluZycsIHByaW9yaXR5IElOVEVHRVIgREVGQVVMVCAxLCBjcmVhdGVkX2F0IFRJTUVTVEFNUCBERUZBVUxUIENVUlJFTlRfVElNRVNUQU1QLCB1cGRhdGVkX2F0IFRJTUVTVEFNUCBERUZBVUxUIENVUlJFTlRfVElNRVNUQU1QKQ=="
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "UXVlcnk=",
+    "postgres:query": "Q1JFQVRFIFRBQkxFIElGIE5PVCBFWElTVFMgdGFza3MgKCBpZCBTRVJJQUwgUFJJTUFSWSBLRVksIHRpdGxlIFZBUkNIQVIgKCAyNTUgKSBOT1QgTlVMTCwgZGVzY3JpcHRpb24gVEVYVCwgc3RhdHVzIFZBUkNIQVIgKCA1MCApIERFRkFVTFQgJ3BlbmRpbmcnLCBwcmlvcml0eSBJTlRFR0VSIERFRkFVTFQgMSwgY3JlYXRlZF9hdCBUSU1FU1RBTVAgREVGQVVMVCBDVVJSRU5UX1RJTUVTVEFNUCwgdXBkYXRlZF9hdCBUSU1FU1RBTVAgREVGQVVMVCBDVVJSRU5UX1RJTUVTVEFNUCAp"
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-10-09T14:42:45.578352217Z",
+    "downstream": {
+      "established": "2025-10-09T14:42:45.559097009Z",
+      "ipAddress": "10.244.0.233",
+      "port": 46660,
+      "bytesSent": "356"
+    },
+    "upstream": {
+      "established": "2025-10-09T14:42:45.559497425Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local",
+      "bytesSent": "139"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Query",
+    "postgres:query": "CREATE TABLE IF NOT EXISTS tasks ( id SERIAL PRIMARY KEY, title VARCHAR ( 255 ) NOT NULL, description TEXT, status VARCHAR ( 50 ) DEFAULT 'pending', priority INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP )"
+  }
+}

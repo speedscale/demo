@@ -1,0 +1,151 @@
+{
+  "msgType": "rrpair",
+  "resource": "responder",
+  "ts": "2025-10-10T00:39:12.395404Z",
+  "l7protocol": "postgres",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "dissectorVersion": "2",
+    "file": "proxymock/snapshot-f82bffb3-62ae-400a-aed4-f2cfba94630e/postgres-service.default.svc.cluster.local/2025-10-09_14-43-25.77006168Z.json",
+    "k8sAppLabel": "ruby-server",
+    "k8sAppPodName": "ruby-server-66f66b5dfb-9mmlr",
+    "k8sAppPodNamespace": "default",
+    "k8sClusterName": "miniken",
+    "match": "HIT",
+    "msgNum": "20",
+    "proxyId": "ruby-server-66f66b5dfb-9mmlr",
+    "proxyLocation": "out",
+    "proxyProtocol": "",
+    "proxyType": "transparent",
+    "proxyVersion": "v2.4.9",
+    "sequence": "20",
+    "source": "responder"
+  },
+  "uuid": "MDOvIYBhSQeW/SB6yhDb6w==",
+  "direction": "OUT",
+  "cluster": "miniken",
+  "namespace": "default",
+  "service": "ruby-server",
+  "tech": "Postgres",
+  "network_address": "postgres-service.default.svc.cluster.local:5432",
+  "command": "Bind Statement Parameters",
+  "location": "INSERT INTO tasks (title, description, status, priority) VALUES ($1, $2, $3, $4) RETURNING *",
+  "status": "OK",
+  "dlpModified": false,
+  "dlpRule": "decoy-email-2",
+  "postgres": {
+    "request": {
+      "bind": {
+        "parameterFormatCodes": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "parameters": [
+          {
+            "asString": "Write unit tests #839723"
+          },
+          {
+            "asString": "Auto-generated task from Ruby client at 2025-10-09 14:43:25 +0000"
+          },
+          {
+            "asString": "completed"
+          },
+          {
+            "asString": "1"
+          }
+        ],
+        "resultFormatCodes": [
+          0
+        ],
+        "parseRequest": {
+          "query": "INSERT INTO tasks (title, description, status, priority) VALUES ($1, $2, $3, $4) RETURNING *",
+          "parameterOids": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "response": {
+      "bind": {
+        "complete": {}
+      }
+    }
+  },
+  "tokenList": {
+    "SQL:INSERT INTO tasks (title, description, status, priority) VALUES ($1, $2, $3, $4) RETURNING *": {
+      "id": "SQL:INSERT INTO tasks (title, description, status, priority) VALUES ($1, $2, $3, $4) RETURNING *",
+      "tokens": [
+        {
+          "uuid": "MDOvIYBhSQeW/SB6yhDb6w==",
+          "token": {
+            "location": "postgres.request.bind.parseRequest.query",
+            "pattern": "DATA_PATTERN_SQL",
+            "replacementValue": "SU5TRVJUIElOVE8gdGFza3MgKHRpdGxlLCBkZXNjcmlwdGlvbiwgc3RhdHVzLCBwcmlvcml0eSkgVkFMVUVTICgkMSwgJDIsICQzLCAkNCkgUkVUVVJOSU5HICo="
+          }
+        }
+      ]
+    },
+    "SQL_PORTAL_NAME:": {
+      "id": "SQL_PORTAL_NAME:",
+      "tokens": [
+        {
+          "uuid": "MDOvIYBhSQeW/SB6yhDb6w==",
+          "token": {
+            "location": "postgres.request.bind.portal",
+            "pattern": "DATA_PATTERN_SQL_PORTAL_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    },
+    "SQL_STATEMENT_NAME:": {
+      "id": "SQL_STATEMENT_NAME:",
+      "tokens": [
+        {
+          "uuid": "MDOvIYBhSQeW/SB6yhDb6w==",
+          "token": {
+            "location": "postgres.request.bind.parseRequest.name",
+            "pattern": "DATA_PATTERN_SQL_STATEMENT_NAME",
+            "replacementValue": ""
+          }
+        }
+      ]
+    }
+  },
+  "signature": {
+    "postgres:msg_type": "QmluZCBTdGF0ZW1lbnQgUGFyYW1ldGVycw==",
+    "postgres:portal": "",
+    "postgres:query": "SU5TRVJUIElOVE8gdGFza3MgKCB0aXRsZSwgZGVzY3JpcHRpb24sIHN0YXR1cywgcHJpb3JpdHkgKSBWQUxVRVMgKCAkMSwgJDIsICQzLCAkNCApIFJFVFVSTklORyAq",
+    "postgres:query_name": ""
+  },
+  "netinfo": {
+    "id": "26",
+    "startTime": "2025-10-09T14:43:25.767550638Z",
+    "downstream": {
+      "established": "2025-10-09T14:43:25.754593138Z",
+      "ipAddress": "10.244.0.233",
+      "port": 51128,
+      "bytesSent": "277"
+    },
+    "upstream": {
+      "established": "2025-10-09T14:43:25.754905555Z",
+      "ipAddress": "10.110.100.79",
+      "port": 5432,
+      "hostname": "postgres-service.default.svc.cluster.local",
+      "bytesSent": "414"
+    }
+  },
+  "mutableSignature": {
+    "postgres:msg_type": "Bind Statement Parameters",
+    "postgres:portal": "",
+    "postgres:query": "INSERT INTO tasks ( title, description, status, priority ) VALUES ( $1, $2, $3, $4 ) RETURNING *",
+    "postgres:query_name": ""
+  },
+  "responderMatch": "HIT"
+}

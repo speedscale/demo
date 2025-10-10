@@ -45,10 +45,18 @@ jobs:
             path: node
             setup: node
             test_cmd: echo "No tests configured for node"
-          - name: ruby-api
+          - name: test-unit
             path: ruby-api
             setup: ruby
-            test_cmd: echo "Running multi-step tests"
+            test_cmd: ./test-unit.sh
+          - name: test-integration
+            path: ruby-api
+            setup: ruby
+            test_cmd: ./test-integration.sh
+          - name: test-load
+            path: ruby-api
+            setup: ruby
+            test_cmd: ./test-load.sh
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -90,7 +98,6 @@ jobs:
         working-directory: ${{ matrix.service.path }}
 
     - name: Run tests
-      if: matrix.service.name != 'ruby-api'
       working-directory: ${{ matrix.service.path }}
       env:
         SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
@@ -103,48 +110,6 @@ jobs:
         USE_MOCK_SERVER: 'true'
       run: ${{ matrix.service.test_cmd }}
 
-    - name: Run unit tests
-      if: matrix.service.name == 'ruby-api'
-      working-directory: ${{ matrix.service.path }}
-      env:
-        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: tasks_db
-        DB_USER: postgres
-        DB_PASSWORD: postgres
-        JWT_SECRET: test-secret-for-ci
-        USE_MOCK_SERVER: 'true'
-      run: ./test-unit.sh
-
-    - name: Run integration tests
-      if: matrix.service.name == 'ruby-api'
-      working-directory: ${{ matrix.service.path }}
-      env:
-        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: tasks_db
-        DB_USER: postgres
-        DB_PASSWORD: postgres
-        JWT_SECRET: test-secret-for-ci
-        USE_MOCK_SERVER: 'true'
-      run: ./test-integration.sh
-
-    - name: Run load tests (replay)
-      if: matrix.service.name == 'ruby-api'
-      working-directory: ${{ matrix.service.path }}
-      env:
-        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: tasks_db
-        DB_USER: postgres
-        DB_PASSWORD: postgres
-        JWT_SECRET: test-secret-for-ci
-        USE_MOCK_SERVER: 'true'
-      run: ./test-replay.sh
-
     - name: Upload test results
       if: always() && matrix.service.setup == 'java'
       uses: actions/upload-artifact@v4
@@ -154,7 +119,7 @@ jobs:
         retention-days: 7
 
     - name: Upload proxymock logs
-      if: always() && matrix.service.name == 'ruby-api'
+      if: always() && startsWith(matrix.service.name, 'test-')
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.service.name }}-logs

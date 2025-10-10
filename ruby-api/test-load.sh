@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Replay test script
-# Runs proxymock replay against the app to verify performance
+# Load test script
+# Runs proxymock replay with virtual users and duration to verify performance under load
 
 set -e
 set -o pipefail 2>/dev/null || true
@@ -9,6 +9,8 @@ set -o pipefail 2>/dev/null || true
 APP_PORT=3000
 APP_COMMAND="bundle exec ruby app.rb"
 PROXYMOCK_IN_DIR="proxymock/snapshot-f82bffb3-62ae-400a-aed4-f2cfba94630e"
+LOAD_TEST_VU=3
+LOAD_TEST_DURATION=60
 
 ###########################
 ### USER SETTINGS ABOVE ###
@@ -36,22 +38,25 @@ install_proxymock() {
   echo "✓ proxymock installed"
 }
 
-run_replay() {
-  REPLAY_LOG_FILE="proxymock_replay.log"
+run_load_test() {
+  LOAD_LOG_FILE="proxymock_load.log"
   print_logs() {
     echo ""
-    echo "=== Replay Results ==="
+    echo "=== Load Test Results ==="
     # Show the last 25 lines for summary
-    tail -25 $REPLAY_LOG_FILE
+    tail -25 $LOAD_LOG_FILE
   }
   trap print_logs EXIT
 
-  # start proxymock replay, with your app, to run your app and replay test traffic
-  # against it
+  echo "Running load test with ${LOAD_TEST_VU} virtual users for ${LOAD_TEST_DURATION}s..."
+
+  # Run proxymock replay with VUs and duration to simulate load
   proxymock replay \
     --in "$PROXYMOCK_IN_DIR" \
     --test-against localhost:$APP_PORT \
-    --log-to $REPLAY_LOG_FILE \
+    --log-to $LOAD_LOG_FILE \
+    --vu $LOAD_TEST_VU \
+    --duration ${LOAD_TEST_DURATION}s \
     --fail-if "latency.p95 > 300" \
     --fail-if "latency.max > 600" \
     -- $APP_COMMAND > /dev/null 2>&1
@@ -60,7 +65,7 @@ run_replay() {
 main() {
   validate
   install_proxymock
-  run_replay
+  run_load_test
 }
 
 main

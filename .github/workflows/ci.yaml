@@ -91,6 +91,7 @@ jobs:
 
     - name: Run tests
       working-directory: ${{ matrix.service.path }}
+      shell: sh
       env:
         SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
         DB_HOST: localhost

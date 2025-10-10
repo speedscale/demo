@@ -38,10 +38,7 @@ install_proxymock() {
   sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)" > /dev/null 2>&1
   export PATH=${PATH}:${HOME}/.speedscale
 
-  # initialize with API key
-  proxymock init --api-key "$SPEEDSCALE_API_KEY" > /dev/null 2>&1
-
-  echo "✓ proxymock installed and initialized"
+  echo "✓ proxymock installed"
 }
 
 run_mock_server() {

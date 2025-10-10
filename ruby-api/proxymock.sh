@@ -17,7 +17,7 @@ LOAD_TEST_DURATION=60
 ###    SCRIPT BELOW     ###
 ###########################
 
-set -e
+set -ex
 set -o pipefail 2>/dev/null || true
 
 validate() {

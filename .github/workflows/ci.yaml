@@ -45,10 +45,18 @@ jobs:
             path: node
             setup: node
             test_cmd: echo "No tests configured for node"
-          - name: ruby-api
+          - name: ruby-api-unit
             path: ruby-api
             setup: ruby
-            test_cmd: ./proxymock.sh
+            test_cmd: ./test-unit.sh
+          - name: ruby-api-integration
+            path: ruby-api
+            setup: ruby
+            test_cmd: ./test-integration.sh
+          - name: ruby-api-replay
+            path: ruby-api
+            setup: ruby
+            test_cmd: ./test-replay.sh
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -110,11 +118,11 @@ jobs:
         path: ${{ matrix.service.path }}/target/surefire-reports/
         retention-days: 7
 
-    - name: Upload proxymock replay results
-      if: always() && matrix.service.name == 'ruby-api'
+    - name: Upload proxymock logs
+      if: always() && startsWith(matrix.service.name, 'ruby-api-')
       uses: actions/upload-artifact@v4
       with:
-        name: proxymock-replay-results
+        name: ${{ matrix.service.name }}-logs
         path: |
           ${{ matrix.service.path }}/proxymock/replayed-*
           ${{ matrix.service.path }}/*.log

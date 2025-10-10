@@ -3,7 +3,7 @@
 # set the port your application will listen on, where traffic will be replayed
 APP_PORT=3000
 # set the command to run your application
-APP_COMMAND="SLOW_AUTH=true bundle exec ruby app.rb"
+APP_COMMAND="bundle exec ruby app.rb"
 # the path to pre-recorded proxymock traffic
 PROXYMOCK_IN_DIR="proxymock/snapshot-f82bffb3-62ae-400a-aed4-f2cfba94630e"
 # optionally, run mock server
@@ -110,9 +110,7 @@ main() {
   if [ "$RUN_LOAD_TEST" = "true" ]; then
     (
       echo "Starting app for load test..."
-      # Don't use SLOW_AUTH during load test, only during replay
-      APP_COMMAND_NO_SLOW=$(echo "$APP_COMMAND" | sed 's/SLOW_AUTH=true //')
-      $APP_COMMAND_NO_SLOW > app_loadtest.log 2>&1 &
+      $APP_COMMAND > app_loadtest.log 2>&1 &
       APP_PID=$!
 
       # Wait for app to be ready

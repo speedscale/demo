@@ -92,8 +92,8 @@ run_replay() {
     --in "$PROXYMOCK_IN_DIR" \
     --test-against localhost:$APP_PORT \
     --log-to $REPLAY_LOG_FILE \
-    --fail-if "latency.p95 > 2000" \
-    --fail-if "latency.max > 5000" \
+    --fail-if "latency.p95 > 10" \
+    --fail-if "latency.max > 50" \
     -- $APP_COMMAND
 }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Integration test script
-# Runs the app with proxymock replay to validate functionality
+# Load test script
+# Runs proxymock replay with virtual users and duration to verify performance under load
 
 set -e
 set -o pipefail 2>/dev/null || true
@@ -9,6 +9,8 @@ set -o pipefail 2>/dev/null || true
 APP_PORT=3000
 APP_COMMAND="bundle exec ruby app.rb"
 PROXYMOCK_IN_DIR="proxymock/snapshot-f82bffb3-62ae-400a-aed4-f2cfba94630e"
+LOAD_TEST_VU=3
+LOAD_TEST_DURATION=60
 
 ###########################
 ### USER SETTINGS ABOVE ###
@@ -36,19 +38,23 @@ install_proxymock() {
   echo "✓ proxymock installed"
 }
 
-run_integration_test() {
-  INTEGRATION_LOG_FILE="proxymock_integration.log"
+run_load_test() {
+  LOAD_LOG_FILE="proxymock_load.log"
 
-  echo "Running integration test with proxymock replay..."
+  echo "Running load test with ${LOAD_TEST_VU} virtual users for ${LOAD_TEST_DURATION}s..."
 
-  # Run proxymock replay with the app, validating that no requests fail
+  # Run proxymock replay with VUs and duration to simulate load
   # Redirect app output to /dev/null to avoid cluttering logs
   set +e  # Temporarily disable exit on error to capture exit code
   proxymock replay \
     --in "$PROXYMOCK_IN_DIR" \
     --test-against localhost:$APP_PORT \
-    --log-to $INTEGRATION_LOG_FILE \
-    --fail-if "requests.failed != 0" \
+    --log-to $LOAD_LOG_FILE \
+    --vus $LOAD_TEST_VU \
+    --for ${LOAD_TEST_DURATION}s \
+    --fail-if "latency.p95 > 800" \
+    --fail-if "latency.max > 1200" \
+    --no-out \
     -- bash -c "$APP_COMMAND > /dev/null 2>&1"
 
   PROXYMOCK_EXIT_CODE=$?
@@ -56,9 +62,9 @@ run_integration_test() {
 
   # Print truncated results after test completes
   echo ""
-  echo "=== Integration Test Results ==="
-  if [ -f "$INTEGRATION_LOG_FILE" ]; then
-    tail -50 $INTEGRATION_LOG_FILE
+  echo "=== Load Test Results ==="
+  if [ -f "$LOAD_LOG_FILE" ]; then
+    tail -25 $LOAD_LOG_FILE
   else
     echo "Log file not found"
   fi
@@ -66,7 +72,7 @@ run_integration_test() {
   # Exit with proxymock's exit code
   if [ $PROXYMOCK_EXIT_CODE -ne 0 ]; then
     echo ""
-    echo "Integration test failed with exit code $PROXYMOCK_EXIT_CODE"
+    echo "Load test failed with exit code $PROXYMOCK_EXIT_CODE"
     exit $PROXYMOCK_EXIT_CODE
   fi
 }
@@ -74,10 +80,7 @@ run_integration_test() {
 main() {
   validate
   install_proxymock
-  run_integration_test
-
-  echo ""
-  echo "✓ Integration test completed"
+  run_load_test
 }
 
 main

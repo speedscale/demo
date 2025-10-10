@@ -3,6 +3,16 @@
 set -e
 
 echo "Running unit tests..."
-echo "✓ No unit tests configured yet"
 echo ""
-echo "To add unit tests, install rspec and create specs in the spec/ directory"
+
+# Check if rspec is available
+if ! bundle exec rspec --version > /dev/null 2>&1; then
+  echo "Installing test dependencies..."
+  bundle install --quiet
+fi
+
+# Run rspec tests
+bundle exec rspec spec/
+
+echo ""
+echo "✓ Unit tests completed"

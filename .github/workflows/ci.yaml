@@ -17,8 +17,8 @@ jobs:
     - name: Validate version consistency
       run: make validate-version
 
-  # Test matrix for different services
-  test:
+  # Unit Tests - Fast feedback on code quality
+  unit-tests:
     runs-on: ubuntu-latest
     needs: validate
     strategy:
@@ -37,51 +37,22 @@ jobs:
             path: java-auth/client
             setup: java
             test_cmd: mvn test
-          - name: smart-replace-demo
-            path: smart-replace-demo
-            setup: node
-            test_cmd: echo "No tests configured for smart-replace-demo"
-          - name: node
-            path: node
-            setup: node
-            test_cmd: echo "No tests configured for node"
           - name: ruby-api
             path: ruby-api
             setup: ruby
-            test_cmd: echo "Running multi-step tests"
+            test_cmd: ./test-unit.sh
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up JDK 17
+    - name: Set up Code Env
       if: matrix.service.setup == 'java'
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Cache Maven dependencies
-      if: matrix.service.setup == 'java'
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-
-    - name: Set up Node.js
-      if: matrix.service.setup == 'node'
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: ${{ matrix.service.path }}/package-lock.json
-
-    - name: Install Node dependencies
-      if: matrix.service.setup == 'node'
-      working-directory: ${{ matrix.service.path }}
-      run: npm ci
-
-    - name: Set up Ruby
+    - name: Set up Code Env
       if: matrix.service.setup == 'ruby'
       uses: ruby/setup-ruby@v1
       with:
@@ -89,8 +60,15 @@ jobs:
         bundler-cache: true
         working-directory: ${{ matrix.service.path }}
 
-    - name: Run tests
-      if: matrix.service.name != 'ruby-api'
+    - name: Cache Dependencies
+      if: matrix.service.setup == 'java'
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Run Tests
       working-directory: ${{ matrix.service.path }}
       env:
         SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
@@ -103,70 +81,114 @@ jobs:
         USE_MOCK_SERVER: 'true'
       run: ${{ matrix.service.test_cmd }}
 
-    - name: Run unit tests
-      if: matrix.service.name == 'ruby-api'
-      working-directory: ${{ matrix.service.path }}
-      env:
-        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: tasks_db
-        DB_USER: postgres
-        DB_PASSWORD: postgres
-        JWT_SECRET: test-secret-for-ci
-        USE_MOCK_SERVER: 'true'
-      run: ./test-unit.sh
-
-    - name: Run integration tests
-      if: matrix.service.name == 'ruby-api'
-      working-directory: ${{ matrix.service.path }}
-      env:
-        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: tasks_db
-        DB_USER: postgres
-        DB_PASSWORD: postgres
-        JWT_SECRET: test-secret-for-ci
-        USE_MOCK_SERVER: 'true'
-      run: ./test-integration.sh
-
-    - name: Run load tests (replay)
-      if: matrix.service.name == 'ruby-api'
-      working-directory: ${{ matrix.service.path }}
-      env:
-        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DB_NAME: tasks_db
-        DB_USER: postgres
-        DB_PASSWORD: postgres
-        JWT_SECRET: test-secret-for-ci
-        USE_MOCK_SERVER: 'true'
-      run: ./test-replay.sh
-
-    - name: Upload test results
-      if: always() && matrix.service.setup == 'java'
+    - name: Upload Results
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.service.name }}-test-results
-        path: ${{ matrix.service.path }}/target/surefire-reports/
+        name: unit-${{ matrix.service.name }}-results
+        path: |
+          ${{ matrix.service.path }}/target/surefire-reports/
+          ${{ matrix.service.path }}/**/*.log
         retention-days: 7
 
-    - name: Upload proxymock logs
-      if: always() && matrix.service.name == 'ruby-api'
+  # Integration Tests - Functional correctness with proxymock
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: ruby-api
+            path: ruby-api
+            setup: ruby
+            test_cmd: ./test-integration.sh
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Code Env
+      if: matrix.service.setup == 'ruby'
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+        working-directory: ${{ matrix.service.path }}
+
+    - name: Run Tests
+      working-directory: ${{ matrix.service.path }}
+      env:
+        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: tasks_db
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+        JWT_SECRET: test-secret-for-ci
+        USE_MOCK_SERVER: 'true'
+      run: ${{ matrix.service.test_cmd }}
+
+    - name: Upload Results
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.service.name }}-logs
+        name: integration-${{ matrix.service.name }}-results
         path: |
           ${{ matrix.service.path }}/proxymock/replayed-*
-          ${{ matrix.service.path }}/*.log
+          ${{ matrix.service.path }}/**/*.log
+        retention-days: 7
+
+  # Load Tests - Performance validation under load
+  load-tests:
+    runs-on: ubuntu-latest
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: ruby-api
+            path: ruby-api
+            setup: ruby
+            test_cmd: ./test-load.sh
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Code Env
+      if: matrix.service.setup == 'ruby'
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+        working-directory: ${{ matrix.service.path }}
+
+    - name: Run Tests
+      working-directory: ${{ matrix.service.path }}
+      env:
+        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: tasks_db
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+        JWT_SECRET: test-secret-for-ci
+        USE_MOCK_SERVER: 'true'
+      run: ${{ matrix.service.test_cmd }}
+
+    - name: Upload Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: load-${{ matrix.service.name }}-results
+        path: |
+          ${{ matrix.service.path }}/proxymock/replayed-*
+          ${{ matrix.service.path }}/**/*.log
         retention-days: 7
 
   # Build matrix for different services
   build:
     runs-on: ubuntu-latest
-    needs: test
+    needs: [unit-tests, integration-tests, load-tests]
     strategy:
       fail-fast: false
       matrix:
@@ -193,28 +215,20 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up JDK 17
+    - name: Set up Code Env
       if: contains(matrix.service.name, 'java')
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Cache Maven dependencies
-      if: contains(matrix.service.name, 'java')
-      uses: actions/cache@v3
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-
-    - name: Set up Node.js
+    - name: Set up Code Env
       if: contains(matrix.service.name, 'node') || matrix.service.name == 'smart-replace-demo'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
 
-    - name: Set up Ruby
+    - name: Set up Code Env
       if: contains(matrix.service.name, 'ruby')
       uses: ruby/setup-ruby@v1
       with:
@@ -222,15 +236,23 @@ jobs:
         bundler-cache: true
         working-directory: ${{ matrix.service.path }}
 
-    - name: Build service
+    - name: Cache Dependencies
+      if: contains(matrix.service.name, 'java')
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Build Service
       working-directory: ${{ matrix.service.path }}
       run: ${{ matrix.service.build_cmd }}
 
-    - name: Upload Java artifacts
-      if: contains(matrix.service.name, 'java')
+    - name: Upload Results
+      if: always() && contains(matrix.service.name, 'java')
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.service.name }}-artifacts
+        name: build-${{ matrix.service.name }}-artifacts
         path: |
           ${{ matrix.service.path }}/**/target/*.jar
         retention-days: 30

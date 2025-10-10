@@ -41,8 +41,8 @@ run_replay() {
   print_logs() {
     echo ""
     echo "=== Replay Results ==="
-    # Only show the summary section, not the full verbose log
-    tail -100 $REPLAY_LOG_FILE
+    # Show the last 25 lines for summary
+    tail -25 $REPLAY_LOG_FILE
   }
   trap print_logs EXIT
 

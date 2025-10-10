@@ -8,3 +8,8 @@ gem 'puma', '~> 6.4'
 gem 'json', '~> 2.7'
 gem 'rack', '~> 2.2'
 gem 'jwt', '~> 2.7'
+
+group :test do
+  gem 'rspec', '~> 3.12'
+  gem 'rack-test', '~> 2.1'
+end

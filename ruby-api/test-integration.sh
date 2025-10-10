@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Integration / Load test script
-# Runs the app with proxymock mock server and client load test
+# Integration test script
+# Runs the app with proxymock replay to validate functionality
 
 set -e
 set -o pipefail 2>/dev/null || true
@@ -9,7 +9,6 @@ set -o pipefail 2>/dev/null || true
 APP_PORT=3000
 APP_COMMAND="bundle exec ruby app.rb"
 PROXYMOCK_IN_DIR="proxymock/snapshot-f82bffb3-62ae-400a-aed4-f2cfba94630e"
-LOAD_TEST_DURATION=60
 
 ###########################
 ### USER SETTINGS ABOVE ###
@@ -37,62 +36,30 @@ install_proxymock() {
   echo "✓ proxymock installed"
 }
 
-run_mock_server() {
-  echo "Starting mock server..."
+run_integration_test() {
+  INTEGRATION_LOG_FILE="proxymock_integration.log"
+  print_logs() {
+    echo ""
+    echo "=== Integration Test Results ==="
+    tail -50 $INTEGRATION_LOG_FILE
+  }
+  trap print_logs EXIT
 
-  proxymock mock \
-    --in $PROXYMOCK_IN_DIR/ \
-    --log-to proxymock_mock.log > /dev/null 2>&1 &
+  echo "Running integration test with proxymock replay..."
 
-  sleep 2
-  echo "✓ Mock server started (logs: proxymock_mock.log)"
-}
-
-run_load_test() {
-  echo "Running client load test for ${LOAD_TEST_DURATION}s..."
-
-  cd client
-  export SERVER_URL=http://localhost:$APP_PORT
-  bundle exec ruby client.rb > ../client.log 2>&1 &
-  CLIENT_PID=$!
-  cd ..
-
-  sleep $LOAD_TEST_DURATION
-
-  echo "Stopping client load test..."
-  kill $CLIENT_PID 2>/dev/null || true
-  wait $CLIENT_PID 2>/dev/null || true
-
-  echo "Load test completed"
+  # Run proxymock replay with the app, validating that no requests fail
+  proxymock replay \
+    --in "$PROXYMOCK_IN_DIR" \
+    --test-against localhost:$APP_PORT \
+    --log-to $INTEGRATION_LOG_FILE \
+    --fail-if "requests.failed != 0" \
+    -- $APP_COMMAND > /dev/null 2>&1
 }
 
 main() {
   validate
   install_proxymock
-  run_mock_server
-
-  echo "Starting app for load test..."
-  $APP_COMMAND > app_loadtest.log 2>&1 &
-  APP_PID=$!
-
-  # Wait for app to be ready
-  echo -n "Waiting for app to be ready"
-  for i in $(seq 1 30); do
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:$APP_PORT/health | grep -q "200"; then
-      echo ""
-      echo "✓ App ready for load test"
-      break
-    fi
-    echo -n "."
-    sleep 2
-  done
-
-  run_load_test
-
-  # Stop the app
-  echo "Stopping load test app..."
-  kill $APP_PID 2>/dev/null || true
-  wait $APP_PID 2>/dev/null || true
+  run_integration_test
 
   echo ""
   echo "✓ Integration test completed"

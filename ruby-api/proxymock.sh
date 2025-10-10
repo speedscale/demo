@@ -74,10 +74,17 @@ run_load_test() {
 
 run_replay() {
   REPLAY_LOG_FILE="proxymock_replay.log"
-  print_replay_log() {
+  print_logs() {
+    echo ""
+    echo "=== Mock Server Log ==="
+    if [ -f proxymock_mock.log ]; then
+      tail -50 proxymock_mock.log
+    fi
+    echo ""
+    echo "=== Replay Log ==="
     cat $REPLAY_LOG_FILE
   }
-  trap print_replay_log EXIT
+  trap print_logs EXIT
 
   # start proxymock replay, with your app, to run your app and replay test traffic
   # against it

@@ -415,7 +415,7 @@ get '/api/project-inspiration' do
   authenticate!
 
   # Simulate slow backend processing
-  sleep(2.5)
+  sleep(3.5)
 
   begin
     # Call GitHub API to get popular Ruby repositories

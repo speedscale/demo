@@ -17,7 +17,7 @@ LOAD_TEST_DURATION=60
 ###    SCRIPT BELOW     ###
 ###########################
 
-set -ex
+set -e
 set -o pipefail 2>/dev/null || true
 
 validate() {
@@ -46,7 +46,6 @@ run_mock_server() {
   echo "Starting mock server..."
 
   proxymock mock \
-    --verbose \
     --in $PROXYMOCK_IN_DIR/ \
     --log-to proxymock_mock.log &
 }
@@ -84,6 +83,9 @@ run_replay() {
     --in "$PROXYMOCK_IN_DIR" \
     --test-against localhost:$APP_PORT \
     --log-to $REPLAY_LOG_FILE \
+    --virtual-users 5 \
+    --fail-if "latency.p95 > 2000" \
+    --fail-if "latency.max > 5000" \
     -- $APP_COMMAND
 }
 

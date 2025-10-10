@@ -17,7 +17,7 @@ LOAD_TEST_DURATION=60
 ###    SCRIPT BELOW     ###
 ###########################
 
-set -ex
+set -e
 set -o pipefail 2>/dev/null || true
 
 validate() {
@@ -35,11 +35,13 @@ validate() {
 install_proxymock() {
   echo "Installing proxymock..."
 
-  sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
+  sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)" > /dev/null 2>&1
   export PATH=${PATH}:${HOME}/.speedscale
 
   # initialize with API key
-  proxymock init --api-key "$SPEEDSCALE_API_KEY"
+  proxymock init --api-key "$SPEEDSCALE_API_KEY" > /dev/null 2>&1
+
+  echo "✓ proxymock installed and initialized"
 }
 
 run_mock_server() {
@@ -47,7 +49,10 @@ run_mock_server() {
 
   proxymock mock \
     --in $PROXYMOCK_IN_DIR/ \
-    --log-to proxymock_mock.log &
+    --log-to proxymock_mock.log > /dev/null 2>&1 &
+
+  sleep 2
+  echo "✓ Mock server started (logs: proxymock_mock.log)"
 }
 
 run_load_test() {
@@ -104,17 +109,21 @@ main() {
       APP_PID=$!
 
       # Wait for app to be ready
+      echo -n "Waiting for app to be ready"
       for i in $(seq 1 30); do
         if curl -s -o /dev/null -w "%{http_code}" http://localhost:$APP_PORT/health | grep -q "200"; then
-          echo "App ready for load test"
+          echo ""
+          echo "✓ App ready for load test"
           break
         fi
+        echo -n "."
         sleep 2
       done
 
       run_load_test
 
       # Stop the app
+      echo "Stopping load test app..."
       kill $APP_PID 2>/dev/null || true
       wait $APP_PID 2>/dev/null || true
     )

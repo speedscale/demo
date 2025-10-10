@@ -38,16 +38,6 @@ install_proxymock() {
 
 run_integration_test() {
   INTEGRATION_LOG_FILE="proxymock_integration.log"
-  print_logs() {
-    echo ""
-    echo "=== Integration Test Results ==="
-    if [ -f "$INTEGRATION_LOG_FILE" ]; then
-      tail -50 $INTEGRATION_LOG_FILE
-    else
-      echo "Log file not found - test may have failed early"
-    fi
-  }
-  trap print_logs EXIT
 
   echo "Running integration test with proxymock replay..."
 
@@ -58,6 +48,15 @@ run_integration_test() {
     --log-to $INTEGRATION_LOG_FILE \
     --fail-if "requests.failed != 0" \
     -- $APP_COMMAND
+
+  # Print truncated results after test completes
+  echo ""
+  echo "=== Integration Test Results ==="
+  if [ -f "$INTEGRATION_LOG_FILE" ]; then
+    tail -50 $INTEGRATION_LOG_FILE
+  else
+    echo "Log file not found"
+  fi
 }
 
 main() {

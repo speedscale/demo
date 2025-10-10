@@ -40,17 +40,6 @@ install_proxymock() {
 
 run_load_test() {
   LOAD_LOG_FILE="proxymock_load.log"
-  print_logs() {
-    echo ""
-    echo "=== Load Test Results ==="
-    # Show the last 25 lines for summary if log file exists
-    if [ -f "$LOAD_LOG_FILE" ]; then
-      tail -25 $LOAD_LOG_FILE
-    else
-      echo "Log file not found - test may have failed early"
-    fi
-  }
-  trap print_logs EXIT
 
   echo "Running load test with ${LOAD_TEST_VU} virtual users for ${LOAD_TEST_DURATION}s..."
 
@@ -64,6 +53,15 @@ run_load_test() {
     --fail-if "latency.p95 > 300" \
     --fail-if "latency.max > 600" \
     -- $APP_COMMAND
+
+  # Print truncated results after test completes
+  echo ""
+  echo "=== Load Test Results ==="
+  if [ -f "$LOAD_LOG_FILE" ]; then
+    tail -25 $LOAD_LOG_FILE
+  else
+    echo "Log file not found"
+  fi
 }
 
 main() {

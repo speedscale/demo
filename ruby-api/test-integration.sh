@@ -42,12 +42,13 @@ run_integration_test() {
   echo "Running integration test with proxymock replay..."
 
   # Run proxymock replay with the app, validating that no requests fail
+  # Redirect app output to /dev/null to avoid cluttering logs
   proxymock replay \
     --in "$PROXYMOCK_IN_DIR" \
     --test-against localhost:$APP_PORT \
     --log-to $INTEGRATION_LOG_FILE \
     --fail-if "requests.failed != 0" \
-    -- $APP_COMMAND
+    -- bash -c "$APP_COMMAND > /dev/null 2>&1"
 
   # Print truncated results after test completes
   echo ""

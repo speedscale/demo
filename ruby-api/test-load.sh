@@ -44,6 +44,7 @@ run_load_test() {
   echo "Running load test with ${LOAD_TEST_VU} virtual users for ${LOAD_TEST_DURATION}s..."
 
   # Run proxymock replay with VUs and duration to simulate load
+  # Redirect app output to /dev/null to avoid cluttering logs
   proxymock replay \
     --in "$PROXYMOCK_IN_DIR" \
     --test-against localhost:$APP_PORT \
@@ -52,7 +53,7 @@ run_load_test() {
     --for ${LOAD_TEST_DURATION}s \
     --fail-if "latency.p95 > 300" \
     --fail-if "latency.max > 600" \
-    -- $APP_COMMAND
+    -- bash -c "$APP_COMMAND > /dev/null 2>&1"
 
   # Print truncated results after test completes
   echo ""

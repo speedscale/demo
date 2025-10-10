@@ -70,6 +70,10 @@ def authenticate!
   end
 
   @current_user_id = payload['user_id']
+
+  # Simulate slow authentication/authorization check
+  # This adds latency to ALL authenticated endpoints for demo purposes
+  sleep(0.5) if ENV['SLOW_AUTH']
 end
 
 # Database connection

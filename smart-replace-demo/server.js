@@ -150,6 +150,54 @@ app.get('/orders', authenticateToken, (req, res) => {
   res.json(order);
 });
 
+// Data endpoints - demonstrates smart replace with path parameters
+app.get('/data/:id', authenticateToken, (req, res) => {
+  console.log(`[${new Date().toISOString()}] GET /data/${req.params.id} - Requested by: ${req.user.email}`);
+  const { id } = req.params;
+
+  // Generate dynamic data based on the ID
+  const data = {
+    id: id,
+    requestedBy: req.user.userId,
+    timestamp: new Date().toISOString(),
+    // Simulate data retrieval with ID-dependent values
+    value: parseInt(id.replace(/\D/g, '') || '0', 10) * 42,
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      source: 'smart-replace-demo',
+      idHash: Buffer.from(id).toString('base64')
+    }
+  };
+
+  res.json(data);
+});
+
+app.post('/data/:id', authenticateToken, (req, res) => {
+  console.log(`[${new Date().toISOString()}] POST /data/${req.params.id} - Requested by: ${req.user.email}, Body:`, req.body);
+  const { id } = req.params;
+  const { name, value, description } = req.body;
+
+  // Create response with posted data
+  const data = {
+    id: id,
+    name: name || `Data ${id}`,
+    value: value || 0,
+    description: description || '',
+    createdBy: req.user.userId,
+    createdAt: new Date().toISOString(),
+    metadata: {
+      source: 'smart-replace-demo',
+      idHash: Buffer.from(id).toString('base64'),
+      bodyHash: Buffer.from(JSON.stringify(req.body)).toString('base64').substring(0, 16)
+    }
+  };
+
+  res.status(201).json({
+    message: 'Data created successfully',
+    data
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
   console.log(`[${new Date().toISOString()}] GET /health`);
@@ -166,6 +214,8 @@ app.listen(PORT, () => {
   console.log('  GET  /users/:userId    - Get user profile (requires auth)');
   console.log('  POST /orders           - Create new order (requires auth)');
   console.log('  GET  /orders?orderId=ID - Get order details (requires auth)');
+  console.log('  GET  /data/:id         - Get data by ID (requires auth)');
+  console.log('  POST /data/:id         - Create/update data by ID (requires auth)');
   console.log('  GET  /health           - Health check');
   console.log('\nDemo users:');
   console.log('  sarah.martinez@example.com / password123 (ID: sarah-martinez)');

@@ -22,6 +22,9 @@ An IP distance calculator service that uses the ipstack API to determine geograp
 ### [Python](python/)
 A Flask application that proxies SpaceX API data, providing a simple example of Python-based API integration suitable for traffic capture and replay testing.
 
+### [PHP](php/)
+A PHP Slim Framework application that proxies SpaceX API data, demonstrating modern PHP 8.3 features and API integration patterns suitable for traffic capture and replay testing.
+
 ### [Node API](node-api/)
 A Node.js/Express IP distance API similar to the Go version, featuring ipstack integration, haversine distance calculations, and optional DynamoDB caching with AWS SDK v3.
 

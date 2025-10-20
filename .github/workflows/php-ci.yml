@@ -1,0 +1,33 @@
+name: PHP CI
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test-php:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        working-directory: php
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Run tests
+        working-directory: php
+        run: vendor/bin/phpunit --no-coverage

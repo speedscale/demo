@@ -1,16 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "IHBz7Xd4O8A=",
+  "dgSpecHash": "OObmCHNrX0KB1zD22CHRZNzIab+K7vo0+2e7DY/hPfII4+zfQMF7G8JgLpOnqPPv+9ElnTuoqhSAEPuuIqEv3A==",
   "success": true,
-  "projectFilePath": "/Users/emilenriquez/Sites/dojo/c-sharp/weatherService/weatherService.csproj",
+  "projectFilePath": "/Users/kahrens/go/src/github.com/speedscale/demo/csharp/weatherService.csproj",
   "expectedPackageFiles": [
-    "/Users/emilenriquez/.nuget/packages/microsoft.aspnetcore.openapi/9.0.0/microsoft.aspnetcore.openapi.9.0.0.nupkg.sha512",
-    "/Users/emilenriquez/.nuget/packages/microsoft.extensions.apidescription.server/6.0.5/microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
-    "/Users/emilenriquez/.nuget/packages/microsoft.openapi/1.6.22/microsoft.openapi.1.6.22.nupkg.sha512",
-    "/Users/emilenriquez/.nuget/packages/swashbuckle.aspnetcore/7.0.0/swashbuckle.aspnetcore.7.0.0.nupkg.sha512",
-    "/Users/emilenriquez/.nuget/packages/swashbuckle.aspnetcore.swagger/7.0.0/swashbuckle.aspnetcore.swagger.7.0.0.nupkg.sha512",
-    "/Users/emilenriquez/.nuget/packages/swashbuckle.aspnetcore.swaggergen/7.0.0/swashbuckle.aspnetcore.swaggergen.7.0.0.nupkg.sha512",
-    "/Users/emilenriquez/.nuget/packages/swashbuckle.aspnetcore.swaggerui/7.0.0/swashbuckle.aspnetcore.swaggerui.7.0.0.nupkg.sha512"
+    "/Users/kahrens/.nuget/packages/microsoft.aspnetcore.openapi/8.0.0/microsoft.aspnetcore.openapi.8.0.0.nupkg.sha512",
+    "/Users/kahrens/.nuget/packages/microsoft.extensions.apidescription.server/6.0.5/microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
+    "/Users/kahrens/.nuget/packages/microsoft.openapi/1.4.3/microsoft.openapi.1.4.3.nupkg.sha512",
+    "/Users/kahrens/.nuget/packages/swashbuckle.aspnetcore/6.5.0/swashbuckle.aspnetcore.6.5.0.nupkg.sha512",
+    "/Users/kahrens/.nuget/packages/swashbuckle.aspnetcore.swagger/6.5.0/swashbuckle.aspnetcore.swagger.6.5.0.nupkg.sha512",
+    "/Users/kahrens/.nuget/packages/swashbuckle.aspnetcore.swaggergen/6.5.0/swashbuckle.aspnetcore.swaggergen.6.5.0.nupkg.sha512",
+    "/Users/kahrens/.nuget/packages/swashbuckle.aspnetcore.swaggerui/6.5.0/swashbuckle.aspnetcore.swaggerui.6.5.0.nupkg.sha512"
   ],
   "logs": []
 }

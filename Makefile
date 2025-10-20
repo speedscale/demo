@@ -40,6 +40,8 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' 's|gcr.io/speedscale-demos/smart-replace-demo:[v]*[0-9.]*|gcr.io/speedscale-demos/smart-replace-demo:v$(VERSION)|g' smart-replace-demo/manifest.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/ruby-api:[v]*[0-9.]*|gcr.io/speedscale-demos/ruby-api:v$(VERSION)|g' ruby-api/k8s/base/ruby-server/ruby-deployment.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/ruby-client:[v]*[0-9.]*|gcr.io/speedscale-demos/ruby-client:v$(VERSION)|g' ruby-api/k8s/base/ruby-client/client-deployment.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/csharp-weather:[v]*[0-9.]*|gcr.io/speedscale-demos/csharp-weather:v$(VERSION)|g' csharp/manifest.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/csharp-client:[v]*[0-9.]*|gcr.io/speedscale-demos/csharp-client:v$(VERSION)|g' csharp/manifest.yaml
 	@echo "Updating Maven pom.xml files..."
 	@sed -i '' '/<artifactId>auth<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/server/pom.xml
 	@sed -i '' '/<artifactId>auth-client<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/client/pom.xml
@@ -59,7 +61,7 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 	echo "Expected version: $$VERSION_FILE"; \
 	echo ""; \
 	echo "Checking Kubernetes manifests:"; \
-	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-server/auth-deployment.yaml java-auth/k8s/base/auth-client/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml ruby-api/k8s/base/ruby-server/ruby-deployment.yaml ruby-api/k8s/base/ruby-client/client-deployment.yaml | \
+	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-server/auth-deployment.yaml java-auth/k8s/base/auth-client/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml ruby-api/k8s/base/ruby-server/ruby-deployment.yaml ruby-api/k8s/base/ruby-client/client-deployment.yaml csharp/manifest.yaml | \
 	while read line; do \
 		if echo "$$line" | grep -q ":$$VERSION_FILE" || echo "$$line" | grep -q ":v$$VERSION_FILE"; then \
 			echo "  ✅ $$line"; \
@@ -137,7 +139,10 @@ build-ruby: ## Build Ruby project
 build-php: ## Build PHP project
 	cd php && make build
 
-build-all: build-java build-java-auth build-node build-smart-replace-demo build-ruby build-php ## Build all projects
+build-csharp: ## Build C# project
+	cd csharp && make build
+
+build-all: build-java build-java-auth build-node build-smart-replace-demo build-ruby build-php build-csharp ## Build all projects
 
 # Docker build targets with centralized version
 docker-java: ## Build and push Java Docker image
@@ -158,7 +163,11 @@ docker-ruby: ## Build and push Ruby Docker images (server and client)
 docker-php: ## Build and push PHP Docker image
 	cd php && make docker-multi VERSION=$(VERSION)
 
-docker-all: docker-java docker-java-auth docker-node docker-smart-replace-demo docker-ruby docker-php ## Build and push all Docker images
+docker-csharp: ## Build and push C# Docker images (server and client)
+	cd csharp && make docker-multi VERSION=$(VERSION)
+	cd csharp && make docker-client-multi VERSION=$(VERSION)
+
+docker-all: docker-java docker-java-auth docker-node docker-smart-replace-demo docker-ruby docker-php docker-csharp ## Build and push all Docker images
 
 # Test targets
 test-java: ## Test Java project
@@ -170,7 +179,10 @@ test-java-auth: ## Test Java Auth project
 test-php: ## Test PHP project
 	cd php && composer test
 
-test-all: test-java test-java-auth test-php ## Run all tests
+test-csharp: ## Test C# project
+	cd csharp && make test
+
+test-all: test-java test-java-auth test-php test-csharp ## Run all tests
 
 # Release management
 release: ## Create a new release (usage: make release VERSION=1.0.7)

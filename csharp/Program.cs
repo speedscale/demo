@@ -18,45 +18,72 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Only redirect to HTTPS in production
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
-var apiKey = "b1e641006d0b095192f4e5dd0932f93d"; // Replace with your actual OpenWeather API key
+// Health check endpoint
+app.MapGet("/health", () =>
+{
+    return Results.Ok(new
+    {
+        status = "healthy",
+        timestamp = DateTime.UtcNow.ToString("O"),
+        environment = app.Environment.EnvironmentName
+    });
+})
+.WithName("HealthCheck")
+.WithTags("Health")
+.WithOpenApi();
+
+// Get configuration values with fallbacks
+var apiKey = Environment.GetEnvironmentVariable("OPENWEATHER_API_KEY") ?? "b1e641006d0b095192f4e5dd0932f93d";
+var defaultCity = Environment.GetEnvironmentVariable("OPENWEATHER_CITY") ?? "Cebu City";
+var proxyUrl = Environment.GetEnvironmentVariable("HTTP_PROXY");
 
 // Weather API integration
 app.MapGet("/weatherforecast", async () =>
 {
-
-    var city = "Cebu City"; // Replace with your desired city
+    var city = defaultCity;
     var apiUrl = $"https://api.openweathermap.org/data/2.5/forecast?q={city}&units=metric&appid={apiKey}";
 
-    // Configure proxy
-    var proxy = new HttpClientHandler
+    // Configure proxy if specified
+    var handler = new HttpClientHandler();
+    if (!string.IsNullOrEmpty(proxyUrl))
     {
-        Proxy = new WebProxy("http://localhost:4150"), // proxy on speedctl
-        // {
-        //     Credentials = new NetworkCredential("username", "password") // Optional: Replace with proxy credentials
-        // },
-        UseProxy = true,
-    };
-
-    using var httpClient = new HttpClient(proxy);
-
-    var response = await httpClient.GetFromJsonAsync<OpenWeatherResponse>(apiUrl);
-    if (response?.list == null)
-    {
-        return Results.Problem("Unable to fetch weather data.");
+        handler.Proxy = new WebProxy(proxyUrl);
+        handler.UseProxy = true;
     }
 
-    var forecast = response.list.Take(5).Select(item => new WeatherForecast
-    (
-        DateOnly.FromDateTime(DateTime.Parse(item.dt_txt)),
-        (int)item.main.temp,
-        item.weather.FirstOrDefault()?.description ?? "No description"
-    )).ToArray();
+    using var httpClient = new HttpClient(handler);
 
-    return Results.Ok(forecast);
+    try
+    {
+        var response = await httpClient.GetFromJsonAsync<OpenWeatherResponse>(apiUrl);
+        if (response?.list == null)
+        {
+            return Results.Problem("Unable to fetch weather data.");
+        }
+
+        var forecast = response.list.Take(5).Select(item => new WeatherForecast
+        (
+            DateOnly.FromDateTime(DateTime.Parse(item.dt_txt)),
+            (int)item.main.temp,
+            item.weather.FirstOrDefault()?.description ?? "No description"
+        )).ToArray();
+
+        return Results.Ok(forecast);
+    }
+    catch (HttpRequestException ex)
+    {
+        return Results.Problem($"Error fetching weather data: {ex.Message}");
+    }
 })
-.WithName("GetWeatherForecast");
+.WithName("GetWeatherForecast")
+.WithTags("Weather")
+.WithOpenApi();
 
 // Run the app
 app.Run();

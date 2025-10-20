@@ -29,7 +29,7 @@ A PHP Slim Framework application that proxies SpaceX API data, demonstrating mod
 A Node.js/Express IP distance API similar to the Go version, featuring ipstack integration, haversine distance calculations, and optional DynamoDB caching with AWS SDK v3.
 
 ### [C#/.NET](csharp/)
-A .NET weather service API that demonstrates C# web application patterns and external service integration capabilities.
+A .NET 8.0 minimal API weather service that integrates with OpenWeather API. Features health checks, Swagger/OpenAPI documentation, Docker support, Kubernetes manifests with client traffic generator, and comprehensive test suite. Demonstrates modern C# patterns and external service integration.
 
 ### [NGINX](nginx/)
 A Kubernetes-based demo featuring multiple nginx services (gateway, payment, user) that simulate a microservices architecture. Perfect for demonstrating service mesh traffic patterns.

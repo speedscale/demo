@@ -22,7 +22,7 @@
     },
     "scripts": {
         "test": "phpunit",
-        "start": "php -S 0.0.0.0:8080 index.php"
+        "start": "php -S 0.0.0.0:8081 index.php"
     },
     "config": {
         "optimize-autoloader": true,

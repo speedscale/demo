@@ -41,6 +41,10 @@ jobs:
             path: ruby-api
             setup: ruby
             test_cmd: ./test-unit.sh
+          - name: csharp
+            path: csharp
+            setup: dotnet
+            test_cmd: dotnet test
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -59,6 +63,12 @@ jobs:
         ruby-version: '3.2'
         bundler-cache: true
         working-directory: ${{ matrix.service.path }}
+
+    - name: Set up Code Env
+      if: matrix.service.setup == 'dotnet'
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
 
     - name: Cache Dependencies
       if: matrix.service.setup == 'java'
@@ -211,6 +221,9 @@ jobs:
           - name: ruby-client
             path: ruby-api
             build_cmd: make build-client
+          - name: csharp
+            path: csharp
+            build_cmd: make build
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -235,6 +248,12 @@ jobs:
         ruby-version: '3.2'
         bundler-cache: true
         working-directory: ${{ matrix.service.path }}
+
+    - name: Set up Code Env
+      if: contains(matrix.service.name, 'csharp')
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
 
     - name: Cache Dependencies
       if: contains(matrix.service.name, 'java')
@@ -284,6 +303,12 @@ jobs:
           - service: ruby-client
             path: ruby-api
             target: docker-client
+          - service: csharp
+            path: csharp
+            target: docker-multi
+          - service: csharp-client
+            path: csharp
+            target: docker-client-multi
     steps:
     - name: Checkout
       uses: actions/checkout@v4

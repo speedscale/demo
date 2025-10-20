@@ -1,0 +1,21 @@
+### Health Check
+GET http://localhost:8080/health
+
+###
+
+### Weather Forecast
+GET http://localhost:8080/weatherforecast
+
+###
+
+### Health Check (Kubernetes)
+GET http://localhost:8080/health
+Host: csharp-weather
+
+###
+
+### Weather Forecast (Kubernetes)
+GET http://localhost:8080/weatherforecast
+Host: csharp-weather
+
+###

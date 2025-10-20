@@ -6,7 +6,7 @@ WORKDIR /src
 COPY weatherService.csproj .
 RUN dotnet restore
 
-# Copy source code and build
+# Copy source code and build (tests/client excluded via .dockerignore)
 COPY . .
 RUN dotnet publish -c Release -o /app/publish --no-restore
 

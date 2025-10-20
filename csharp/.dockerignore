@@ -1,0 +1,41 @@
+# Build artifacts
+bin/
+obj/
+*.dll
+*.pdb
+*.user
+*.suo
+
+# Test projects
+tests/
+
+# Client projects
+client/
+
+# Node modules (for requestor subdirectory)
+requestor/
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation and scripts
+README.md
+Makefile
+*.md
+*.http
+
+# Kubernetes
+manifest.yaml

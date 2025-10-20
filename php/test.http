@@ -1,0 +1,15 @@
+### Health Check
+GET http://localhost:8081/health
+
+###
+
+### SpaceX Launches
+GET http://localhost:8081/spacex/launches
+
+###
+
+### SpaceX Launches with Error Handling Test
+GET http://localhost:8081/spacex/launches
+Accept: application/json
+
+###

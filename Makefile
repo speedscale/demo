@@ -134,7 +134,10 @@ build-smart-replace-demo: ## Build Smart Replace Demo project
 build-ruby: ## Build Ruby project
 	cd ruby-api && make build
 
-build-all: build-java build-java-auth build-node build-smart-replace-demo build-ruby ## Build all projects
+build-php: ## Build PHP project
+	cd php && make build
+
+build-all: build-java build-java-auth build-node build-smart-replace-demo build-ruby build-php ## Build all projects
 
 # Docker build targets with centralized version
 docker-java: ## Build and push Java Docker image
@@ -152,7 +155,10 @@ docker-smart-replace-demo: ## Build and push Smart Replace Demo Docker image
 docker-ruby: ## Build and push Ruby Docker images (server and client)
 	cd ruby-api && make docker-all VERSION=$(VERSION)
 
-docker-all: docker-java docker-java-auth docker-node docker-smart-replace-demo docker-ruby ## Build and push all Docker images
+docker-php: ## Build and push PHP Docker image
+	cd php && make docker-multi VERSION=$(VERSION)
+
+docker-all: docker-java docker-java-auth docker-node docker-smart-replace-demo docker-ruby docker-php ## Build and push all Docker images
 
 # Test targets
 test-java: ## Test Java project
@@ -161,7 +167,10 @@ test-java: ## Test Java project
 test-java-auth: ## Test Java Auth project
 	cd java-auth && make test
 
-test-all: test-java test-java-auth ## Run all tests
+test-php: ## Test PHP project
+	cd php && composer test
+
+test-all: test-java test-java-auth test-php ## Run all tests
 
 # Release management
 release: ## Create a new release (usage: make release VERSION=1.0.7)

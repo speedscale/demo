@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-server
+  template:
+    metadata:
+      labels:
+        app: php-server
+    spec:
+      containers:
+        - name: php-server
+          image: gcr.io/speedscale-demos/php-server:v1.2.4
+          imagePullPolicy: Always
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          ports:
+            - containerPort: 8081
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-server
+  labels:
+    app: php-server
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8081
+  selector:
+    app: php-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-client
+  labels:
+    app: php-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-client
+  template:
+    metadata:
+      labels:
+        app: php-client
+    spec:
+      initContainers:
+        - name: check-server
+          image: gcr.io/speedscale-demos/curl-jq
+          command:
+          - bash
+          - -c
+          args:
+          - |-
+            for i in {1..300}
+              do sleep 1
+              echo "Checking for server liveness"
+              if curl -m 1 -s http://${SERVER_URL}/health; then
+                exit 0
+              fi
+            done
+            exit 1
+          env:
+          - name: SERVER_URL
+            value: php-server
+      containers:
+        - name: php-client
+          image: gcr.io/speedscale-demos/curl-jq
+          imagePullPolicy: Always
+          command:
+          - bash
+          - -c
+          - /client
+          env:
+          - name: SERVER_URL
+            value: php-server
+          volumeMounts:
+          - mountPath: "/client"
+            name: "script"
+            subPath: client
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+            limits:
+              cpu: 50m
+              memory: 100Mi
+      volumes:
+      - name: script
+        configMap:
+          name: client-script
+          defaultMode: 0777
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: client-script
+data:
+  client: |
+    #!/bin/bash
+    echo "Starting PHP client traffic generator..."
+    
+    while true; do
+      echo "=== Health Check ==="
+      curl -s http://${SERVER_URL}/health | jq .
+      
+      echo "=== SpaceX Launches ==="
+      curl -s http://${SERVER_URL}/spacex/launches | jq '.name, .date_utc, .success'
+      
+      echo "Waiting 5 seconds before next request..."
+      sleep 5
+    done

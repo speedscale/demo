@@ -1,0 +1,33 @@
+{
+    "name": "speedscale/php-demo",
+    "description": "PHP Slim Framework demo service for Speedscale traffic capture and replay",
+    "type": "project",
+    "require": {
+        "php": "^8.3",
+        "slim/slim": "^4.12",
+        "guzzlehttp/guzzle": "^7.8"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Speedscale\\PhpDemo\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Speedscale\\PhpDemo\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "start": "php -S 0.0.0.0:8081 index.php"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

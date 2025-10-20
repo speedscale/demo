@@ -31,3 +31,26 @@ jobs:
       - name: Run tests
         working-directory: php
         run: vendor/bin/phpunit --no-coverage
+
+  build-php:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Install dependencies (composer)
+        working-directory: php
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Build project via Makefile
+        run: make build-php
+
+      - name: Build Docker image (no push)
+        working-directory: php
+        run: docker build -t php-server:test .

@@ -1,0 +1,16 @@
+apiVersion: speedscale.com/v1
+kind: TrafficReplay
+metadata:
+  name: nginx-demo-replay
+  namespace: demo
+spec:
+  snapshotID: "939b6844-4da9-4d35-9128-7e6c2a95988b"
+  testConfigID: "standard-ken-debug"
+  workloadRef:
+    kind: Deployment
+    name: gateway
+  cleanup: inventory
+  sidecar:
+    inject: true
+    tls:
+      out: true

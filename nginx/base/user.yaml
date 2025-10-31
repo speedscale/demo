@@ -14,44 +14,33 @@ spec:
     spec:
       containers:
       - name: user
-        image: nginx:1.14.2
+        image: nginx:1.27
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat > /etc/nginx/conf.d/custom.conf <<'EOF'
+          server {
+            listen 8080;
+            location / {
+              default_type application/json;
+              return 200 '{"user": {"name": "Matt"}}\n';
+            }
+            location /profile {
+              default_type application/json;
+              return 200 '{"reviews": {"summary": "One star. Very bad, would not recommend."}}\n';
+            }
+          }
+          EOF
+          exec nginx -g 'daemon off;'
         resources:
           requests:
             cpu: 100m
-            memory: 56k
+            memory: 128Mi
           limits:
             cpu: "1"
-            memory: 512M
-        volumeMounts:
-        - mountPath: /etc/nginx/conf.d/ # mount nginx-conf volumn to /etc/nginx
-          readOnly: true
-          name: nginx-conf
+            memory: 512Mi
         ports:
-        - containerPort: 80
-      volumes:
-      - name: nginx-conf
-        configMap:
-          name: user-conf
-          items:
-            - key: custom.conf
-              path: custom.conf
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: user-conf
-data:
-  custom.conf: |
-    server {
-      location / {
-        default_type application/json;
-        return 200 '{"user": {"name": "Matt"}}\n';
-      }
-      location /profile {
-        default_type application/json;
-        return 200 '{"reviews": {"summary": "One star. Very bad, would not recommend."}}\n';
-      }
-    }
+        - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
@@ -60,6 +49,7 @@ metadata:
 spec:
   ports:
   - port: 80
+    targetPort: 8080
     protocol: TCP
   selector:
     app: user

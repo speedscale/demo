@@ -1,0 +1,32 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: traffic-generator
+  namespace: demo
+spec:
+  schedule: "*/1 * * * *"  # Run every 1 minute
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: traffic
+            imagePullPolicy: Always
+            image: curlimages/curl:latest
+            command:
+            - sh
+            - /scripts/generate-traffic.sh
+            volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+          volumes:
+          - name: scripts
+            configMap:
+              name: traffic-script
+              defaultMode: 0755
+          restartPolicy: Never
+      backoffLimit: 0

@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:4143
+
+### Get OAuth Token
+POST {{baseUrl}}/oauth/token
+Content-Type: application/json
+
+### Access Protected Endpoint
+# First, run the /oauth/token request above to get a token
+# Then replace YOUR_TOKEN_HERE with the access_token from the response
+GET {{baseUrl}}/protected
+Authorization: Bearer 79e5fda319aaf98a95594d630d48016d2a3a581b56d5f14faccbfafcee0162cf
+
+### Access Public Endpoint
+GET {{baseUrl}}/public

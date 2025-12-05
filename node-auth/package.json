@@ -1,0 +1,12 @@
+{
+  "name": "node-auth-demo",
+  "version": "1.0.0",
+  "description": "Node.js OAuth authentication demo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["oauth", "auth", "demo"],
+  "author": "",
+  "license": "ISC"
+}

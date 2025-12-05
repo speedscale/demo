@@ -51,6 +51,10 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node/package.json
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node-auth/package.json
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' smart-replace-demo/package.json
+	@echo "Regenerating Node package-lock.json files..."
+	@cd node && npm install --package-lock-only
+	@cd node-auth && npm install --package-lock-only
+	@cd smart-replace-demo && npm install --package-lock-only
 	@echo ""
 	@echo "✅ Version $(VERSION) updated across all files!"
 	@echo ""

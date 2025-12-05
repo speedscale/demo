@@ -10,11 +10,13 @@
 	</parent>
 	<groupId>speedscale</groupId>
 	<artifactId>server</artifactId>
-	<version>1.2.4</version>
+	<version>1.3.0</version>
 	<name>server</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>17</java.version>
+		<gatling.version>3.10.3</gatling.version>
+		<gatling-maven-plugin.version>4.4.0</gatling-maven-plugin.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -39,12 +41,12 @@
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcprov-jdk18on</artifactId>
-			<version>1.78</version>
+			<version>1.79</version>
 		</dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcpkix-jdk18on</artifactId>
-			<version>1.78</version>
+			<version>1.79</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.xml.bind</groupId>
@@ -55,12 +57,25 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
       </dependency>
+		<dependency>
+			<groupId>io.gatling.highcharts</groupId>
+			<artifactId>gatling-charts-highcharts</artifactId>
+			<version>${gatling.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>io.gatling</groupId>
+				<artifactId>gatling-maven-plugin</artifactId>
+				<version>${gatling-maven-plugin.version}</version>
+			<!-- Gatling tests can be run manually with: mvn gatling:test -->
+			<!-- Disabled from test phase to avoid CI failures when test classes don\'t exist -->
 			</plugin>
 		</plugins>
 	</build>

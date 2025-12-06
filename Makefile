@@ -49,7 +49,12 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' '/<artifactId>jwt-generator<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/scripts/pom.xml
 	@echo "Updating Node package.json..."
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node/package.json
+	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node-auth/package.json
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' smart-replace-demo/package.json
+	@echo "Regenerating Node package-lock.json files..."
+	@cd node && npm install --package-lock-only
+	@cd node-auth && npm install --package-lock-only
+	@cd smart-replace-demo && npm install --package-lock-only
 	@echo ""
 	@echo "✅ Version $(VERSION) updated across all files!"
 	@echo ""
@@ -103,6 +108,12 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 	else \
 		echo "  ❌ node/package.json: $$VERSION_IN_PKG (expected $$VERSION_FILE)"; \
 	fi; \
+	VERSION_IN_AUTH_PKG=$$(grep -o '"version": "[0-9.]*"' node-auth/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
+	if [ "$$VERSION_IN_AUTH_PKG" = "$$VERSION_FILE" ]; then \
+		echo "  ✅ node-auth/package.json: $$VERSION_IN_AUTH_PKG"; \
+	else \
+		echo "  ❌ node-auth/package.json: $$VERSION_IN_AUTH_PKG (expected $$VERSION_FILE)"; \
+	fi; \
 	VERSION_IN_SMART_PKG=$$(grep -o '"version": "[0-9.]*"' smart-replace-demo/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
 	if [ "$$VERSION_IN_SMART_PKG" = "$$VERSION_FILE" ]; then \
 		echo "  ✅ smart-replace-demo/package.json: $$VERSION_IN_SMART_PKG"; \
@@ -130,6 +141,9 @@ build-java-auth: ## Build Java Auth project
 build-node: ## Build Node project
 	cd node && make build
 
+build-node-auth: ## Build Node Auth project
+	cd node-auth && make build
+
 build-smart-replace-demo: ## Build Smart Replace Demo project
 	cd smart-replace-demo && make build
 
@@ -142,7 +156,7 @@ build-php: ## Build PHP project
 build-csharp: ## Build C# project
 	cd csharp && make build
 
-build-all: build-java build-java-auth build-node build-smart-replace-demo build-ruby build-php build-csharp ## Build all projects
+build-all: build-java build-java-auth build-node build-node-auth build-smart-replace-demo build-ruby build-php build-csharp ## Build all projects
 
 # Docker build targets with centralized version
 docker-java: ## Build and push Java Docker image
@@ -153,6 +167,9 @@ docker-java-auth: ## Build and push Java Auth Docker images
 
 docker-node: ## Build and push Node Docker image
 	cd node && make docker-multi VERSION=$(VERSION)
+
+docker-node-auth: ## Build and push Node Auth Docker image
+	cd node-auth && make docker-multi VERSION=$(VERSION)
 
 docker-smart-replace-demo: ## Build and push Smart Replace Demo Docker image
 	cd smart-replace-demo && make docker-multi VERSION=$(VERSION)
@@ -167,7 +184,7 @@ docker-csharp: ## Build and push C# Docker images (server and client)
 	cd csharp && make docker-multi VERSION=$(VERSION)
 	cd csharp && make docker-client-multi VERSION=$(VERSION)
 
-docker-all: docker-java docker-java-auth docker-node docker-smart-replace-demo docker-ruby docker-php docker-csharp ## Build and push all Docker images
+docker-all: docker-java docker-java-auth docker-node docker-node-auth docker-smart-replace-demo docker-ruby docker-php docker-csharp ## Build and push all Docker images
 
 # Test targets
 test-java: ## Test Java project

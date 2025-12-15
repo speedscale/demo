@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: warehouse-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: warehouse-service
+  template:
+    metadata:
+      labels:
+        app: warehouse-service
+    spec:
+      containers:
+      - name: warehouse-service
+        image: gcr.io/speedscale-demos/smart-replace-warehouse:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: PORT
+          value: "8081"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "250m"

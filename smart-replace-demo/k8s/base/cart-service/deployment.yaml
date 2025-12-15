@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cart-service
+  template:
+    metadata:
+      labels:
+        app: cart-service
+    spec:
+      containers:
+      - name: cart-service
+        image: gcr.io/speedscale-demos/smart-replace-cart:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: WAREHOUSE_SERVICE_HOST
+          value: warehouse-service
+        - name: WAREHOUSE_SERVICE_PORT
+          value: "8081"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: cart-secrets
+              key: jwt-secret
+        envFrom:
+        - configMapRef:
+            name: cart-config
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"

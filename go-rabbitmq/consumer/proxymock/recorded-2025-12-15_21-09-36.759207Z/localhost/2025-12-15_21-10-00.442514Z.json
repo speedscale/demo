@@ -1,0 +1,67 @@
+{
+  "msgType": "rrpair",
+  "ts": "2025-12-15T21:10:00.442514Z",
+  "l7protocol": "amqp091",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.4.80-8-gc4393db8c",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "8",
+    "source": "goproxy"
+  },
+  "uuid": "qgw27BDaQyWqkHfBOF7fkA==",
+  "direction": "IN",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "undefined",
+  "network_address": "localhost:5672",
+  "command": "Basic.Deliver",
+  "location": "Consumer Tag: ctag-/var/folders/9v/dysbxfw966x15hjkry6z1p4w0000gn/T/go-build3096452322/b001/exe/main-1",
+  "status": "OK",
+  "partOfStreamUUID": "Ym48mEDrSIyQb1gaBONDKA==",
+  "streamSeqNum": "1",
+  "AmqpV091": {
+    "server": {
+      "basic": {
+        "deliver": {
+          "consumerTag": "ctag-/var/folders/9v/dysbxfw966x15hjkry6z1p4w0000gn/T/go-build3096452322/b001/exe/main-1",
+          "deliverTag": "1",
+          "routingKey": "demo-queue",
+          "properties": {
+            "deliveryMode": 2,
+            "headers": {},
+            "contentType": "text/plain",
+            "timestamp": "0001-01-01T00:00:00Z"
+          },
+          "body": "TWVzc2FnZSAjMSAtIHRpbWVzdGFtcDogMjAyNS0xMi0xNVQxNjowOTo1OC0wNTowMA=="
+        }
+      }
+    },
+    "sig": {
+      "channel": 1,
+      "session_key": "d0bb027036fb8d7d7cbfd6959c80079f27321cbf993cfe66b86d575e4194b214"
+    }
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-12-15T21:09:50.881866Z",
+    "downstream": {
+      "established": "2025-12-15T21:09:50.880943Z",
+      "ipAddress": "127.0.0.1",
+      "port": 54954,
+      "bytesSent": "486"
+    },
+    "upstream": {
+      "established": "2025-12-15T21:09:50.881428Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5672,
+      "hostname": "localhost",
+      "bytesSent": "945"
+    }
+  }
+}

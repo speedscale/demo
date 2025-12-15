@@ -1,0 +1,59 @@
+{
+  "msgType": "rrpair",
+  "ts": "2025-12-15T21:09:50.887301Z",
+  "l7protocol": "amqp091",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.4.80-8-gc4393db8c",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "4",
+    "source": "goproxy"
+  },
+  "uuid": "PsxOOshoTCia8p93Hcpa+g==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "undefined",
+  "network_address": "localhost:5672",
+  "command": "Channel.Open",
+  "location": "N/A",
+  "status": "OK",
+  "AmqpV091": {
+    "client": {
+      "channel": {
+        "open": {}
+      }
+    },
+    "server": {
+      "channel": {
+        "openOk": {}
+      }
+    },
+    "sig": {
+      "channel": 1,
+      "session_key": "d0bb027036fb8d7d7cbfd6959c80079f27321cbf993cfe66b86d575e4194b214"
+    }
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-12-15T21:09:50.881866Z",
+    "downstream": {
+      "established": "2025-12-15T21:09:50.880943Z",
+      "ipAddress": "127.0.0.1",
+      "port": 54954,
+      "bytesSent": "268"
+    },
+    "upstream": {
+      "established": "2025-12-15T21:09:50.881428Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5672,
+      "hostname": "localhost",
+      "bytesSent": "580"
+    }
+  }
+}

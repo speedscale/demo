@@ -1,0 +1,98 @@
+{
+  "msgType": "rrpair",
+  "ts": "2025-12-15T21:09:50.885061Z",
+  "l7protocol": "amqp091",
+  "duration": 1,
+  "tags": {
+    "captureMode": "proxy",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.4.80-8-gc4393db8c",
+    "reverseProxyHost": "localhost",
+    "reverseProxyPort": "8080",
+    "sequence": "1",
+    "source": "goproxy"
+  },
+  "uuid": "fkLomPS/Rkmpnld2m9uHvw==",
+  "direction": "IN",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "undefined",
+  "network_address": "localhost:5672",
+  "command": "Connection.Start",
+  "location": "N/A",
+  "status": "OK",
+  "AmqpV091": {
+    "client": {
+      "connection": {
+        "startOk": {
+          "properties": {
+            "capabilities": {
+              "basic.nack": true,
+              "connection.blocked": true,
+              "consumer_cancel_notify": true,
+              "publisher_confirms": true
+            },
+            "platform": "golang",
+            "product": "AMQP 0.9.1 Client",
+            "version": "1.10.0"
+          },
+          "mechanism": "PLAIN",
+          "response": "\u0000guest\u0000guest",
+          "locale": "en_US"
+        }
+      }
+    },
+    "server": {
+      "connection": {
+        "start": {
+          "minor": 9,
+          "properties": {
+            "capabilities": {
+              "authentication_failure_close": true,
+              "basic.nack": true,
+              "connection.blocked": true,
+              "consumer_cancel_notify": true,
+              "consumer_priorities": true,
+              "direct_reply_to": true,
+              "exchange_exchange_bindings": true,
+              "per_consumer_qos": true,
+              "publisher_confirms": true
+            },
+            "cluster_name": "rabbit@rabbitmq-demo",
+            "copyright": "Copyright (c) 2007-2025 Broadcom Inc and/or its subsidiaries",
+            "information": "Licensed under the MPL 2.0. Website: https://rabbitmq.com",
+            "platform": "Erlang/OTP 27.3.4.6",
+            "product": "RabbitMQ",
+            "version": "4.2.1"
+          },
+          "mechanisms": "PLAIN ANONYMOUS AMQPLAIN",
+          "locales": [
+            "en_US"
+          ]
+        }
+      }
+    },
+    "sig": {
+      "session_key": "d0bb027036fb8d7d7cbfd6959c80079f27321cbf993cfe66b86d575e4194b214"
+    }
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2025-12-15T21:09:50.881866Z",
+    "downstream": {
+      "established": "2025-12-15T21:09:50.880943Z",
+      "ipAddress": "127.0.0.1",
+      "port": 54954,
+      "bytesSent": "219"
+    },
+    "upstream": {
+      "established": "2025-12-15T21:09:50.881428Z",
+      "ipAddress": "127.0.0.1",
+      "port": 5672,
+      "hostname": "localhost",
+      "bytesSent": "531"
+    }
+  }
+}

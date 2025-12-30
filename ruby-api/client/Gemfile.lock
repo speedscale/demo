@@ -1,13 +1,15 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    bigdecimal (4.0.1)
     csv (3.3.5)
-    httparty (0.23.1)
+    httparty (0.24.0)
       csv
       mini_mime (>= 1.0.0)
       multi_xml (>= 0.5.2)
     mini_mime (1.1.5)
-    multi_xml (0.6.0)
+    multi_xml (0.8.0)
+      bigdecimal (>= 3.1, < 5)
 
 PLATFORMS
   aarch64-linux
@@ -16,7 +18,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  httparty (~> 0.21)
+  httparty (~> 0.24)
 
 BUNDLED WITH
    2.2.33

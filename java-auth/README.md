@@ -1,9 +1,5 @@
 # Java Authentication Microservice
 
-[![CI](https://github.com/speedscale/demo/actions/workflows/ci.yml/badge.svg)](https://github.com/speedscale/demo/actions/workflows/ci.yml)
-[![Docker Build](https://github.com/speedscale/demo/actions/workflows/docker.yml/badge.svg)](https://github.com/speedscale/demo/actions/workflows/docker.yml)
-[![CD](https://github.com/speedscale/demo/actions/workflows/cd.yml/badge.svg)](https://github.com/speedscale/demo/actions/workflows/cd.yml)
-[![Release](https://github.com/speedscale/demo/actions/workflows/release.yml/badge.svg)](https://github.com/speedscale/demo/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Spring Boot microservice providing JWT-based authentication with MySQL database backend.

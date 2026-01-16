@@ -1,0 +1,17 @@
+@port = 3001
+@baseUrl = http://localhost:{{port}}
+
+###
+GET {{baseUrl}}/
+
+###
+GET {{baseUrl}}/profile
+
+###
+GET {{baseUrl}}/payment
+
+###
+GET {{baseUrl}}/audit
+
+###
+GET {{baseUrl}}/ids

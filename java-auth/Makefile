@@ -36,6 +36,13 @@ kube: ## Deploy to Kubernetes
 kube-clean: ## Remove from Kubernetes
 	kubectl -n ${NAMESPACE} delete -k k8s/base
 
+kube-statefulset: ## Deploy to Kubernetes as StatefulSet
+	kubectl -n ${NAMESPACE} apply -k k8s/overlays/statefulset
+
+kube-statefulset-clean: ## Remove StatefulSet deployment
+	kubectl -n ${NAMESPACE} delete -k k8s/overlays/statefulset
+	@echo "Delete PVCs manually if desired: kubectl -n ${NAMESPACE} delete pvc -l app=java-auth"
+
 docker-build: ## Build Docker images locally
 	docker build -t java-auth:$(VERSION) ./server
 	docker build -t java-auth-client:$(VERSION) ./client

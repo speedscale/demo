@@ -309,6 +309,9 @@ jobs:
           - service: csharp-client
             path: csharp
             target: docker-client-multi
+          - service: php
+            path: php
+            target: docker-multi
     steps:
     - name: Checkout
       uses: actions/checkout@v4

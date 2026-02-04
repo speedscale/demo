@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: java-server
-          image: gcr.io/speedscale-demos/java-server:v1.3.0
+          image: gcr.io/speedscale-demos/java-server:v1.3.1
           imagePullPolicy: Always
           readinessProbe:
             httpGet:

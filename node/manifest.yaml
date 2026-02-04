@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: node-server
-          image: gcr.io/speedscale-demos/node-server:v1.3.0
+          image: gcr.io/speedscale-demos/node-server:v1.3.1
           imagePullPolicy: Always
           readinessProbe:
             httpGet:

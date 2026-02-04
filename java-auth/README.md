@@ -261,11 +261,10 @@ make client-docker-run   # Run client in Docker
 
 #### Kubernetes Deployment
 ```bash
-make k8s-deploy          # Deploy to Kubernetes
-make k8s-status          # Check deployment status
-make k8s-logs            # Show application logs
-make k8s-port-forward    # Port forward service to localhost:8080
-make k8s-undeploy        # Remove from Kubernetes
+make kube                # Deploy to Kubernetes (Deployment)
+make kube-clean          # Remove from Kubernetes
+make kube-statefulset    # Deploy as StatefulSet (stable pod names, persistent storage)
+make kube-statefulset-clean  # Remove StatefulSet deployment
 ```
 
 #### Utilities

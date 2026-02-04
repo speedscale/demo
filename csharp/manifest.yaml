@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: csharp-weather
-          image: gcr.io/speedscale-demos/csharp-weather:v1.3.1
+          image: gcr.io/speedscale-demos/csharp-weather:v1.3.2
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -90,7 +90,7 @@ spec:
     spec:
       containers:
         - name: csharp-client
-          image: gcr.io/speedscale-demos/csharp-client:v1.3.1
+          image: gcr.io/speedscale-demos/csharp-client:v1.3.2
           imagePullPolicy: Always
           env:
             - name: SERVER_URL

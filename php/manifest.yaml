@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: php-server
-          image: gcr.io/speedscale-demos/php-server:v1.3.1
+          image: gcr.io/speedscale-demos/php-server:v1.3.2
           imagePullPolicy: Always
           readinessProbe:
             httpGet:
@@ -66,12 +66,12 @@ spec:
         - name: check-server
           image: gcr.io/speedscale-demos/curl-jq
           command:
-          - bash
+          - sh
           - -c
           args:
           - |-
-            for i in {1..300}
-              do sleep 1
+            for i in $(seq 1 300); do
+              sleep 1
               echo "Checking for server liveness"
               if curl -m 1 -s http://${SERVER_URL}/health; then
                 exit 0
@@ -86,8 +86,7 @@ spec:
           image: gcr.io/speedscale-demos/curl-jq
           imagePullPolicy: Always
           command:
-          - bash
-          - -c
+          - sh
           - /client
           env:
           - name: SERVER_URL
@@ -115,15 +114,16 @@ metadata:
   name: client-script
 data:
   client: |
-    #!/bin/bash
+    #!/bin/sh
     echo "Starting PHP client traffic generator..."
     
     while true; do
       echo "=== Health Check ==="
-      curl -s http://${SERVER_URL}/health | jq .
+      curl -s http://${SERVER_URL}/health | jq . 2>/dev/null || curl -s http://${SERVER_URL}/health
       
       echo "=== SpaceX Launches ==="
-      curl -s http://${SERVER_URL}/spacex/launches | jq '.name, .date_utc, .success'
+      RESP=$(curl -s http://${SERVER_URL}/spacex/launches)
+      echo "$RESP" | jq -r '.name, .date_utc, .success' 2>/dev/null || echo "$RESP"
       
       echo "Waiting 5 seconds before next request..."
       sleep 5

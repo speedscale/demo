@@ -18,7 +18,7 @@ $app->get('/spacex/launches', function (Request $request, Response $response) {
     $client = new \GuzzleHttp\Client();
     try {
         $apiResponse = $client->get('https://api.spacexdata.com/v4/launches/latest');
-        $response->getBody()->write($apiResponse->getBody());
+        $response->getBody()->write((string) $apiResponse->getBody());
         return $response->withHeader('Content-Type', 'application/json');
     } catch (\Exception $e) {
         $response->getBody()->write(json_encode(['error' => $e->getMessage()]));

@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: java-server
   namespace: demo-stack
+  annotations:
+    capture.speedscale.com/enabled: "true"
+    capture.speedscale.com/java-agent: "true"
 spec:
   replicas: 1
   selector:
@@ -15,7 +18,7 @@ spec:
     spec:
       containers:
         - name: java-server
-          image: gcr.io/speedscale-demos/java-server:v1.3.3
+          image: gcr.io/speedscale-demos/java-server:v1.3.4
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

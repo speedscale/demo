@@ -6,4 +6,12 @@ resources:
   - java-server.yaml
   - csharp-weather.yaml
   - node-server.yaml
+  - php-server.yaml
   - gateway.yaml
+  - traffic-client.yaml
+configMapGenerator:
+  - name: traffic-client-script
+    files:
+      - traffic-client/client
+    options:
+      disableNameSuffixHash: true

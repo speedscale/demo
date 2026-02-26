@@ -1,6 +1,6 @@
 {
   "name": "node-auth-demo",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "Node.js OAuth authentication demo",
   "main": "server.js",
   "scripts": {

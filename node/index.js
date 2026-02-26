@@ -79,6 +79,19 @@ app.get('/space', async (req, res) => {
   }
 })
 
+app.get('/spacex/launches', async (req, res) => {
+  try {
+    const url = 'https://api.spacexdata.com/v5/launches/latest';
+    const data = await got(url).json()
+    res.send(data)
+  } catch (err) {
+    const msg = makeError(err)
+    console.error(msg)
+    res.status(500)
+    res.send(msg)
+  }
+})
+
 app.get('/events', async (req, res) => {
   try {
     const url = 'https://api.github.com/orgs/speedscale/events';

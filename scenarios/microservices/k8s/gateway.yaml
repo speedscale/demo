@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: gateway
   namespace: demo-stack
+  annotations:
+    capture.speedscale.com/enabled: "true"
 spec:
   replicas: 1
   selector:
@@ -15,7 +17,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: gcr.io/speedscale-demos/scenarios-gateway:v1.3.3
+          image: gcr.io/speedscale-demos/scenarios-gateway:v1.3.4
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -27,6 +29,8 @@ spec:
               value: "http://csharp-weather:80"
             - name: NODE_SERVICE_URL
               value: "http://node-server:80"
+            - name: PHP_SERVICE_URL
+              value: "http://php-server:80"
           readinessProbe:
             httpGet:
               path: /health

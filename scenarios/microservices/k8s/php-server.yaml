@@ -1,28 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: smart-replace-demo
+  name: php-server
+  namespace: demo-stack
+  annotations:
+    capture.speedscale.com/enabled: "true"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: smart-replace-demo
+      app: php-server
   template:
     metadata:
       labels:
-        app: smart-replace-demo
+        app: php-server
     spec:
       containers:
-        - name: smart-replace-demo
-          image: gcr.io/speedscale-demos/smart-replace-demo:v1.3.4
-          imagePullPolicy: Always
+        - name: php-server
+          image: gcr.io/speedscale-demos/php-server:v1.3.4
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              name: http
           readinessProbe:
             httpGet:
               path: /health
               port: http
-          ports:
-            - containerPort: 8080
-              name: http
           resources:
             requests:
               cpu: 100m
@@ -34,14 +37,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: smart-replace-demo
-  labels:
-    app: smart-replace-demo
+  name: php-server
+  namespace: demo-stack
 spec:
   type: ClusterIP
   ports:
     - name: http
       port: 80
-      targetPort: 8080
+      targetPort: 8081
   selector:
-    app: smart-replace-demo
+    app: php-server

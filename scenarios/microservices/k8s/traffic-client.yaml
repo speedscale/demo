@@ -1,0 +1,66 @@
+# Traffic generator: continuously hits the gateway and real app endpoints so eBPF/capture sees realistic traffic.
+# Script is in traffic-client/client; Kustomize configMapGenerator builds the ConfigMap from it.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traffic-client
+  namespace: demo-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traffic-client
+  template:
+    metadata:
+      labels:
+        app: traffic-client
+    spec:
+      initContainers:
+        - name: wait-for-gateway
+          image: gcr.io/speedscale-demos/curl-jq
+          command:
+            - bash
+            - -c
+          args:
+            - |-
+              for i in $(seq 1 60); do
+                echo "Waiting for gateway..."
+                if curl -s -m 2 "${GATEWAY_URL}/health" >/dev/null 2>&1; then
+                  echo "Gateway is up"
+                  exit 0
+                fi
+                sleep 2
+              done
+              exit 1
+          env:
+            - name: GATEWAY_URL
+              value: "http://gateway"
+      containers:
+        - name: traffic-client
+          image: gcr.io/speedscale-demos/curl-jq
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - /client
+          env:
+            - name: GATEWAY_URL
+              value: "http://gateway"
+            - name: SLEEP_SECONDS
+              value: "5"
+          volumeMounts:
+            - mountPath: "/client"
+              name: script
+              subPath: client
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      volumes:
+        - name: script
+          configMap:
+            name: traffic-client-script
+            defaultMode: 0755

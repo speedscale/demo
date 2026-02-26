@@ -1,6 +1,6 @@
 # Kubernetes deployment (minikube)
 
-Deploy the Java + .NET + Node stack with gateway to a local cluster (e.g. minikube). All images are built locally; no registry required.
+Deploy the Java + .NET + Node + PHP stack with gateway to a local cluster (e.g. minikube). All images are built locally; no registry required.
 
 ## Prerequisites
 

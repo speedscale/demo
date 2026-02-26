@@ -19,7 +19,7 @@ From the **repository root**:
 This will:
 
 1. Use minikube’s Docker daemon (`eval $(minikube docker-env)`)
-2. Build four images: `scenarios-gateway:local`, `java-server:local`, `csharp-weather:local`, `node-server:local`
+2. Build four images with the same names and version tags as the manifests: `gcr.io/speedscale-demos/scenarios-gateway:v<VERSION>`, `gcr.io/speedscale-demos/java-server:v<VERSION>`, `gcr.io/speedscale-demos/csharp-weather:v<VERSION>`, `gcr.io/speedscale-demos/node-server:v<VERSION>`
 3. Apply manifests to namespace `demo-stack` (creates namespace, deployments, services, and the Java TLS secret)
 4. Wait for all deployments to be ready
 
@@ -65,4 +65,4 @@ kubectl delete namespace demo-stack
 | `gateway.yaml` | Gateway deployment and NodePort service |
 | `kustomization.yaml` | Kustomize entrypoint |
 
-Images use `*:local` and `imagePullPolicy: IfNotPresent` so minikube uses the images built by `deploy-minikube.sh`.
+Images use `gcr.io/speedscale-demos/*:v<VERSION>` and `imagePullPolicy: IfNotPresent`. When using `deploy-minikube.sh`, those images are built locally into minikube's Docker daemon so no registry pull is required.

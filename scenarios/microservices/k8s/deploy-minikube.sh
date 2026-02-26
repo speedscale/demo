@@ -13,14 +13,14 @@ eval "$(minikube docker-env)"
 echo "Building gateway (gcr.io/speedscale-demos/scenarios-gateway:v$VERSION)..."
 docker build -t "gcr.io/speedscale-demos/scenarios-gateway:v$VERSION" -f scenarios/microservices/gateway/Dockerfile scenarios/microservices/gateway
 
-echo "Building java-server..."
-docker build -t java-server:local -f java/Dockerfile java
+echo "Building java-server (gcr.io/speedscale-demos/java-server:v$VERSION)..."
+docker build -t "gcr.io/speedscale-demos/java-server:v$VERSION" -f java/Dockerfile java
 
-echo "Building csharp-weather..."
-docker build -t csharp-weather:local -f csharp/Dockerfile csharp
+echo "Building csharp-weather (gcr.io/speedscale-demos/csharp-weather:v$VERSION)..."
+docker build -t "gcr.io/speedscale-demos/csharp-weather:v$VERSION" -f csharp/Dockerfile csharp
 
-echo "Building node-server..."
-docker build -t node-server:local -f node/Dockerfile node
+echo "Building node-server (gcr.io/speedscale-demos/node-server:v$VERSION)..."
+docker build -t "gcr.io/speedscale-demos/node-server:v$VERSION" -f node/Dockerfile node
 
 echo "Deploying to namespace demo-stack..."
 kubectl apply -k scenarios/microservices/k8s

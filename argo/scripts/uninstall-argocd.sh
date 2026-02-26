@@ -26,6 +26,16 @@ kubectl config use-context "$CLUSTER_NAME"
 
 echo "Removing ArgoCD from cluster: $CLUSTER_NAME"
 
+# Delete CRDs first so the namespace can terminate cleanly (ArgoCD resources
+# have finalizers that require the controller; deleting the namespace first
+# can leave the namespace stuck in Terminating).
+for crd in applications.argoproj.io appprojects.argoproj.io applicationsets.argoproj.io; do
+  if kubectl get crd "$crd" &>/dev/null; then
+    kubectl delete crd "$crd" --timeout=60s
+    echo "Deleted CRD $crd"
+  fi
+done
+
 # Delete namespace (removes all ArgoCD workloads, services, configmaps, etc.)
 if kubectl get namespace argocd &>/dev/null; then
   kubectl delete namespace argocd --timeout=120s
@@ -33,15 +43,6 @@ if kubectl get namespace argocd &>/dev/null; then
 else
   echo "Namespace argocd not found (already removed or never installed)"
 fi
-
-# Cluster-scoped CRDs are not removed when the namespace is deleted.
-# Remove them so a re-install starts clean.
-for crd in applications.argoproj.io appprojects.argoproj.io applicationsets.argoproj.io; do
-  if kubectl get crd "$crd" &>/dev/null; then
-    kubectl delete crd "$crd" --timeout=60s
-    echo "Deleted CRD $crd"
-  fi
-done
 
 echo ""
 echo "ArgoCD has been uninstalled from $CLUSTER_NAME"

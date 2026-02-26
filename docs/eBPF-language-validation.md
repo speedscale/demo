@@ -57,7 +57,7 @@ Tests are run **locally** using **Rancher Desktop** as the Kubernetes environmen
 
 ## Step-by-step: Install demo, configure capture, verify with speedctl
 
-Use these exact steps to install the demo app, point the Speedscale NetTap config at it, generate traffic, and confirm capture with `speedctl`.
+Use these exact steps to install the demo app, enable eBPF capture via annotation, generate traffic, and confirm capture with `speedctl`.
 
 ### 1. Install the demo app
 
@@ -76,81 +76,47 @@ kubectl rollout status deployment/node-server -n demo-stack --timeout=120s
 
 Image tags follow the repo [VERSION](VERSION) file and are updated by `make update-version` / `make bump-version`. The gateway image is built and pushed by CI on the `master` branch along with the other demo images.
 
-### 2. Add capture targets to the speedscale-nettap ConfigMap
+### 2. Enable eBPF capture (annotation)
 
-The Speedscale operator installs a ConfigMap named `speedscale-nettap` in the cluster. Add (or merge) the following capture and logging section into that ConfigMap.
+Capture is enabled **per deployment** by adding the annotation `capture.speedscale.com/enabled: "true"` to the **Deployment** `metadata.annotations`. The gateway, java-server, csharp-weather, node-server, and php-server deployments in this scenario already have it in their manifests, so when you deploy with `kubectl apply -k scenarios/microservices/k8s`, capture is enabled for those workloads.
 
-**Find the ConfigMap namespace** (often `speedscale`, `default`, or the operator’s namespace):
+For **Java** workloads, also add `capture.speedscale.com/java-agent: "true"` to the deployment. The java-server deployment already has both annotations.
 
-```bash
-kubectl get configmap speedscale-nettap -A
-```
-
-**Edit the ConfigMap** and ensure it contains a `data.config.yaml` (or the key your agent expects) with `capture.targets` and `logging`:
+**With kubectl:** to add or update the annotation on deployments from the CLI:
 
 ```bash
-# Replace <NETTAP_NAMESPACE> with the namespace from the command above (e.g. speedscale)
-kubectl edit configmap speedscale-nettap -n <NETTAP_NAMESPACE>
+# Enable capture on each app deployment
+kubectl annotate deployment gateway csharp-weather node-server php-server -n demo-stack capture.speedscale.com/enabled="true" --overwrite
+kubectl annotate deployment java-server -n demo-stack capture.speedscale.com/enabled="true" capture.speedscale.com/java-agent="true" --overwrite
 ```
 
-**Paste or merge this into the ConfigMap’s `data`** (as the value of `config.yaml` or the agent’s config key). This targets the `demo-stack` namespace and all four demo services (gateway, java-server, csharp-weather, node-server):
+To confirm a deployment's annotations:
 
-```yaml
-  config.yaml: |
-    capture:
-      targets:
-      - name: demo-gateway
-        namespaceSelector:
-          matchLabels:
-            app.kubernetes.io/name: demo-stack
-        podSelector:
-          matchLabels:
-            app: gateway
-      - name: demo-java
-        namespaceSelector:
-          matchLabels:
-            app.kubernetes.io/name: demo-stack
-        podSelector:
-          matchLabels:
-            app: java-server
-      - name: demo-csharp
-        namespaceSelector:
-          matchLabels:
-            app.kubernetes.io/name: demo-stack
-        podSelector:
-          matchLabels:
-            app: csharp-weather
-      - name: demo-node
-        namespaceSelector:
-          matchLabels:
-            app.kubernetes.io/name: demo-stack
-        podSelector:
-          matchLabels:
-            app: node-server
-    logging:
-      level: info
+```bash
+kubectl get deployment java-server -n demo-stack -o jsonpath='{.metadata.annotations}' | jq .
 ```
-
-Save and exit. The eBPF agent will pick up the updated config (restart the DaemonSet pods if it does not reload automatically).
 
 ### 3. Generate traffic
 
-Port-forward the gateway and send requests so there is traffic to capture:
+The stack includes a **traffic-client** deployment (patterned after [java/client/client](java/client/client)) that obtains Java auth tokens (login + RSA) and calls each app so they make **outbound HTTPS** calls: Java→SpaceX/Treasury, CSharp→OpenWeather, Node→NASA/SpaceX/GitHub, PHP→SpaceX. Traffic runs continuously for eBPF capture. It starts automatically when you deploy; no extra step required.
+
+To confirm it is running:
+
+```bash
+kubectl get pods -n demo-stack -l app=traffic-client
+kubectl logs -n demo-stack -l app=traffic-client -f
+```
+
+Optionally, you can also send traffic from your machine by port-forwarding and curling:
 
 ```bash
 kubectl port-forward -n demo-stack svc/gateway 8080:80
-```
-
-In another terminal:
-
-```bash
+# In another terminal:
 curl -s http://localhost:8080/health
 curl -s http://localhost:8080/java/healthz
 curl -s http://localhost:8080/csharp/health
 curl -s http://localhost:8080/node/healthz
 ```
-
-Repeat or add more requests as needed (e.g. `/`, `/nasa`, `/events`) so capture has enough data.
 
 ### 4. Use speedctl to see if traffic is observed
 

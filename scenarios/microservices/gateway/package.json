@@ -1,6 +1,6 @@
 {
   "name": "scenarios-gateway",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "Gateway for Java + .NET + Node microservices scenario",
   "type": "module",
   "main": "index.js",

@@ -47,6 +47,7 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' 's|gcr.io/speedscale-demos/java-server:[v]*[0-9.]*|gcr.io/speedscale-demos/java-server:v$(VERSION)|g' scenarios/microservices/k8s/java-server.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/csharp-weather:[v]*[0-9.]*|gcr.io/speedscale-demos/csharp-weather:v$(VERSION)|g' scenarios/microservices/k8s/csharp-weather.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/node-server:[v]*[0-9.]*|gcr.io/speedscale-demos/node-server:v$(VERSION)|g' scenarios/microservices/k8s/node-server.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/php-server:[v]*[0-9.]*|gcr.io/speedscale-demos/php-server:v$(VERSION)|g' scenarios/microservices/k8s/php-server.yaml
 	@echo "Updating Maven pom.xml files..."
 	@sed -i '' '/<artifactId>auth<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/server/pom.xml
 	@sed -i '' '/<artifactId>auth-client<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/client/pom.xml
@@ -73,7 +74,7 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 	echo "Expected version: $$VERSION_FILE"; \
 	echo ""; \
 	echo "Checking Kubernetes manifests:"; \
-	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-server/auth-deployment.yaml java-auth/k8s/base/auth-client/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml ruby-api/k8s/base/ruby-server/ruby-deployment.yaml ruby-api/k8s/base/ruby-client/client-deployment.yaml csharp/manifest.yaml php/manifest.yaml scenarios/microservices/k8s/gateway.yaml scenarios/microservices/k8s/java-server.yaml scenarios/microservices/k8s/csharp-weather.yaml scenarios/microservices/k8s/node-server.yaml | \
+	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-server/auth-deployment.yaml java-auth/k8s/base/auth-client/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml ruby-api/k8s/base/ruby-server/ruby-deployment.yaml ruby-api/k8s/base/ruby-client/client-deployment.yaml csharp/manifest.yaml php/manifest.yaml scenarios/microservices/k8s/gateway.yaml scenarios/microservices/k8s/java-server.yaml scenarios/microservices/k8s/csharp-weather.yaml scenarios/microservices/k8s/node-server.yaml scenarios/microservices/k8s/php-server.yaml | \
 	while read line; do \
 		if echo "$$line" | grep -q ":$$VERSION_FILE" || echo "$$line" | grep -q ":v$$VERSION_FILE"; then \
 			echo "  ✅ $$line"; \

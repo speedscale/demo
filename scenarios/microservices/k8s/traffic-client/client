@@ -1,0 +1,66 @@
+#!/bin/sh
+# Traffic client patterned after java/client/client: hold auth tokens, call each app
+# so it makes outbound HTTPS (Java->SpaceX/Treasury, CSharp->OpenWeather, Node->NASA/SpaceX/GitHub, PHP->SpaceX).
+round=0
+loginToken=""
+rsaToken=""
+echo "Starting traffic generator (gateway at ${GATEWAY_URL})..."
+
+get_java_tokens() {
+  echo "[Java] Getting login token..."
+  loginToken=$(curl -s -m 10 -X POST -H "Content-Type: application/json" -d '{"username":"admin","password":"pass"}' "${GATEWAY_URL}/java/login" | jq -r .access_token)
+  echo "[Java] Getting RSA token..."
+  rsaToken=$(curl -s -m 10 -X POST -H "Content-Type: application/json" -d '{"username":"admin","password":"pass"}' "${GATEWAY_URL}/java/rsaToken" | jq -r .access_token)
+  sleep 1
+}
+
+while true; do
+  round=$((round + 1))
+  echo "=== Round $round ==="
+
+  if [ $((round % 5)) -eq 1 ]; then
+    get_java_tokens
+  fi
+
+  echo "[Gateway] GET /health"
+  curl -s -m 10 "${GATEWAY_URL}/health" | jq -c . 2>/dev/null || true
+  sleep 1
+
+  # Java: auth-required endpoints (outbound HTTPS to SpaceX, Treasury)
+  echo "[Java] GET /java/spacex/launches (Bearer)"
+  curl -s -m 15 -H "Authorization: Bearer ${loginToken}" "${GATEWAY_URL}/java/spacex/launches" | jq -c 'if type=="array" then length else . end' 2>/dev/null || true
+  sleep 1
+  echo "[Java] GET /java/spacex/ship (Bearer)"
+  curl -s -m 15 -H "Authorization: Bearer ${loginToken}" "${GATEWAY_URL}/java/spacex/ship" | jq -c . 2>/dev/null || true
+  sleep 1
+  echo "[Java] GET /java/treasury/max_interest (RSA Bearer)"
+  curl -s -m 15 -H "Authorization: Bearer ${rsaToken}" "${GATEWAY_URL}/java/treasury/max_interest" | jq -c . 2>/dev/null || true
+  sleep 1
+
+  # CSharp: outbound HTTPS to OpenWeather
+  echo "[CSharp] GET /csharp/weatherforecast"
+  curl -s -m 20 "${GATEWAY_URL}/csharp/weatherforecast" | jq -c 'if type=="array" then length else . end' 2>/dev/null || true
+  sleep 1
+
+  # Node: outbound HTTPS to SpaceX, GitHub
+  echo "[Node] GET /node/spacex/launches"
+  curl -s -m 20 "${GATEWAY_URL}/node/spacex/launches" | jq -c . 2>/dev/null || true
+  sleep 1
+  echo "[Node] GET /node/space"
+  curl -s -m 20 "${GATEWAY_URL}/node/space" | jq -c . 2>/dev/null || true
+  sleep 1
+  echo "[Node] GET /node/events"
+  curl -s -m 20 "${GATEWAY_URL}/node/events" | jq -c 'if type=="array" then length else type end' 2>/dev/null || true
+  sleep 1
+
+  # PHP: outbound HTTPS to SpaceX
+  echo "[PHP] GET /php/health"
+  curl -s -m 10 "${GATEWAY_URL}/php/health" | jq -c . 2>/dev/null || true
+  sleep 1
+  echo "[PHP] GET /php/spacex/launches"
+  curl -s -m 15 "${GATEWAY_URL}/php/spacex/launches" | jq -c . 2>/dev/null || true
+  sleep 1
+
+  echo "Round $round done. Sleeping ${SLEEP_SECONDS}s..."
+  sleep "${SLEEP_SECONDS}"
+done

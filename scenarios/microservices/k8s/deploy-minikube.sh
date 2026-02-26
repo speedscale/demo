@@ -22,6 +22,9 @@ docker build -t "gcr.io/speedscale-demos/csharp-weather:v$VERSION" -f csharp/Doc
 echo "Building node-server (gcr.io/speedscale-demos/node-server:v$VERSION)..."
 docker build -t "gcr.io/speedscale-demos/node-server:v$VERSION" -f node/Dockerfile node
 
+echo "Building php-server (gcr.io/speedscale-demos/php-server:v$VERSION)..."
+docker build -t "gcr.io/speedscale-demos/php-server:v$VERSION" -f php/Dockerfile php
+
 echo "Deploying to namespace demo-stack..."
 kubectl apply -k scenarios/microservices/k8s
 
@@ -29,7 +32,9 @@ echo "Waiting for deployments to be ready..."
 kubectl rollout status deployment/java-server -n demo-stack --timeout=120s
 kubectl rollout status deployment/csharp-weather -n demo-stack --timeout=120s
 kubectl rollout status deployment/node-server -n demo-stack --timeout=120s
+kubectl rollout status deployment/php-server -n demo-stack --timeout=120s
 kubectl rollout status deployment/gateway -n demo-stack --timeout=60s
+kubectl rollout status deployment/traffic-client -n demo-stack --timeout=60s
 
 echo ""
 echo "Stack is up. To test the gateway:"

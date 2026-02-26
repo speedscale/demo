@@ -5,6 +5,8 @@ metadata:
   namespace: demo-stack
   labels:
     app: csharp-weather
+  annotations:
+    capture.speedscale.com/enabled: "true"
 spec:
   replicas: 1
   selector:
@@ -17,7 +19,7 @@ spec:
     spec:
       containers:
         - name: csharp-weather
-          image: gcr.io/speedscale-demos/csharp-weather:v1.3.3
+          image: gcr.io/speedscale-demos/csharp-weather:v1.3.4
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

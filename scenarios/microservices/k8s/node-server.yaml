@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: node-server
   namespace: demo-stack
+  annotations:
+    capture.speedscale.com/enabled: "true"
 spec:
   replicas: 1
   selector:
@@ -15,7 +17,7 @@ spec:
     spec:
       containers:
         - name: node-server
-          image: gcr.io/speedscale-demos/node-server:v1.3.3
+          image: gcr.io/speedscale-demos/node-server:v1.3.4
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000

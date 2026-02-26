@@ -1,15 +1,17 @@
-# Microservices Demo Scenario (Java, .NET, Node)
+# Microservices Demo Scenario (Java, .NET, Node, PHP)
 
-**Java + .NET + Node** behind one gateway. Kubernetes only; all traffic goes through the gateway.
+**Java + .NET + Node + PHP** behind one gateway. Kubernetes only; all traffic goes through the gateway.
 
 ## What runs
 
 | Service | Role |
 |--------|------|
-| **gateway** | Reverse proxy; routes `/java/*`, `/csharp/*`, `/node/*` to backends. Version-managed like other demos. |
+| **gateway** | Reverse proxy; routes `/java/*`, `/csharp/*`, `/node/*`, `/php/*` to backends. Version-managed like other demos. |
 | **java-server** | [java/](../../java/) – Spring Boot |
 | **csharp-weather** | [csharp/](../../csharp/) – .NET 8 weather API |
 | **node-server** | [node/](../../node/) – Express |
+| **php-server** | [php/](../../php/) – Slim (PHP); SpaceX proxy |
+| **traffic-client** | Continuously calls gateway so each app makes outbound HTTPS (Java→SpaceX/Treasury, CSharp→OpenWeather, Node→NASA/SpaceX/GitHub, PHP→SpaceX). |
 
 Manifests live in [k8s/](k8s/). Gateway app is in [gateway/](gateway/).
 
@@ -35,6 +37,7 @@ Then:
 - `curl http://localhost:8080/java/healthz`
 - `curl http://localhost:8080/csharp/health`
 - `curl http://localhost:8080/node/healthz`
+- `curl http://localhost:8080/php/health`
 
 ## Version management
 

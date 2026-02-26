@@ -28,7 +28,7 @@ spec:
             echo "Ruby server is ready!"
       containers:
         - name: ruby-client
-          image: gcr.io/speedscale-demos/ruby-client:v1.3.3
+          image: gcr.io/speedscale-demos/ruby-client:v1.3.4
           imagePullPolicy: Always
           env:
             - name: SERVER_URL

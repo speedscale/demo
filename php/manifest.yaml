@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: php-server
-          image: gcr.io/speedscale-demos/php-server:v1.3.3
+          image: gcr.io/speedscale-demos/php-server:v1.3.4
           imagePullPolicy: Always
           readinessProbe:
             httpGet:

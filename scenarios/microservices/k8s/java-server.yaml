@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-server
+  namespace: demo-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-server
+  template:
+    metadata:
+      labels:
+        app: java-server
+    spec:
+      containers:
+        - name: java-server
+          image: gcr.io/speedscale-demos/java-server:v1.3.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          env:
+            - name: JAVA_OPTS
+              value: >-
+                -Dmy.rsaPrivateKeyFile=/etc/speedscale/java-server/certs/tls.key
+                -Dmy.rsaPublicKeyFile=/etc/speedscale/java-server/certs/tls.crt
+          volumeMounts:
+            - name: java-server-certs
+              mountPath: /etc/speedscale/java-server/certs
+              readOnly: true
+      volumes:
+        - name: java-server-certs
+          secret:
+            secretName: java-server-certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: java-server
+  namespace: demo-stack
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    app: java-server
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: java-server-certs
+  namespace: demo-stack
+type: Opaque
+data:
+  tls.crt: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFvN2w0YlRjcVBXaHZqb0tTNHoxdwptQWp5c1hPM01ic3VaaTZaN3dmR0NXRmZEanJjQUdYMmZISCtwbWVNYXNORXFXVnhnQ2VGTVNwRlRXQXhwRWlkCkNDNkRrdlduNkpkU3JVUWN1Vjg0Yk10TENBSklqZnBRNXNSR0hURDFvNCttTlhQRlk5OElLNk9IM25MVkdxZk4KaFBCRHd5UHRJWkVkMnBMU0F6QkVhb2prRHQzZ1FFcXFzcU04NzJPNzVaZUxqQytVbzgyS3Z1T2l6cXo0YUdiZwpXTnF4KzhLbEQ5S1NHUk5MTDVVZlJRRTFHa1pHR3RxTWptbWk2RG5ZSVE2eTI0UC8rMkRFM3l6NUxwMm5rQ0FZCmgzSFl2Z1lFditHN1ZYeTl5K1l6endmcDhFdHlqbGVqN0c0RmVPNUNGNFZpVFNGNzE4UXczVzlIRU5JSHVVWnQKTHdJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBbzdsNGJUY3FQV2h2am9LUzR6MXdtQWp5c1hPM01ic3VaaTZaN3dmR0NXRmZEanJjCkFHWDJmSEgrcG1lTWFzTkVxV1Z4Z0NlRk1TcEZUV0F4cEVpZENDNkRrdlduNkpkU3JVUWN1Vjg0Yk10TENBSkkKamZwUTVzUkdIVEQxbzQrbU5YUEZZOThJSzZPSDNuTFZHcWZOaFBCRHd5UHRJWkVkMnBMU0F6QkVhb2prRHQzZwpRRXFxc3FNODcyTzc1WmVMakMrVW84Mkt2dU9penF6NGFHYmdXTnF4KzhLbEQ5S1NHUk5MTDVVZlJRRTFHa1pHCkd0cU1qbW1pNkRuWUlRNnkyNFAvKzJERTN5ejVMcDJua0NBWWgzSFl2Z1lFditHN1ZYeTl5K1l6endmcDhFdHkKamxlajdHNEZlTzVDRjRWaVRTRjcxOFF3M1c5SEVOSUh1VVp0THdJREFRQUJBb0lCQUE2b3RXSWQrQ3BqQytpaQp3MFpxV0FieUlpZGJtTkdiUDFFY2ZMYmNwM3dXaGtnWllySlJ4Q0IvVDd3VUlHRTh3T0hqNHlZdmVRQkpGeHhtCjc2V1ViM21ZanpwSGJzbThwc1U4WGRBR2VRc0YvQWxUQ2E1VjlRd1J2Y1N3LzFxdUtzVUt3UktBbVNtREY2VmIKVUdqMXU1NkZVL2t6REhFZXlQYXExNktSSGZHN0p2SE96YlpkaXczalFLb2tmQjFjdFVkcGxNSTFIc2YyemMxZQpyM25rSXVSaWlLQVRGQkczNlRlcGI5ajVESU14SEQ2dklqalQwRWtaMnN4Q1lBeGxCOVBWd0Q5N1V0aHFnVXVTCkJXYkQ1czNId3N6QWlBd2RBNW5wQjg4ckpDYjNVS0pnZlpaRlpoUFhUZGRQNHJ0aTI3T2h1U0hVWnI0V1hKNXYKK1I3cHlBVUNnWUVBMWYwbUhsU3A5ellCa3FnREJpMXlqOU0wZkRINDVHak1zM2szN2hrTHlwVFpZdlUyWUMxTgpIM3ZSTkZrTVJsSEtyeEgvMkEzMEx5YjVRRkxxbnU1Skwvbk9Pa1dGemZFbXBEK3NkQXhveHdXRkNFWDYwUXBpCnVZdmF1aWVHckF3VTRJaU8yTHY1QzBrcnQ5d2lWMWpZU2grWEJNeW03ajdFei9DWEtha0hCUFVDZ1lFQXc5NFcKa1IyUUlpVHJVRTBoVHI0cVlUUGRSTHhwQTNMWjM2UmZlUjBiT1RvTTRsWkdvZzJwbzhINHJZM0dmbmhqYndyUAprZ0l4Nm5MbVVvbXVza3dKS1N5cWtFcnJ0ZW9Bd3BFRE5NWkZmYUVGZ1EwcHpRK3QzR3gvSGZaMEc4elZIRzBBCndaTzB5KzcxVExTdUdsRDBzcnlYa2lZQWhWN2lpaXUrWDVBTGN4TUNnWUVBa3ZILzF4dzBpenBlNGlMVjBNd3MKdTI5QnYzZGhmeGdvV2FhSUxjeXRPRFAzQStsM3FadnlOZ2lFcFBueFgraVMwcDM5bnBRV2RyckF0dGM1bm1IcgppREoyMTdVZUtVbk1TMFllV3FLYTRQQjlaaTBJQzd5aUJ1QnZGeDVGY0tmclBqVUlRdlR5RkRudTk1Y0hUZ3dJCm12NE9hcEZPb0pRaCt0a3dOTCtKdm5FQ2dZQXdnWUdKTW84TlJhTlk0YUVNQlNBdHJsQnZ3MUVtWDMwQlc0MmgKU3NvQkpCVW93RUVCeE94cjk0K0VPNFlhcituQUNDZGJlMXV0T2dNOEVZakg4dmlaejh2MXEvZ3Z0dUcxVFlCRAp3NDVXREZoMm16SHM3S01iNFdxaG12VXFKVkhwbGowSHMzS2t4bXJOTWptam5zVGF0c1c2bGRxdkxNNWhkVy9SCjdyUkhMUUtCZ0M1aUI2WHB6b0FWUVdRTmN6aUtoT1dMTG5RbUI1N2dmcnd4WjVqVWNYYkMvWXJiYWoxMjVIazYKNUdORjFxRWE2djhha29aZWNRMHd6T3B1dHZFeERQK0ljVTVkcjFlSXdwUEY4c2FoMXkrRmUzNkF3VVRnMjZUNQoxSnY0THR2K2hpY3NlellIU0VjRkl3ZUtrbmVjNmJSeWFSeCtMQmR2MEJzck1HWTJqeTViCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==
+  hmacSecret: dGhpcy1pcy1hLXZlcnktZ29vZC1zZWNyZXQtand0LWtleQ==

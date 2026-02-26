@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csharp-weather
+  namespace: demo-stack
+  labels:
+    app: csharp-weather
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: csharp-weather
+  template:
+    metadata:
+      labels:
+        app: csharp-weather
+    spec:
+      containers:
+        - name: csharp-weather
+          image: gcr.io/speedscale-demos/csharp-weather:v1.3.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+            - name: OPENWEATHER_API_KEY
+              value: "b1e641006d0b095192f4e5dd0932f93d"
+            - name: OPENWEATHER_CITY
+              value: "Cebu City"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: csharp-weather
+  namespace: demo-stack
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    app: csharp-weather

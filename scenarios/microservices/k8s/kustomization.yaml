@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: demo-stack
+resources:
+  - namespace.yaml
+  - java-server.yaml
+  - csharp-weather.yaml
+  - node-server.yaml
+  - gateway.yaml

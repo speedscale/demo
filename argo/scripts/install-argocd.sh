@@ -31,8 +31,10 @@ kubectl config use-context "$CLUSTER_NAME"
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
 # Install ArgoCD core
+# Use server-side apply to avoid "metadata.annotations: Too long" on the ApplicationSet CRD
+# (client-side apply stores last-applied-configuration in an annotation, which can exceed 262144 bytes)
 echo "Installing ArgoCD core..."
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/core-install.yaml
+kubectl apply --server-side --force-conflicts -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/core-install.yaml
 
 # Create the server components manually
 echo "Adding ArgoCD server (dashboard)..."

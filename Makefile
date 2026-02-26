@@ -43,6 +43,10 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' 's|gcr.io/speedscale-demos/csharp-weather:[v]*[0-9.]*|gcr.io/speedscale-demos/csharp-weather:v$(VERSION)|g' csharp/manifest.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/csharp-client:[v]*[0-9.]*|gcr.io/speedscale-demos/csharp-client:v$(VERSION)|g' csharp/manifest.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/php-server:[v]*[0-9.]*|gcr.io/speedscale-demos/php-server:v$(VERSION)|g' php/manifest.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/scenarios-gateway:[v]*[0-9.]*|gcr.io/speedscale-demos/scenarios-gateway:v$(VERSION)|g' scenarios/microservices/k8s/gateway.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/java-server:[v]*[0-9.]*|gcr.io/speedscale-demos/java-server:v$(VERSION)|g' scenarios/microservices/k8s/java-server.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/csharp-weather:[v]*[0-9.]*|gcr.io/speedscale-demos/csharp-weather:v$(VERSION)|g' scenarios/microservices/k8s/csharp-weather.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/node-server:[v]*[0-9.]*|gcr.io/speedscale-demos/node-server:v$(VERSION)|g' scenarios/microservices/k8s/node-server.yaml
 	@echo "Updating Maven pom.xml files..."
 	@sed -i '' '/<artifactId>auth<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/server/pom.xml
 	@sed -i '' '/<artifactId>auth-client<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/client/pom.xml
@@ -52,10 +56,12 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node/package.json
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node-auth/package.json
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' smart-replace-demo/package.json
+	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' scenarios/microservices/gateway/package.json
 	@echo "Regenerating Node package-lock.json files..."
 	@cd node && npm install --package-lock-only
 	@cd node-auth && npm install --package-lock-only
 	@cd smart-replace-demo && npm install --package-lock-only
+	@cd scenarios/microservices/gateway && npm install --package-lock-only
 	@echo ""
 	@echo "✅ Version $(VERSION) updated across all files!"
 	@echo ""
@@ -67,7 +73,7 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 	echo "Expected version: $$VERSION_FILE"; \
 	echo ""; \
 	echo "Checking Kubernetes manifests:"; \
-	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-server/auth-deployment.yaml java-auth/k8s/base/auth-client/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml ruby-api/k8s/base/ruby-server/ruby-deployment.yaml ruby-api/k8s/base/ruby-client/client-deployment.yaml csharp/manifest.yaml php/manifest.yaml | \
+	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-server/auth-deployment.yaml java-auth/k8s/base/auth-client/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml ruby-api/k8s/base/ruby-server/ruby-deployment.yaml ruby-api/k8s/base/ruby-client/client-deployment.yaml csharp/manifest.yaml php/manifest.yaml scenarios/microservices/k8s/gateway.yaml scenarios/microservices/k8s/java-server.yaml scenarios/microservices/k8s/csharp-weather.yaml scenarios/microservices/k8s/node-server.yaml | \
 	while read line; do \
 		if echo "$$line" | grep -q ":$$VERSION_FILE" || echo "$$line" | grep -q ":v$$VERSION_FILE"; then \
 			echo "  ✅ $$line"; \
@@ -120,6 +126,12 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 		echo "  ✅ smart-replace-demo/package.json: $$VERSION_IN_SMART_PKG"; \
 	else \
 		echo "  ❌ smart-replace-demo/package.json: $$VERSION_IN_SMART_PKG (expected $$VERSION_FILE)"; \
+	fi; \
+	VERSION_IN_GATEWAY_PKG=$$(grep -o '"version": "[0-9.]*"' scenarios/microservices/gateway/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
+	if [ "$$VERSION_IN_GATEWAY_PKG" = "$$VERSION_FILE" ]; then \
+		echo "  ✅ scenarios/microservices/gateway/package.json: $$VERSION_IN_GATEWAY_PKG"; \
+	else \
+		echo "  ❌ scenarios/microservices/gateway/package.json: $$VERSION_IN_GATEWAY_PKG (expected $$VERSION_FILE)"; \
 	fi
 
 bump-version: ## Bump to next patch version and update all files
@@ -185,7 +197,10 @@ docker-csharp: ## Build and push C# Docker images (server and client)
 	cd csharp && make docker-multi VERSION=$(VERSION)
 	cd csharp && make docker-client-multi VERSION=$(VERSION)
 
-docker-all: docker-java docker-java-auth docker-node docker-node-auth docker-smart-replace-demo docker-ruby docker-php docker-csharp ## Build and push all Docker images
+docker-gateway: ## Build and push scenarios gateway Docker image
+	cd scenarios/microservices/gateway && make docker-multi VERSION=$(VERSION)
+
+docker-all: docker-java docker-java-auth docker-node docker-node-auth docker-smart-replace-demo docker-ruby docker-php docker-csharp docker-gateway ## Build and push all Docker images
 
 # Test targets
 test-java: ## Test Java project

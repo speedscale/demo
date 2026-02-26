@@ -11,9 +11,9 @@ Deploy your apps to multiple Kubernetes clusters using ArgoCD - the simple way.
 
 ## Quick Start
 
-### 1. Install ArgoCD on all clusters
+### 1. Install ArgoCD on your cluster(s)
 ```bash
-./scripts/install-argocd.sh
+./scripts/install-argocd.sh <cluster-name>   # e.g. minikube, colima, gke-*
 ```
 
 ### 2. Add k8s configs to your app repos
@@ -59,7 +59,8 @@ your-app-repo/
 
 ## Scripts Reference
 
-- `scripts/install-argocd.sh` - Install ArgoCD on all clusters
+- `scripts/install-argocd.sh <cluster-name>` - Install ArgoCD (core + dashboard) on a cluster
+- `scripts/uninstall-argocd.sh <cluster-name>` - Remove ArgoCD and its CRDs from a cluster
 - `scripts/setup-app-repo.sh` - Add k8s configs to an app repo
 - `scripts/deploy-apps.sh` - Deploy all apps to all clusters
 - `scripts/get-argocd-passwords.sh` - Get ArgoCD admin passwords

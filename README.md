@@ -4,6 +4,14 @@ This repository contains various self-contained demo applications that showcase 
 
 For contributor guidance, see [Repository Guidelines](AGENTS.md).
 
+## Demo Scenarios (Java, .NET, Node)
+
+Demos are **Kubernetes-only**. Use the [**scenarios/**](scenarios/README.md) directory:
+
+- **[Monolith](scenarios/monolith/)** – Run a **single** app in K8s: **Java**, **.NET**, or **Node.js** via each project’s manifests (`kubectl apply -f java/manifest.yaml`, etc.).
+- **[Microservices](scenarios/microservices/)** – **Java + .NET + Node** behind one gateway in namespace `demo-stack`: from repo root, `./scenarios/microservices/k8s/deploy-minikube.sh`. The gateway is version-managed like other demos (`make update-version`, `make docker-gateway`).
+
+- **[eBPF language validation](docs/eBPF-language-validation.md)** – Scope for validating eBPF traffic capture (PHP, .NET, Node.js, Java) over HTTP/HTTPS on Rancher Desktop.
 
 ## Demo Projects
 

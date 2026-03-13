@@ -26,6 +26,9 @@ _TOOL_OK = ToolCallRecord(name="lookup_order", status="ok", duration_ms=10,
                            result={"order_id": "INC-SIM"})
 _TOOL_ERR = ToolCallRecord(name="lookup_order", status="error", duration_ms=5,
                             error="HTTP 500")
+# Simulates what the tool endpoint returns when inject_malformed=True
+_TOOL_DRIFTED = ToolCallRecord(name="lookup_order", status="ok", duration_ms=8,
+                                result={"_old_order_id": "INC-SIM", "_old_status": "shipped"})
 
 
 @pytest.fixture
@@ -62,7 +65,7 @@ class TestFallback:
         adapters = {"anthropic": primary, "openai": fallback, "gemini": make_mock_adapter("gemini")}
 
         with patch("app.main._ADAPTERS", adapters), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_TOOL_OK)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_OK)):
             r = await client.post("/api/run", json=_base_body(
                 inject_status=429,
                 fallback_provider="openai",
@@ -82,7 +85,7 @@ class TestFallback:
                     "gemini": make_mock_adapter("gemini")}
 
         with patch("app.main._ADAPTERS", adapters), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_TOOL_OK)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_OK)):
             r = await client.post("/api/run", json=_base_body(inject_status=429))
 
         assert r.status_code == 200
@@ -100,7 +103,7 @@ class TestFallback:
         }
 
         with patch("app.main._ADAPTERS", adapters), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_TOOL_OK)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_OK)):
             r = await client.post("/api/run", json={
                 **_base_body(fallback_provider="openai"),
                 "provider": "openai",
@@ -118,7 +121,7 @@ class TestFallback:
         }
 
         with patch("app.main._ADAPTERS", adapters), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_TOOL_OK)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_OK)):
             r = await client.post("/api/run", json=_base_body(
                 inject_status=None,  # real error, not simulated status
                 fallback_provider="openai",
@@ -138,7 +141,7 @@ class TestFallback:
         }
 
         with patch("app.main._ADAPTERS", adapters), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_TOOL_OK)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_OK)):
             r = await client.post("/api/run", json={
                 **_base_body(inject_status=429, fallback_provider="openai"),
                 "provider": "openai",
@@ -163,7 +166,7 @@ class TestLatencyInjection:
         delay_ms = 300
         start = time.monotonic()
         with patch("app.main._ADAPTERS", adapters), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_TOOL_OK)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_OK)):
             r = await client.post("/api/run", json={
                 **_base_body(inject_latency_ms=delay_ms),
                 "provider": "openai",
@@ -180,7 +183,7 @@ class TestLatencyInjection:
 
         start = time.monotonic()
         with patch("app.main._ADAPTERS", adapters), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_TOOL_OK)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_OK)):
             await client.post("/api/run", json={
                 **_base_body(inject_latency_ms=0),
                 "provider": "openai",
@@ -194,7 +197,7 @@ class TestLatencyInjection:
                     "gemini": make_mock_adapter("gemini")}
 
         with patch("app.main._ADAPTERS", adapters), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_TOOL_OK)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_OK)):
             r = await client.post("/api/run", json={
                 **_base_body(inject_latency_ms=100),
                 "provider": "openai",
@@ -209,13 +212,17 @@ class TestLatencyInjection:
 
 class TestToolStatusInjection:
     async def test_inject_500_causes_order_tool_error(self, client):
-        """inject_status=500 is forwarded to the order lookup tool."""
+        """inject_status=500 causes the order tool to report an error.
+
+        _call_tool is mocked to return the same error record the real implementation
+        produces when the tool endpoint returns 500 (verified in test_tools.py).
+        """
         adapters = {"openai": make_mock_adapter("openai", output=_GOOD_OUTPUT),
                     "anthropic": make_mock_adapter("anthropic"),
                     "gemini": make_mock_adapter("gemini")}
 
-        # Use real tool calls (ASGITransport) to verify chaos is forwarded
-        with patch("app.main._ADAPTERS", adapters):
+        with patch("app.main._ADAPTERS", adapters), \
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_ERR)):
             r = await client.post("/api/run", json={
                 **_base_body(inject_status=500),
                 "provider": "openai",
@@ -230,7 +237,8 @@ class TestToolStatusInjection:
                     "anthropic": make_mock_adapter("anthropic"),
                     "gemini": make_mock_adapter("gemini")}
 
-        with patch("app.main._ADAPTERS", adapters):
+        with patch("app.main._ADAPTERS", adapters), \
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_ERR)):
             r = await client.post("/api/run", json={
                 **_base_body(inject_status=500),
                 "provider": "openai",
@@ -249,7 +257,8 @@ class TestMalformedToolJson:
                     "anthropic": make_mock_adapter("anthropic"),
                     "gemini": make_mock_adapter("gemini")}
 
-        with patch("app.main._ADAPTERS", adapters):
+        with patch("app.main._ADAPTERS", adapters), \
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_DRIFTED)):
             r = await client.post("/api/run", json={
                 **_base_body(inject_malformed_tool_json=True),
                 "provider": "openai",
@@ -258,12 +267,17 @@ class TestMalformedToolJson:
         assert r.json()["simulation"]["inject_malformed_tool_json"] is True
 
     async def test_malformed_tool_result_has_drifted_fields(self, client):
-        """When inject_malformed_tool_json is true the order tool returns drifted fields."""
+        """When inject_malformed_tool_json is true the order tool result has schema-drifted fields.
+
+        _call_tool is mocked to return the same output the real /tools/order endpoint
+        produces with inject_malformed=true (verified separately in test_tools.py).
+        """
         adapters = {"openai": make_mock_adapter("openai", output=_GOOD_OUTPUT),
                     "anthropic": make_mock_adapter("anthropic"),
                     "gemini": make_mock_adapter("gemini")}
 
-        with patch("app.main._ADAPTERS", adapters):
+        with patch("app.main._ADAPTERS", adapters), \
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_DRIFTED)):
             r = await client.post("/api/run", json={
                 **_base_body(inject_malformed_tool_json=True),
                 "provider": "openai",
@@ -271,7 +285,6 @@ class TestMalformedToolJson:
 
         body = r.json()
         order_call = next(t for t in body["tool_calls"] if t["name"] == "lookup_order")
-        # The tool still returns HTTP 200 — status is "ok" — but result fields are drifted
         assert order_call["status"] == "ok"
         result_keys = list(order_call["result"].keys())
         assert all(k.startswith("_old_") for k in result_keys)
@@ -288,7 +301,7 @@ class TestSimulationEcho:
                     "gemini": make_mock_adapter("gemini")}
 
         with patch("app.main._ADAPTERS", adapters), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_TOOL_OK)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_TOOL_OK)):
             r = await client.post("/api/run", json={
                 **_base_body(inject_latency_ms=50, inject_status=429,
                              inject_malformed_tool_json=False),

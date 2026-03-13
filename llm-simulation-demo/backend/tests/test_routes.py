@@ -119,7 +119,7 @@ class TestScenarios:
 class TestRunScenario:
     async def test_known_scenario_returns_run_result(self, client):
         with patch("app.main._ADAPTERS", _patched_adapters()), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_MOCK_TOOL)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_MOCK_TOOL)):
             r = await client.post("/api/scenarios/baseline-ticket/run")
         assert r.status_code == 200
         body = r.json()
@@ -140,7 +140,7 @@ class TestRunScenario:
         ]
         for sid in scenario_ids:
             with patch("app.main._ADAPTERS", _patched_adapters()), \
-                 patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_MOCK_TOOL)()):
+                 patch("app.main._call_tool", new=AsyncMock(return_value=_MOCK_TOOL)):
                 r = await client.post(f"/api/scenarios/{sid}/run")
             assert r.status_code == 200, f"Scenario {sid!r} failed with {r.status_code}"
 
@@ -152,7 +152,7 @@ class TestRunScenario:
 class TestRunTask:
     async def test_happy_path_shape(self, client):
         with patch("app.main._ADAPTERS", _patched_adapters()), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_MOCK_TOOL)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_MOCK_TOOL)):
             r = await client.post("/api/run", json={
                 "task": "summarize_ticket",
                 "provider": "openai",
@@ -193,7 +193,7 @@ class TestRunTask:
 
     async def test_run_is_stored_and_retrievable(self, client):
         with patch("app.main._ADAPTERS", _patched_adapters()), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_MOCK_TOOL)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_MOCK_TOOL)):
             r = await client.post("/api/run", json={
                 "task": "summarize_ticket",
                 "provider": "openai",
@@ -208,7 +208,7 @@ class TestRunTask:
 
     async def test_request_id_has_expected_prefix(self, client):
         with patch("app.main._ADAPTERS", _patched_adapters()), \
-             patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_MOCK_TOOL)()):
+             patch("app.main._call_tool", new=AsyncMock(return_value=_MOCK_TOOL)):
             r = await client.post("/api/run", json={
                 "task": "summarize_ticket",
                 "provider": "anthropic",
@@ -235,7 +235,7 @@ class TestListRuns:
         # Populate a few runs first
         for i in range(5):
             with patch("app.main._ADAPTERS", _patched_adapters()), \
-                 patch("app.main._call_tool", side_effect=lambda *a, **kw: AsyncMock(return_value=_MOCK_TOOL)()):
+                 patch("app.main._call_tool", new=AsyncMock(return_value=_MOCK_TOOL)):
                 await client.post("/api/run", json={
                     "task": "summarize_ticket",
                     "provider": "openai",

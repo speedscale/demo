@@ -1,0 +1,21 @@
+{
+  "id": "malformed-tool-response",
+  "name": "Malformed tool response",
+  "description": "Forces the order lookup tool to return schema-drifted JSON (fields renamed with _old_ prefix). Demonstrates how the backend handles unexpected tool output shapes and how the LLM output degrades.",
+  "request": {
+    "task": "summarize_ticket",
+    "provider": "openai",
+    "input": {
+      "ticket_id": "INC-1003",
+      "customer_tier": "enterprise",
+      "transcript": "Order tracking page shows no shipment data for orders placed in the last 48 hours. Customer needs an updated delivery estimate for order INC-1003."
+    },
+    "simulation": {
+      "mode": "chaos",
+      "inject_latency_ms": 0,
+      "inject_status": null,
+      "inject_malformed_tool_json": true,
+      "fallback_provider": null
+    }
+  }
+}

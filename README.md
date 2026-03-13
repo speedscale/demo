@@ -12,40 +12,52 @@ Demos are **Kubernetes-only**. Use the [**scenarios/**](scenarios/README.md) dir
 - **[Microservices](scenarios/microservices/)** – **Java + .NET + Node** behind one gateway in namespace `demo-stack`: from repo root, `./scenarios/microservices/k8s/deploy-minikube.sh`. The gateway is version-managed like other demos (`make update-version`, `make docker-gateway`).
 
 - **[eBPF language validation](docs/eBPF-language-validation.md)** – Scope for validating eBPF traffic capture (PHP, .NET, Node.js, Java) over HTTP/HTTPS on Rancher Desktop.
+- **[LLM simulation demo app plan](docs/llm-simulation-demo-app-plan.md)** – Plan for a Node.js frontend + Python backend demo that exercises multiple LLM providers and runtime simulation scenarios.
 
 ## Demo Projects
 
 ### [Java](java/)
+
 A Spring Boot application that integrates with external APIs (SpaceX and US Treasury). Features JWT authentication, health checks, and comprehensive API endpoints for testing traffic capture and replay scenarios.
 
 ### [Java Auth](java-auth/)
+
 A complete JWT-based authentication microservice built with Spring Boot and MySQL. Includes user registration, login, token validation, refresh tokens, and audit logging. Perfect for demonstrating secure API interactions and database traffic patterns.
 
 ### [Node.js](node/)
+
 A Node.js Express application with multiple endpoints that call external APIs including GitHub, SpaceX, NASA, and httpbin. Includes comprehensive documentation for local, Docker, and Kubernetes deployment scenarios.
 
 ### [Go](go/)
+
 An IP distance calculator service that uses the ipstack API to determine geographical distances between IP addresses. Demonstrates API integration patterns and mathematical calculations in Go.
 
 ### [Python](python/)
+
 A Flask application that proxies SpaceX API data, providing a simple example of Python-based API integration suitable for traffic capture and replay testing.
 
 ### [PHP](php/)
+
 A PHP Slim Framework application that proxies SpaceX API data, demonstrating modern PHP 8.3 features and API integration patterns suitable for traffic capture and replay testing.
 
 ### [Node API](node-api/)
+
 A Node.js/Express IP distance API similar to the Go version, featuring ipstack integration, haversine distance calculations, and optional DynamoDB caching with AWS SDK v3.
 
 ### [C#/.NET](csharp/)
+
 A .NET 8.0 minimal API weather service that integrates with OpenWeather API. Features health checks, Swagger/OpenAPI documentation, Docker support, Kubernetes manifests with client traffic generator, and comprehensive test suite. Demonstrates modern C# patterns and external service integration.
 
 ### [NGINX](nginx/)
+
 A Kubernetes-based demo featuring multiple nginx services (gateway, payment, user) that simulate a microservices architecture. Perfect for demonstrating service mesh traffic patterns.
 
 ### [ArgoCD](argo/)
+
 A GitOps deployment solution using ArgoCD for multi-cluster Kubernetes deployments. Shows how to manage application deployments across different cluster environments.
 
 ### [AWS Services](aws/)
+
 Contains AWS-specific demos including DynamoDB integration examples, demonstrating cloud service integration patterns.
 
 ## Version Management
@@ -106,7 +118,7 @@ You can also manually edit the `VERSION` file and run `make update-version VERSI
 Each project directory contains its own `Makefile` for local development convenience:
 
 - **`java/Makefile`** - Java service development commands
-- **`java-auth/Makefile`** - Java Auth service development commands  
+- **`java-auth/Makefile`** - Java Auth service development commands
 - **`node/Makefile`** - Node service development commands
 
 ### Root vs Project Makefiles
@@ -116,7 +128,7 @@ The **root Makefile** provides centralized commands that delegate to project Mak
 ```bash
 # Root commands (work from repository root)
 make docker-java-auth      # Builds java-auth Docker images
-make build-java-auth       # Builds java-auth application  
+make build-java-auth       # Builds java-auth application
 make test-java-auth        # Runs java-auth tests
 
 # Project commands (work from project directory)

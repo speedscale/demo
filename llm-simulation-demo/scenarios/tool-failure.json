@@ -1,0 +1,21 @@
+{
+  "id": "tool-failure",
+  "name": "Tool failure (500)",
+  "description": "Forces the order lookup tool to return HTTP 500. The backend records the tool call as status=error and the LLM must produce a degraded response with higher severity and an escalation recommendation.",
+  "request": {
+    "task": "summarize_ticket",
+    "provider": "openai",
+    "input": {
+      "ticket_id": "INC-1005",
+      "customer_tier": "standard",
+      "transcript": "Cannot view order history. The page loads but the order list is empty. The customer placed two orders last week and needs the order numbers to arrange a return."
+    },
+    "simulation": {
+      "mode": "chaos",
+      "inject_latency_ms": 0,
+      "inject_status": 500,
+      "inject_malformed_tool_json": false,
+      "fallback_provider": null
+    }
+  }
+}

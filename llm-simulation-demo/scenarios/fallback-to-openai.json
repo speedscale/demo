@@ -1,0 +1,21 @@
+{
+  "id": "fallback-to-openai",
+  "name": "Fallback to OpenAI",
+  "description": "Injects a 429 rate-limit error from Anthropic. The backend detects the 429 and retries the same request against OpenAI. Useful for verifying that fallback logic normalizes output and that Speedscale can replay both the failed and successful legs.",
+  "request": {
+    "task": "summarize_ticket",
+    "provider": "anthropic",
+    "input": {
+      "ticket_id": "INC-1004",
+      "customer_tier": "vip",
+      "transcript": "Subscription renewal charged twice this billing cycle. Customer has a screenshot showing two identical charges. They have contacted their bank and need a refund within 24 hours or they will file a chargeback."
+    },
+    "simulation": {
+      "mode": "chaos",
+      "inject_latency_ms": 0,
+      "inject_status": 429,
+      "inject_malformed_tool_json": false,
+      "fallback_provider": "openai"
+    }
+  }
+}

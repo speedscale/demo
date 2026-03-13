@@ -1,0 +1,21 @@
+{
+  "id": "provider-timeout",
+  "name": "Provider timeout",
+  "description": "Injects 3 000 ms of latency on the primary provider (Anthropic) to simulate a stall, then falls back to OpenAI. Shows how the normalized envelope records fallback_triggered=true and provider_used differs from provider_requested.",
+  "request": {
+    "task": "summarize_ticket",
+    "provider": "anthropic",
+    "input": {
+      "ticket_id": "INC-1002",
+      "customer_tier": "standard",
+      "transcript": "Payment is declined on every retry since the last deploy went out at 14:00 UTC. The error message is generic: 'payment could not be processed'. Customer has tried three different cards."
+    },
+    "simulation": {
+      "mode": "chaos",
+      "inject_latency_ms": 3000,
+      "inject_status": null,
+      "inject_malformed_tool_json": false,
+      "fallback_provider": "openai"
+    }
+  }
+}

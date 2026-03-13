@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: llm-simulation
+  labels:
+    app.kubernetes.io/name: llm-simulation
+    app.kubernetes.io/part-of: speedscale-demos

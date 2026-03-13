@@ -1,6 +1,6 @@
 #!/bin/sh
 # Traffic client patterned after java/client/client: hold auth tokens, call each app
-# so it makes outbound HTTPS (Java->SpaceX/Treasury, CSharp->OpenWeather, Node->NASA/SpaceX/GitHub, PHP->SpaceX).
+# so it makes outbound HTTPS (Java->SpaceX/Treasury, CSharp->OpenWeather, Node->SpaceX, PHP->SpaceX).
 round=0
 loginToken=""
 rsaToken=""
@@ -42,15 +42,12 @@ while true; do
   curl -s -m 20 "${GATEWAY_URL}/csharp/weatherforecast" | jq -c 'if type=="array" then length else . end' 2>/dev/null || true
   sleep 1
 
-  # Node: outbound HTTPS to SpaceX, GitHub
+  # Node: outbound HTTPS to SpaceX API (node-server calls api.spacexdata.com)
   echo "[Node] GET /node/spacex/launches"
   curl -s -m 20 "${GATEWAY_URL}/node/spacex/launches" | jq -c . 2>/dev/null || true
   sleep 1
   echo "[Node] GET /node/space"
   curl -s -m 20 "${GATEWAY_URL}/node/space" | jq -c . 2>/dev/null || true
-  sleep 1
-  echo "[Node] GET /node/events"
-  curl -s -m 20 "${GATEWAY_URL}/node/events" | jq -c 'if type=="array" then length else type end' 2>/dev/null || true
   sleep 1
 
   # PHP: outbound HTTPS to SpaceX

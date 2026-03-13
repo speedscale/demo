@@ -1,0 +1,29 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Build / runtime artefacts
+dist/
+build/
+*.egg-info/
+
+# Dev server logs
+*.log
+
+# Local env files (keys must never be committed)
+.env
+.env.local
+backend/.env
+
+# k8s secret with real keys
+k8s/api-keys.secret.yaml

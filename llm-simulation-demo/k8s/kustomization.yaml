@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: llm-simulation
+
+resources:
+  - namespace.yaml
+  - config.yaml
+  - backend.yaml
+  - frontend.yaml
+  # api-keys.secret.yaml is NOT listed here because it must be created by the
+  # user and should never be committed.  Create it with:
+  #   cp api-keys.secret.example.yaml api-keys.secret.yaml
+  #   # fill in your keys, then:
+  #   kubectl apply -f api-keys.secret.yaml
+  # OR use the helper script:
+  #   ./configure-keys.sh

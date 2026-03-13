@@ -48,6 +48,10 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' 's|gcr.io/speedscale-demos/csharp-weather:[v]*[0-9.]*|gcr.io/speedscale-demos/csharp-weather:v$(VERSION)|g' scenarios/microservices/k8s/csharp-weather.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/node-server:[v]*[0-9.]*|gcr.io/speedscale-demos/node-server:v$(VERSION)|g' scenarios/microservices/k8s/node-server.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/php-server:[v]*[0-9.]*|gcr.io/speedscale-demos/php-server:v$(VERSION)|g' scenarios/microservices/k8s/php-server.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/llm-simulation-backend:[v]*[0-9.]*|gcr.io/speedscale-demos/llm-simulation-backend:v$(VERSION)|g' llm-simulation-demo/k8s/backend.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/llm-simulation-frontend:[v]*[0-9.]*|gcr.io/speedscale-demos/llm-simulation-frontend:v$(VERSION)|g' llm-simulation-demo/k8s/frontend.yaml
+	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' llm-simulation-demo/frontend/package.json
+	@sed -i '' 's|version="[0-9.]*"|version="$(VERSION)"|' llm-simulation-demo/backend/app/main.py
 	@echo "Updating Maven pom.xml files..."
 	@sed -i '' '/<artifactId>auth<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/server/pom.xml
 	@sed -i '' '/<artifactId>auth-client<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/client/pom.xml
@@ -63,6 +67,7 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@cd node-auth && npm install --package-lock-only
 	@cd smart-replace-demo && npm install --package-lock-only
 	@cd scenarios/microservices/gateway && npm install --package-lock-only
+	@cd llm-simulation-demo/frontend && npm install --package-lock-only
 	@echo ""
 	@echo "✅ Version $(VERSION) updated across all files!"
 	@echo ""
@@ -107,6 +112,32 @@ validate-version: ## Validate that all versions are consistent with VERSION file
 		echo "  ✅ java-auth/scripts/pom.xml: $$VERSION_IN_SCRIPTS"; \
 	else \
 		echo "  ❌ java-auth/scripts/pom.xml: $$VERSION_IN_SCRIPTS (expected $$VERSION_FILE)"; \
+	fi; \
+	echo ""; \
+	echo "Checking LLM Simulation Demo:"; \
+	LLM_BACKEND_IMG=$$(grep 'llm-simulation-backend:' llm-simulation-demo/k8s/backend.yaml | grep -o 'v[0-9.]*' | head -1); \
+	if [ "$$LLM_BACKEND_IMG" = "v$$VERSION_FILE" ]; then \
+		echo "  ✅ llm-simulation-demo/k8s/backend.yaml: $$LLM_BACKEND_IMG"; \
+	else \
+		echo "  ❌ llm-simulation-demo/k8s/backend.yaml: $$LLM_BACKEND_IMG (expected v$$VERSION_FILE)"; \
+	fi; \
+	LLM_FRONTEND_IMG=$$(grep 'llm-simulation-frontend:' llm-simulation-demo/k8s/frontend.yaml | grep -o 'v[0-9.]*' | head -1); \
+	if [ "$$LLM_FRONTEND_IMG" = "v$$VERSION_FILE" ]; then \
+		echo "  ✅ llm-simulation-demo/k8s/frontend.yaml: $$LLM_FRONTEND_IMG"; \
+	else \
+		echo "  ❌ llm-simulation-demo/k8s/frontend.yaml: $$LLM_FRONTEND_IMG (expected v$$VERSION_FILE)"; \
+	fi; \
+	LLM_FE_PKG=$$(grep -o '"version": "[0-9.]*"' llm-simulation-demo/frontend/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
+	if [ "$$LLM_FE_PKG" = "$$VERSION_FILE" ]; then \
+		echo "  ✅ llm-simulation-demo/frontend/package.json: $$LLM_FE_PKG"; \
+	else \
+		echo "  ❌ llm-simulation-demo/frontend/package.json: $$LLM_FE_PKG (expected $$VERSION_FILE)"; \
+	fi; \
+	LLM_BE_VER=$$(grep -o 'version="[0-9.]*"' llm-simulation-demo/backend/app/main.py | sed 's/version="//g' | sed 's/"//g'); \
+	if [ "$$LLM_BE_VER" = "$$VERSION_FILE" ]; then \
+		echo "  ✅ llm-simulation-demo/backend/app/main.py: $$LLM_BE_VER"; \
+	else \
+		echo "  ❌ llm-simulation-demo/backend/app/main.py: $$LLM_BE_VER (expected $$VERSION_FILE)"; \
 	fi; \
 	echo ""; \
 	echo "Checking Node package.json:"; \
@@ -201,7 +232,15 @@ docker-csharp: ## Build and push C# Docker images (server and client)
 docker-gateway: ## Build and push scenarios gateway Docker image
 	cd scenarios/microservices/gateway && make docker-multi VERSION=$(VERSION)
 
-docker-all: docker-java docker-java-auth docker-node docker-node-auth docker-smart-replace-demo docker-ruby docker-php docker-csharp docker-gateway ## Build and push all Docker images
+docker-llm-simulation: ## Build and push LLM Simulation Demo Docker images
+	docker buildx build --platform linux/amd64,linux/arm64 \
+		-t gcr.io/speedscale-demos/llm-simulation-backend:v$(VERSION) \
+		--push llm-simulation-demo/backend
+	docker buildx build --platform linux/amd64,linux/arm64 \
+		-t gcr.io/speedscale-demos/llm-simulation-frontend:v$(VERSION) \
+		--push llm-simulation-demo/frontend
+
+docker-all: docker-java docker-java-auth docker-node docker-node-auth docker-smart-replace-demo docker-ruby docker-php docker-csharp docker-gateway docker-llm-simulation ## Build and push all Docker images
 
 # Test targets
 test-java: ## Test Java project
@@ -216,7 +255,11 @@ test-php: ## Test PHP project
 test-csharp: ## Test C# project
 	cd csharp && make test
 
-test-all: test-java test-java-auth test-php test-csharp ## Run all tests
+test-llm-simulation: ## Test LLM Simulation Demo (backend + frontend)
+	cd llm-simulation-demo/backend && pip install -q -r requirements-dev.txt && pytest
+	cd llm-simulation-demo/frontend && npm install --silent && npm test -- --passWithNoTests
+
+test-all: test-java test-java-auth test-php test-csharp test-llm-simulation ## Run all tests
 
 # Release management
 release: ## Create a new release (usage: make release VERSION=1.0.7)

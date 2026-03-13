@@ -1,0 +1,21 @@
+{
+  "id": "baseline-ticket",
+  "name": "Baseline ticket",
+  "description": "Standard support ticket with no simulation. Verifies the happy path against the default provider.",
+  "request": {
+    "task": "summarize_ticket",
+    "provider": "openai",
+    "input": {
+      "ticket_id": "INC-1001",
+      "customer_tier": "enterprise",
+      "transcript": "Customer cannot complete checkout after address update triggered a tax recalculation. Steps to reproduce: update shipping address to a different state, then attempt payment. The order summary page refreshes but the checkout button becomes unresponsive."
+    },
+    "simulation": {
+      "mode": "live",
+      "inject_latency_ms": 0,
+      "inject_status": null,
+      "inject_malformed_tool_json": false,
+      "fallback_provider": null
+    }
+  }
+}

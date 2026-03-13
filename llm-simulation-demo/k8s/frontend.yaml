@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-simulation-frontend
+  namespace: llm-simulation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-simulation-frontend
+  template:
+    metadata:
+      labels:
+        app: llm-simulation-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: gcr.io/speedscale-demos/llm-simulation-frontend:v1.3.5
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: NEXT_PUBLIC_API_BASE_URL
+              value: "http://llm-simulation-backend"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-simulation-frontend
+  namespace: llm-simulation
+spec:
+  # Use NodePort for easy local access with minikube/kind.
+  # Change to LoadBalancer for cloud clusters.
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      nodePort: 30300
+  selector:
+    app: llm-simulation-frontend
+---
+# Optional: expose on a stable hostname via an Ingress.
+# Requires an ingress controller (e.g. nginx-ingress) in the cluster.
+# Uncomment and set spec.rules[0].host to your desired hostname.
+#
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: llm-simulation
+#   namespace: llm-simulation
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+# spec:
+#   rules:
+#     - host: llm-simulation.example.com
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: llm-simulation-frontend
+#                 port:
+#                   name: http
+#           - path: /api
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: llm-simulation-backend
+#                 port:
+#                   name: http

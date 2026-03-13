@@ -1,2 +1,6 @@
 .DS_Store
 .vscode
+
+# Planning documents — working notes only, not for committing
+docs/**/*-plan.md
+docs/**/*-proposal.md

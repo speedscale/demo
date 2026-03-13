@@ -45,6 +45,14 @@ jobs:
             path: csharp
             setup: dotnet
             test_cmd: dotnet test
+          - name: llm-simulation-backend
+            path: llm-simulation-demo/backend
+            setup: python
+            test_cmd: make test
+          - name: llm-simulation-frontend
+            path: llm-simulation-demo/frontend
+            setup: node
+            test_cmd: make test
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -69,6 +77,18 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
+
+    - name: Set up Code Env
+      if: matrix.service.setup == 'python'
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Set up Code Env
+      if: matrix.service.setup == 'node'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
 
     - name: Cache Dependencies
       if: matrix.service.setup == 'java'
@@ -224,6 +244,9 @@ jobs:
           - name: csharp
             path: csharp
             build_cmd: make build
+          - name: llm-simulation-frontend
+            path: llm-simulation-demo/frontend
+            build_cmd: make build
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -236,7 +259,7 @@ jobs:
         distribution: 'temurin'
 
     - name: Set up Code Env
-      if: contains(matrix.service.name, 'node') || matrix.service.name == 'smart-replace-demo'
+      if: contains(matrix.service.name, 'node') || matrix.service.name == 'smart-replace-demo' || matrix.service.name == 'llm-simulation-frontend'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
@@ -314,6 +337,12 @@ jobs:
             target: docker-multi
           - service: gateway
             path: scenarios/microservices/gateway
+            target: docker-multi
+          - service: llm-simulation-backend
+            path: llm-simulation-demo/backend
+            target: docker-multi
+          - service: llm-simulation-frontend
+            path: llm-simulation-demo/frontend
             target: docker-multi
     steps:
     - name: Checkout

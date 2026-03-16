@@ -1,14 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"}/api/:path*`,
-      },
-    ];
-  },
+  // API proxying is handled at runtime by src/app/api/[...path]/route.ts
+  // using the BACKEND_URL env var, so no build-time rewrites are needed.
 };
 
 module.exports = nextConfig;

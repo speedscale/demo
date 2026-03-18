@@ -8,15 +8,18 @@
 #   ./deploy-local.sh               # deploy (or update) both services
 #   ./deploy-local.sh backend       # redeploy backend only
 #   ./deploy-local.sh frontend      # redeploy frontend only
+#   ./deploy-local.sh open          # port-forward the frontend to localhost:3000
 #
 # Environment overrides:
 #   KUBE_CONTEXT=my-cluster         # target cluster context (default: current)
 #   NAMESPACE=llm-simulation        # target namespace
+#   PORT=3000                       # local port for the 'open' subcommand
 
 set -euo pipefail
 
 KUBE_CONTEXT="${KUBE_CONTEXT:-}"
 NAMESPACE="${NAMESPACE:-llm-simulation}"
+PORT="${PORT:-3000}"
 TARGET="${1:-all}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -28,6 +31,16 @@ fi
 
 CURRENT_CTX="$(${KUBECTL} config current-context 2>/dev/null || echo 'unknown')"
 
+# ── open subcommand ─────────────────────────────────────────────────────────
+if [[ "${TARGET}" == "open" ]]; then
+  echo ""
+  echo "=== Port-forwarding frontend → http://localhost:${PORT} ==="
+  echo "  (Ctrl-C to stop)"
+  echo ""
+  exec ${KUBECTL} port-forward svc/llm-simulation-frontend "${PORT}:80" -n "${NAMESPACE}"
+fi
+
+# ── deploy ──────────────────────────────────────────────────────────────────
 echo ""
 echo "=== LLM Simulation Demo — Deploy ==="
 echo ""
@@ -54,7 +67,7 @@ case "${TARGET}" in
   frontend) rollout frontend ;;
   all)      rollout backend; rollout frontend ;;
   *)
-    echo "ERROR: unknown target '${TARGET}'. Use: all | backend | frontend"
+    echo "ERROR: unknown target '${TARGET}'. Use: all | backend | frontend | open"
     exit 1
     ;;
 esac
@@ -62,5 +75,6 @@ esac
 echo ""
 echo "=== Deploy complete ==="
 echo ""
-echo "  App : http://localhost:30300"
+echo "  NodePort  : http://localhost:30300  (Rancher Desktop / kind)"
+echo "  Port-fwd  : ./deploy-local.sh open  (minikube / any cluster)"
 echo ""

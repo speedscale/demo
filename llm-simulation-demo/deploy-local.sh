@@ -75,6 +75,6 @@ esac
 echo ""
 echo "=== Deploy complete ==="
 echo ""
-echo "  Rancher Desktop : http://localhost  (LoadBalancer auto-assigned)"
-echo "  Minikube        : ./deploy-local.sh tunnel  then  http://localhost"
+echo "  Rancher Desktop : http://localhost:3000  (LoadBalancer auto-assigned)"
+echo "  Minikube        : ./deploy-local.sh tunnel  then  http://localhost:3000"
 echo ""

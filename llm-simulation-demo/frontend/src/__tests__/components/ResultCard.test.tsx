@@ -4,9 +4,8 @@ import type { RunResult } from "@/lib/types";
 
 const baseResult: RunResult = {
   request_id: "req_abc123",
-  provider_requested: "anthropic",
-  provider_used: "anthropic",
-  fallback_triggered: false,
+  provider: "anthropic",
+  model: "claude-3-5-haiku-latest",
   output: {
     summary: "Checkout fails after tax rule change.",
     severity: "high",
@@ -17,11 +16,6 @@ const baseResult: RunResult = {
     { name: "lookup_policy", status: "ok", duration_ms: 22 },
   ],
   timing: { provider_ms: 1200, total_ms: 1450 },
-  simulation: {
-    inject_latency_ms: 0,
-    inject_status: null,
-    inject_malformed_tool_json: false,
-  },
 };
 
 describe("ResultCard", () => {
@@ -41,9 +35,9 @@ describe("ResultCard", () => {
       expect(screen.getByText("req_abc123")).toBeInTheDocument();
     });
 
-    it("renders the provider used", () => {
+    it("renders provider and model", () => {
       render(<ResultCard result={baseResult} />);
-      expect(screen.getByText("anthropic")).toBeInTheDocument();
+      expect(screen.getByText(/anthropic/)).toBeInTheDocument();
     });
 
     it("renders provider_ms timing", () => {
@@ -67,24 +61,6 @@ describe("ResultCard", () => {
       const low = { ...baseResult, output: { ...baseResult.output, severity: "low" as const } };
       render(<ResultCard result={low} />);
       expect(screen.getByText("low")).toBeInTheDocument();
-    });
-  });
-
-  describe("fallback badge", () => {
-    it("does NOT show fallback badge when fallback_triggered is false", () => {
-      render(<ResultCard result={baseResult} />);
-      expect(screen.queryByText("Fallback triggered")).not.toBeInTheDocument();
-    });
-
-    it("shows fallback badge when fallback_triggered is true", () => {
-      const withFallback: RunResult = {
-        ...baseResult,
-        fallback_triggered: true,
-        provider_requested: "anthropic",
-        provider_used: "openai",
-      };
-      render(<ResultCard result={withFallback} />);
-      expect(screen.getByText("Fallback triggered")).toBeInTheDocument();
     });
   });
 

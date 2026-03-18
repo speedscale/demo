@@ -21,7 +21,7 @@ from app.tools import router as tools_router
 app = FastAPI(
     title="Ticket Triage API",
     description="AI-powered support ticket analysis backend.",
-    version="1.3.5",
+    version="1.3.6",
 )
 
 app.add_middleware(
@@ -42,9 +42,9 @@ _ADAPTERS: Dict[str, Any] = {
 _PROVIDER_MODELS: Dict[str, List[str]] = {
     "openai": ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"],
     "anthropic": [
-        "claude-3-5-haiku-latest",
-        "claude-3-5-sonnet-latest",
-        "claude-3-7-sonnet-latest",
+        "claude-haiku-4-5",
+        "claude-sonnet-4-5",
+        "claude-opus-4-5",
     ],
     "gemini": ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
 }

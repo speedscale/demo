@@ -5,7 +5,7 @@ import type { RunResult } from "@/lib/types";
 const baseResult: RunResult = {
   request_id: "req_abc123",
   provider: "anthropic",
-  model: "claude-3-5-haiku-latest",
+  model: "claude-haiku-4-5",
   output: {
     summary: "Checkout fails after tax rule change.",
     severity: "high",

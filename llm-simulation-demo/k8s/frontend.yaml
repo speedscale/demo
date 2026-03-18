@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: gcr.io/speedscale-demos/llm-simulation-frontend:v1.3.5
+          image: gcr.io/speedscale-demos/llm-simulation-frontend:v1.3.6
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -49,14 +49,11 @@ metadata:
   name: llm-simulation-frontend
   namespace: llm-simulation
 spec:
-  # Use NodePort for easy local access with minikube/kind.
-  # Change to LoadBalancer for cloud clusters.
-  type: NodePort
+  type: ClusterIP
   ports:
     - name: http
-      port: 80
+      port: 3000
       targetPort: 3000
-      nodePort: 30300
   selector:
     app: llm-simulation-frontend
 ---

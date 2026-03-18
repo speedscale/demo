@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: gcr.io/speedscale-demos/llm-simulation-backend:v1.3.5
+          image: gcr.io/speedscale-demos/llm-simulation-backend:v1.3.6
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

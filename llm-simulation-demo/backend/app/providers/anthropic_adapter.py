@@ -15,7 +15,7 @@ _ANTHROPIC_VERSION = "2023-06-01"
 
 class AnthropicAdapter:
     name = "anthropic"
-    default_model = "claude-3-5-haiku-latest"
+    default_model = "claude-haiku-4-5"
 
     async def run(self, request: RunRequest) -> OutputEnvelope:
         api_key = os.getenv("ANTHROPIC_API_KEY", "")

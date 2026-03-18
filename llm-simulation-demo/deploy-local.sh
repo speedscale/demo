@@ -5,9 +5,10 @@
 # public GCR images.  No local container build tooling required.
 #
 # Usage:
-#   ./deploy-local.sh               # deploy (or update) both services
+#   ./deploy-local.sh               # deploy (or update) all services
 #   ./deploy-local.sh backend       # redeploy backend only
 #   ./deploy-local.sh frontend      # redeploy frontend only
+#   ./deploy-local.sh nginx         # redeploy nginx only
 #   ./deploy-local.sh tunnel        # start minikube tunnel (M-series Mac)
 #
 # Environment overrides:
@@ -65,9 +66,10 @@ rollout() {
 case "${TARGET}" in
   backend)  rollout backend ;;
   frontend) rollout frontend ;;
-  all)      rollout backend; rollout frontend ;;
+  nginx)    rollout nginx ;;
+  all)      rollout backend; rollout frontend; rollout nginx ;;
   *)
-    echo "ERROR: unknown target '${TARGET}'. Use: all | backend | frontend | tunnel"
+    echo "ERROR: unknown target '${TARGET}'. Use: all | backend | frontend | nginx | tunnel"
     exit 1
     ;;
 esac
@@ -75,9 +77,11 @@ esac
 echo ""
 echo "=== Deploy complete ==="
 echo ""
-echo "  Rancher Desktop : http://localhost:3000  (LoadBalancer auto-assigned)"
+echo "  Traffic flows: browser → nginx (LoadBalancer) → frontend → backend → LLM"
+echo ""
+echo "  Rancher Desktop : http://localhost:3000"
 echo "  Minikube        : ./deploy-local.sh tunnel  then  http://localhost:3000"
 echo ""
-echo "  Note: minikube tunnel routes traffic through the pod's eth0 (via kube-proxy"
-echo "  DNAT), so Speedscale sidecar iptables rules capture inbound traffic correctly."
+echo "  Speedscale capture: port-forward to nginx for full layer visibility"
+echo "    kubectl port-forward -n llm-simulation svc/llm-simulation-nginx 3000:80"
 echo ""

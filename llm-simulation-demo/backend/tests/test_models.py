@@ -41,12 +41,12 @@ class TestRunRequest:
     def test_with_provider_and_model(self):
         req = RunRequest(
             provider="anthropic",
-            model="claude-3-5-haiku-latest",
+            model="claude-haiku-4-5",
             input={"ticket_id": "INC-2", "customer_tier": "vip",
                    "transcript": "Urgent issue"},
         )
         assert req.provider == "anthropic"
-        assert req.model == "claude-3-5-haiku-latest"
+        assert req.model == "claude-haiku-4-5"
 
     def test_missing_input_raises(self):
         with pytest.raises(ValidationError):

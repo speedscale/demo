@@ -109,7 +109,6 @@ Edit `config.yaml` before deploying to change defaults:
 | Key | Default | Description |
 |---|---|---|
 | `DEFAULT_PROVIDER` | `openai` | Provider selected by default in the UI |
-| `ENABLE_SIMULATION_MODE` | `true` | Enable chaos/latency injection controls |
 | `ENABLED_PROVIDERS` | `openai,anthropic,gemini` | Comma-separated list shown in the UI |
 
 ## Ingress (optional)
@@ -120,6 +119,39 @@ set `spec.rules[0].host` to expose the demo on a stable hostname:
 ```bash
 # Requires nginx-ingress or another ingress controller
 kubectl apply -f frontend.yaml
+```
+
+## Speedscale traffic capture
+
+An nginx reverse proxy (`llm-simulation-nginx`) sits in front of the frontend specifically to enable full traffic capture. Browser traffic is accessed via `kubectl port-forward` to the nginx pod — port-forwarded traffic arrives on the pod's loopback interface (`127.0.0.1`) and is not subject to the CNI bridge SNAT that prevents capture on NodePort/LoadBalancer services.
+
+The only Speedscale annotation required is on the nginx Deployment:
+
+```yaml
+metadata:
+  annotations:
+    sidecar.speedscale.com/inject: "true"
+    sidecar.speedscale.com/tls-out: "true"
+```
+
+The frontend and backend get their sidecars injected automatically by the operator (namespace is managed by Speedscale). No additional annotations are needed.
+
+### Traffic layers captured
+
+| Layer | Service | Direction |
+|---|---|---|
+| Browser → nginx | `llm-simulation-nginx` | inbound (via port-forward on `lo`) |
+| nginx → Frontend | `llm-simulation-frontend` | inbound (nginx pod IP as source) |
+| Frontend → Backend | `llm-simulation-backend` | inbound (frontend pod IP as source) |
+| Backend → LLM API | `llm-simulation-backend` | outbound |
+
+### Accessing the app
+
+Port-forward to the nginx service (not the frontend directly):
+
+```bash
+kubectl port-forward -n llm-simulation svc/llm-simulation-nginx 3000:80
+# open http://localhost:3000
 ```
 
 ## Teardown

@@ -7,6 +7,7 @@ resources:
   - config.yaml
   - backend.yaml
   - frontend.yaml
+  - nginx.yaml
   # api-keys.secret.yaml is NOT listed here because it must be created by the
   # user and should never be committed.  Create it with:
   #   cp api-keys.secret.example.yaml api-keys.secret.yaml

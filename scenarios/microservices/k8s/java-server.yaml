@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: java-server
-          image: gcr.io/speedscale-demos/java-server:v1.3.5
+          image: gcr.io/speedscale-demos/java-server:v1.3.6
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

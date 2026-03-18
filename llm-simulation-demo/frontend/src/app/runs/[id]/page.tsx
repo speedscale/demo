@@ -10,10 +10,7 @@ import { ToolCallList } from "@/components/ToolCallList";
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h2
-        className="text-xs font-semibold uppercase tracking-wider"
-        style={{ color: "var(--text-muted)" }}
-      >
+      <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
         {title}
       </h2>
       {children}
@@ -50,18 +47,14 @@ export default function TracePage() {
     return <p className="animate-pulse text-sm" style={{ color: "var(--text-muted)" }}>Loading…</p>;
   }
   if (error || !run) {
-    return (
-      <p className="text-sm" style={{ color: "#ef4444" }}>
-        {error ?? "Run not found"}
-      </p>
-    );
+    return <p className="text-sm" style={{ color: "#ef4444" }}>{error ?? "Run not found"}</p>;
   }
 
   return (
     <div className="max-w-3xl space-y-8">
       <div className="flex items-center gap-4">
         <a href="/runs" className="text-sm hover:opacity-80" style={{ color: "var(--text-muted)" }}>
-          ← Runs
+          ← History
         </a>
         <h1 className="text-2xl font-bold tracking-tight">Trace</h1>
       </div>
@@ -74,18 +67,13 @@ export default function TracePage() {
         <SeverityBadge severity={run.output.severity} />
         <div className="flex gap-6 text-sm flex-wrap">
           <div>
-            <span style={{ color: "var(--text-muted)" }}>Requested: </span>
-            <span className="font-medium">{run.provider_requested}</span>
+            <span style={{ color: "var(--text-muted)" }}>Provider: </span>
+            <span className="font-medium">{run.provider}</span>
           </div>
           <div>
-            <span style={{ color: "var(--text-muted)" }}>Used: </span>
-            <span className="font-medium">{run.provider_used}</span>
+            <span style={{ color: "var(--text-muted)" }}>Model: </span>
+            <span className="font-medium">{run.model}</span>
           </div>
-          {run.fallback_triggered && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ background: "#f9731622", color: "#f97316" }}>
-              fallback triggered
-            </span>
-          )}
           {run.error && (
             <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ background: "#ef444422", color: "#ef4444" }}>
               error
@@ -113,20 +101,14 @@ export default function TracePage() {
               className="rounded-lg p-4"
               style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
             >
-              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
-                {label}
-              </p>
+              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
               <p className="text-2xl font-bold font-mono">{value}</p>
             </div>
           ))}
         </div>
       </Section>
 
-      <Section title="Simulation Config">
-        <JsonBlock value={run.simulation} />
-      </Section>
-
-      <Section title="Full Envelope">
+      <Section title="Full Response">
         <JsonBlock value={run} />
       </Section>
 

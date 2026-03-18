@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from pydantic import BaseModel
 
 from app.models.tool_call import ToolCallRecord
@@ -17,19 +17,11 @@ class TimingInfo(BaseModel):
     total_ms: int
 
 
-class SimulationEcho(BaseModel):
-    inject_latency_ms: int = 0
-    inject_status: Optional[int] = None
-    inject_malformed_tool_json: bool = False
-
-
 class RunResult(BaseModel):
     request_id: str
-    provider_requested: str
-    provider_used: str
-    fallback_triggered: bool = False
+    provider: str
+    model: str
     output: OutputEnvelope
     tool_calls: List[ToolCallRecord] = []
     timing: TimingInfo
-    simulation: SimulationEcho
     error: Optional[str] = None

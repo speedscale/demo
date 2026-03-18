@@ -1,4 +1,4 @@
-import type { ProviderInfo, RunRequest, RunResult, Scenario } from "./types";
+import type { ProviderInfo, RunRequest, RunResult } from "./types";
 
 // Browser: use "" so requests go to /api/... on the same origin (proxied by the
 // Next.js route handler at src/app/api/[...path]/route.ts).
@@ -28,16 +28,8 @@ export async function runTask(req: RunRequest): Promise<RunResult> {
   });
 }
 
-export async function runScenario(id: string): Promise<RunResult> {
-  return apiFetch<RunResult>(`/api/scenarios/${id}/run`, { method: "POST" });
-}
-
 export async function getProviders(): Promise<{ providers: ProviderInfo[]; default_provider: string }> {
   return apiFetch("/api/providers");
-}
-
-export async function getScenarios(): Promise<{ scenarios: Scenario[] }> {
-  return apiFetch("/api/scenarios");
 }
 
 export async function getRun(id: string): Promise<RunResult> {

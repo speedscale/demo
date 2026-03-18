@@ -5,7 +5,4 @@ metadata:
   namespace: llm-simulation
 data:
   DEFAULT_PROVIDER: "openai"
-  ENABLE_SIMULATION_MODE: "true"
-  # Comma-separated list of providers to advertise in /api/providers.
-  # Remove any provider for which you have not supplied an API key.
   ENABLED_PROVIDERS: "openai,anthropic,gemini"

@@ -1,11 +1,3 @@
-export interface SimulationConfig {
-  mode: "live" | "mock" | "chaos";
-  inject_latency_ms: number;
-  inject_status: number | null;
-  inject_malformed_tool_json: boolean;
-  fallback_provider: string | null;
-}
-
 export interface TicketInput {
   ticket_id: string;
   customer_tier: string;
@@ -13,11 +5,9 @@ export interface TicketInput {
 }
 
 export interface RunRequest {
-  task: string;
   provider: string;
   model?: string;
   input: TicketInput;
-  simulation: SimulationConfig;
 }
 
 export interface OutputEnvelope {
@@ -39,21 +29,13 @@ export interface TimingInfo {
   total_ms: number;
 }
 
-export interface SimulationEcho {
-  inject_latency_ms: number;
-  inject_status: number | null;
-  inject_malformed_tool_json: boolean;
-}
-
 export interface RunResult {
   request_id: string;
-  provider_requested: string;
-  provider_used: string;
-  fallback_triggered: boolean;
+  provider: string;
+  model: string;
   output: OutputEnvelope;
   tool_calls: ToolCallRecord[];
   timing: TimingInfo;
-  simulation: SimulationEcho;
   error?: string;
 }
 
@@ -62,10 +44,4 @@ export interface ProviderInfo {
   models: string[];
   default_model: string;
   configured: boolean;
-}
-
-export interface Scenario {
-  id: string;
-  name: string;
-  description: string;
 }

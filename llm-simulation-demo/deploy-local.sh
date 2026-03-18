@@ -8,18 +8,16 @@
 #   ./deploy-local.sh               # deploy (or update) both services
 #   ./deploy-local.sh backend       # redeploy backend only
 #   ./deploy-local.sh frontend      # redeploy frontend only
-#   ./deploy-local.sh open          # port-forward the frontend to localhost:3000
+#   ./deploy-local.sh tunnel        # start minikube tunnel (M-series Mac)
 #
 # Environment overrides:
 #   KUBE_CONTEXT=my-cluster         # target cluster context (default: current)
 #   NAMESPACE=llm-simulation        # target namespace
-#   PORT=3000                       # local port for the 'open' subcommand
 
 set -euo pipefail
 
 KUBE_CONTEXT="${KUBE_CONTEXT:-}"
 NAMESPACE="${NAMESPACE:-llm-simulation}"
-PORT="${PORT:-3000}"
 TARGET="${1:-all}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -31,13 +29,15 @@ fi
 
 CURRENT_CTX="$(${KUBECTL} config current-context 2>/dev/null || echo 'unknown')"
 
-# ── open subcommand ─────────────────────────────────────────────────────────
-if [[ "${TARGET}" == "open" ]]; then
+# ── tunnel subcommand (minikube / M-series Mac) ──────────────────────────────
+if [[ "${TARGET}" == "tunnel" ]]; then
   echo ""
-  echo "=== Port-forwarding frontend → http://localhost:${PORT} ==="
-  echo "  (Ctrl-C to stop)"
+  echo "=== Starting minikube tunnel ==="
+  echo "  This routes LoadBalancer IPs to localhost."
+  echo "  App will be available at http://localhost once the tunnel is up."
+  echo "  (Ctrl-C to stop — may require sudo)"
   echo ""
-  exec ${KUBECTL} port-forward svc/llm-simulation-frontend "${PORT}:80" -n "${NAMESPACE}"
+  exec minikube tunnel
 fi
 
 # ── deploy ──────────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ case "${TARGET}" in
   frontend) rollout frontend ;;
   all)      rollout backend; rollout frontend ;;
   *)
-    echo "ERROR: unknown target '${TARGET}'. Use: all | backend | frontend | open"
+    echo "ERROR: unknown target '${TARGET}'. Use: all | backend | frontend | tunnel"
     exit 1
     ;;
 esac
@@ -75,6 +75,6 @@ esac
 echo ""
 echo "=== Deploy complete ==="
 echo ""
-echo "  NodePort  : http://localhost:30300  (Rancher Desktop / kind)"
-echo "  Port-fwd  : ./deploy-local.sh open  (minikube / any cluster)"
+echo "  Rancher Desktop : http://localhost  (LoadBalancer auto-assigned)"
+echo "  Minikube        : ./deploy-local.sh tunnel  then  http://localhost"
 echo ""

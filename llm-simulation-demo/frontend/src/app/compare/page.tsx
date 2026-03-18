@@ -7,18 +7,6 @@ import type { RunResult } from "@/lib/types";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { ToolCallList } from "@/components/ToolCallList";
 
-function diffClass(a: string | number, b: string | number) {
-  return a !== b
-    ? "rounded px-1 text-xs font-semibold"
-    : "";
-}
-
-function diffStyle(a: string | number, b: string | number) {
-  return a !== b
-    ? { background: "#f59e0b22", color: "#f59e0b", border: "1px solid #f59e0b44" }
-    : {};
-}
-
 function RunColumn({ run }: { run: RunResult }) {
   return (
     <div
@@ -29,61 +17,35 @@ function RunColumn({ run }: { run: RunResult }) {
         {run.request_id}
       </p>
       <div className="space-y-1">
-        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-          Severity
-        </p>
+        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Severity</p>
         <SeverityBadge severity={run.output.severity} />
       </div>
       <div className="space-y-1">
-        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-          Provider
-        </p>
-        <p className="text-sm font-medium">
-          {run.provider_used}
-          {run.fallback_triggered && (
-            <span className="ml-2 text-xs" style={{ color: "#f97316" }}>
-              (fallback)
-            </span>
-          )}
-        </p>
+        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Provider</p>
+        <p className="text-sm font-medium">{run.provider} / {run.model}</p>
       </div>
       <div className="space-y-1">
-        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-          Summary
-        </p>
+        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Summary</p>
         <p className="text-sm leading-relaxed">{run.output.summary}</p>
       </div>
       <div className="space-y-1">
-        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-          Recommended Action
-        </p>
+        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Recommended Action</p>
         <p className="text-sm leading-relaxed">{run.output.recommended_action}</p>
       </div>
       <div className="space-y-1">
-        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-          Tool Calls
-        </p>
+        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Tool Calls</p>
         <ToolCallList tools={run.tool_calls} />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div
-          className="rounded-lg p-3"
-          style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
-        >
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Provider ms
-          </p>
-          <p className="text-xl font-bold font-mono">{run.timing.provider_ms}</p>
-        </div>
-        <div
-          className="rounded-lg p-3"
-          style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
-        >
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Total ms
-          </p>
-          <p className="text-xl font-bold font-mono">{run.timing.total_ms}</p>
-        </div>
+        {[
+          { label: "Provider ms", value: run.timing.provider_ms },
+          { label: "Total ms", value: run.timing.total_ms },
+        ].map(({ label, value }) => (
+          <div key={label} className="rounded-lg p-3" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>{label}</p>
+            <p className="text-xl font-bold font-mono">{value}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -92,11 +54,15 @@ function RunColumn({ run }: { run: RunResult }) {
 function DiffHighlighter({ runA, runB }: { runA: RunResult; runB: RunResult }) {
   const fields: { label: string; a: string | number; b: string | number }[] = [
     { label: "severity", a: runA.output.severity, b: runB.output.severity },
-    { label: "provider used", a: runA.provider_used, b: runB.provider_used },
-    { label: "fallback triggered", a: String(runA.fallback_triggered), b: String(runB.fallback_triggered) },
+    { label: "provider", a: runA.provider, b: runB.provider },
+    { label: "model", a: runA.model, b: runB.model },
     { label: "provider ms", a: runA.timing.provider_ms, b: runB.timing.provider_ms },
     { label: "total ms", a: runA.timing.total_ms, b: runB.timing.total_ms },
-    { label: "tool errors", a: runA.tool_calls.filter((t) => t.status !== "ok").length, b: runB.tool_calls.filter((t) => t.status !== "ok").length },
+    {
+      label: "tool errors",
+      a: runA.tool_calls.filter((t) => t.status !== "ok").length,
+      b: runB.tool_calls.filter((t) => t.status !== "ok").length,
+    },
   ];
   const diffs = fields.filter((f) => f.a !== f.b);
 
@@ -112,10 +78,7 @@ function DiffHighlighter({ runA, runB }: { runA: RunResult; runB: RunResult }) {
   }
 
   return (
-    <div
-      className="rounded-xl p-4 space-y-2"
-      style={{ background: "#f59e0b11", border: "1px solid #f59e0b33" }}
-    >
+    <div className="rounded-xl p-4 space-y-2" style={{ background: "#f59e0b11", border: "1px solid #f59e0b33" }}>
       <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#f59e0b" }}>
         {diffs.length} difference{diffs.length !== 1 ? "s" : ""} detected
       </p>
@@ -133,6 +96,37 @@ function DiffHighlighter({ runA, runB }: { runA: RunResult; runB: RunResult }) {
   );
 }
 
+// Pick the best pair for auto-compare:
+// 1. Same ticket, different providers (most interesting)
+// 2. Different providers, any tickets
+// 3. Just the two most recent runs
+function pickAutoPair(runs: RunResult[]): [string, string] | null {
+  if (runs.length < 2) return null;
+
+  // Extract ticket id from request — we infer it from summary uniqueness isn't reliable,
+  // so we just match on provider differences ordered by recency.
+  // Priority 1: same summary prefix + different provider
+  for (let i = 0; i < runs.length; i++) {
+    for (let j = i + 1; j < runs.length; j++) {
+      const a = runs[i], b = runs[j];
+      const sameTicketHint = a.output.summary.slice(0, 40) === b.output.summary.slice(0, 40);
+      if (sameTicketHint && a.provider !== b.provider) {
+        return [a.request_id, b.request_id];
+      }
+    }
+  }
+  // Priority 2: different providers
+  for (let i = 0; i < runs.length; i++) {
+    for (let j = i + 1; j < runs.length; j++) {
+      if (runs[i].provider !== runs[j].provider) {
+        return [runs[i].request_id, runs[j].request_id];
+      }
+    }
+  }
+  // Fallback: two most recent
+  return [runs[0].request_id, runs[1].request_id];
+}
+
 function CompareContent() {
   const searchParams = useSearchParams();
   const initA = searchParams.get("a") ?? "";
@@ -143,10 +137,11 @@ function CompareContent() {
   const [runB, setRunB] = useState<RunResult | null>(null);
   const [selectedA, setSelectedA] = useState(initA);
   const [selectedB, setSelectedB] = useState(initB);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    listRuns(50).then((d) => setAllRuns(d.runs.slice().reverse())).catch(() => {});
+    listRuns(50)
+      .then((d) => setAllRuns(d.runs.slice().reverse()))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -159,16 +154,34 @@ function CompareContent() {
     getRun(selectedB).then(setRunB).catch(() => setRunB(null));
   }, [selectedB]);
 
+  function handleAutoCompare() {
+    const pair = pickAutoPair(allRuns);
+    if (pair) {
+      setSelectedA(pair[0]);
+      setSelectedB(pair[1]);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Compare Runs</h1>
-        <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-          Select two runs to compare output drift and fallback behavior side by side.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Compare Runs</h1>
+          <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+            Select two runs to compare outputs side by side.
+          </p>
+        </div>
+        <button
+          onClick={handleAutoCompare}
+          disabled={allRuns.length < 2}
+          className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-40"
+          style={{ background: "var(--accent)", color: "white" }}
+          title="Auto-select the most interesting pair to compare"
+        >
+          Auto Compare
+        </button>
       </div>
 
-      {/* Selectors */}
       <div className="grid grid-cols-2 gap-4">
         {(["A", "B"] as const).map((label) => {
           const selected = label === "A" ? selectedA : selectedB;
@@ -185,16 +198,12 @@ function CompareContent() {
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
                 className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                style={{
-                  background: "var(--surface2)",
-                  border: "1px solid var(--border)",
-                  color: "var(--text)",
-                }}
+                style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}
               >
                 <option value="">Select a run…</option>
                 {allRuns.map((r) => (
                   <option key={r.request_id} value={r.request_id}>
-                    [{r.output.severity}] {r.provider_used} — {r.output.summary.slice(0, 60)}
+                    [{r.output.severity}] {r.provider} — {r.output.summary.slice(0, 60)}
                   </option>
                 ))}
               </select>
@@ -203,10 +212,8 @@ function CompareContent() {
         })}
       </div>
 
-      {/* Diff summary */}
       {runA && runB && <DiffHighlighter runA={runA} runB={runB} />}
 
-      {/* Side by side */}
       <div className="flex gap-4 items-start">
         {runA ? (
           <RunColumn run={runA} />

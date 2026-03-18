@@ -8,7 +8,7 @@ import httpx
 import pytest
 
 from app.main import app
-from app.models.request import RunRequest, SimulationConfig, TicketInput
+from app.models.request import RunRequest, TicketInput
 from app.models.result import OutputEnvelope
 from app.models.tool_call import ToolCallRecord
 
@@ -43,7 +43,6 @@ def ticket_input() -> TicketInput:
 @pytest.fixture
 def run_request(ticket_input: TicketInput) -> RunRequest:
     return RunRequest(
-        task="summarize_ticket",
         provider="openai",
         input=ticket_input,
     )

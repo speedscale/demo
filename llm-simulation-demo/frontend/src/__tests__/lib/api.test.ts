@@ -1,4 +1,4 @@
-import { runTask, getProviders, getScenarios, getRun, listRuns } from "@/lib/api";
+import { runTask, getProviders, getRun, listRuns } from "@/lib/api";
 import type { RunRequest } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
@@ -16,26 +16,16 @@ const mockFetch = (body: unknown, status = 200) =>
 
 const GOOD_RESULT = {
   request_id: "req_test",
-  provider_requested: "openai",
-  provider_used: "openai",
-  fallback_triggered: false,
+  provider: "openai",
+  model: "gpt-4o-mini",
   output: { summary: "Test", severity: "low", recommended_action: "None" },
   tool_calls: [],
   timing: { provider_ms: 100, total_ms: 120 },
-  simulation: { inject_latency_ms: 0, inject_status: null, inject_malformed_tool_json: false },
 };
 
 const GOOD_REQUEST: RunRequest = {
-  task: "summarize_ticket",
   provider: "openai",
   input: { ticket_id: "INC-1", customer_tier: "enterprise", transcript: "Test" },
-  simulation: {
-    mode: "live",
-    inject_latency_ms: 0,
-    inject_status: null,
-    inject_malformed_tool_json: false,
-    fallback_provider: null,
-  },
 };
 
 // ---------------------------------------------------------------------------
@@ -110,23 +100,6 @@ describe("getProviders", () => {
   it("throws on non-ok response", async () => {
     global.fetch = mockFetch({}, 503);
     await expect(getProviders()).rejects.toThrow();
-  });
-});
-
-// ---------------------------------------------------------------------------
-// getScenarios
-// ---------------------------------------------------------------------------
-
-describe("getScenarios", () => {
-  afterEach(() => jest.restoreAllMocks());
-
-  it("GETs /api/scenarios and returns scenario list", async () => {
-    const response = {
-      scenarios: [{ id: "baseline-ticket", name: "Baseline", description: "No sim." }],
-    };
-    global.fetch = mockFetch(response);
-    const data = await getScenarios();
-    expect(data.scenarios[0].id).toBe("baseline-ticket");
   });
 });
 

@@ -19,9 +19,9 @@ export default function RunsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Runs</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Run History</h1>
         <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-          All task runs recorded in this session.
+          All ticket analyses from this session.
         </p>
       </div>
 
@@ -33,11 +33,11 @@ export default function RunsPage() {
 
       {!loading && runs.length === 0 && (
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          No runs yet. Go to the{" "}
+          No runs yet.{" "}
           <a href="/" className="underline">
-            demo page
+            Analyze a ticket
           </a>{" "}
-          to run a task.
+          to get started.
         </p>
       )}
 
@@ -57,13 +57,8 @@ export default function RunsPage() {
             </div>
             <div className="flex items-center gap-4 flex-shrink-0">
               <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {run.provider_used}
+                {run.provider}
               </span>
-              {run.fallback_triggered && (
-                <span className="text-xs" style={{ color: "#f97316" }}>
-                  fallback
-                </span>
-              )}
               <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                 {run.timing.total_ms}ms
               </span>
@@ -71,22 +66,14 @@ export default function RunsPage() {
                 <a
                   href={`/runs/${run.request_id}`}
                   className="text-xs px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
-                  style={{
-                    background: "var(--surface2)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text)",
-                  }}
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}
                 >
                   Trace
                 </a>
                 <a
                   href={`/compare?a=${run.request_id}`}
                   className="text-xs px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
-                  style={{
-                    background: "var(--surface2)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text)",
-                  }}
+                  style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}
                 >
                   Compare
                 </a>

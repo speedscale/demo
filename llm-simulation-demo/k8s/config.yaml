@@ -6,3 +6,4 @@ metadata:
 data:
   DEFAULT_PROVIDER: "openai"
   ENABLED_PROVIDERS: "openai,anthropic,gemini,xai"
+  TOOL_BASE_URL: "http://llm-simulation-tools"

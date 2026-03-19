@@ -11,6 +11,9 @@ that can be mocked independently during simulation.
 """
 from __future__ import annotations
 
+import asyncio
+import random
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -355,7 +358,12 @@ async def healthz():
 
 @app.get("/tools/order/{order_id}")
 async def lookup_order(order_id: str):
-    """Look up order/account details by ticket ID or order ID."""
+    """Look up order/account details by ticket ID or order ID.
+
+    Simulates a real database query: 80–220 ms including index scan,
+    customer account join, and order-line hydration.
+    """
+    await asyncio.sleep(random.uniform(0.08, 0.22))
     record = _ORDERS.get(order_id)
     if record:
         return JSONResponse(record)
@@ -374,6 +382,11 @@ async def lookup_order(order_id: str):
 
 @app.get("/tools/policy/{policy_id}")
 async def lookup_policy(policy_id: str):
-    """Look up a company policy document by ID."""
+    """Look up a company policy document by ID.
+
+    Simulates a cache-backed policy fetch: 15–60 ms
+    (cache hit most of the time, occasional cold read).
+    """
+    await asyncio.sleep(random.uniform(0.015, 0.06))
     record = _POLICIES.get(policy_id, _DEFAULT_POLICY)
     return JSONResponse(record)

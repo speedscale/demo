@@ -6,6 +6,7 @@
 #
 # Usage:
 #   ./deploy-local.sh               # deploy (or update) all services
+#   ./deploy-local.sh tools         # redeploy tools-service only
 #   ./deploy-local.sh backend       # redeploy backend only
 #   ./deploy-local.sh frontend      # redeploy frontend only
 #   ./deploy-local.sh nginx         # redeploy nginx only
@@ -48,7 +49,7 @@ echo ""
 echo "  Context   : ${CURRENT_CTX}"
 echo "  Namespace : ${NAMESPACE}"
 echo "  Target    : ${TARGET}"
-echo "  Images    : gcr.io/speedscale-demos/llm-simulation-{backend,frontend}"
+echo "  Images    : gcr.io/speedscale-demos/llm-simulation-{tools,backend,frontend}"
 echo ""
 
 echo "── Applying k8s manifests ──"
@@ -64,12 +65,13 @@ rollout() {
 }
 
 case "${TARGET}" in
+  tools)    rollout tools ;;
   backend)  rollout backend ;;
   frontend) rollout frontend ;;
   nginx)    rollout nginx ;;
-  all)      rollout backend; rollout frontend; rollout nginx ;;
+  all)      rollout tools; rollout backend; rollout frontend; rollout nginx ;;
   *)
-    echo "ERROR: unknown target '${TARGET}'. Use: all | backend | frontend | nginx | tunnel"
+    echo "ERROR: unknown target '${TARGET}'. Use: all | tools | backend | frontend | nginx | tunnel"
     exit 1
     ;;
 esac
@@ -77,7 +79,8 @@ esac
 echo ""
 echo "=== Deploy complete ==="
 echo ""
-echo "  Traffic flows: browser → nginx (LoadBalancer) → frontend → backend → LLM"
+echo "  Traffic flows: browser → nginx → frontend → backend → tools-service
+                                                          └──────────→ LLM API"
 echo ""
 echo "  Rancher Desktop : http://localhost:3000"
 echo "  Minikube        : ./deploy-local.sh tunnel  then  http://localhost:3000"

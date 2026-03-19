@@ -2,11 +2,19 @@
 
 A support ticket triage app built to demonstrate [Speedscale](https://speedscale.com) LLM simulation. The backend runs a 3-step AI pipeline on each ticket (classify → analyze → draft response) and calls out to a separate tools service for order data and policy lookups. You can run any of four LLM providers and compare their outputs side by side.
 
-## The simulation angle
+## When to use simulation
 
-Every run against a real LLM costs money. That's fine in production where you need real responses, and it's fine when you're running evals to measure quality. But most of the time you're not doing either of those things — you're writing pipeline logic, fixing a prompt, running CI, or load testing. Paying API rates for that is wasteful and it slows you down.
+A mid-size support center running Claude Sonnet at 10K tickets/day spends around $180K/year on LLM API calls. Most of that isn't production traffic. It's engineers tweaking prompts, CI running the same tickets on every PR, and load tests that someone runs once and never again because it costs $400 each time.
 
-The demo lets you capture a real run once, then replay that captured traffic at any scale without touching the API again. Load test at 10,000 tickets/hour, your CI runs in seconds, and the cost is zero. The slider on the main page shows what the real API bill would have been.
+| | Use real API |
+|---|---|
+| Production traffic | Yes |
+| Prompt quality evals | Yes |
+| Developing pipeline logic | No |
+| CI / regression tests | No |
+| Load testing | No |
+
+Speedscale records one real run and replays it locally at any volume. The slider on the main page projects what the real bill would be at your ticket volume.
 
 ## How it works
 

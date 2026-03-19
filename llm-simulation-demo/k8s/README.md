@@ -87,45 +87,9 @@ kubectl rollout restart deployment/llm-simulation-backend -n llm-simulation
 Keys that are absent from the Secret are silently skipped; the backend will
 exclude unconfigured providers from `/api/providers`.
 
-## File overview
-
-```
-k8s/
-  namespace.yaml                  # llm-simulation namespace
-  config.yaml                     # ConfigMap — non-sensitive settings
-  api-keys.secret.example.yaml    # Secret template — copy & fill in
-  api-keys.secret.yaml            # Your actual keys — gitignored, never commit
-  backend.yaml                    # Backend Deployment + ClusterIP Service
-  frontend.yaml                   # Frontend Deployment + NodePort Service (+ Ingress stub)
-  kustomization.yaml              # Kustomize root
-  configure-keys.sh               # Helper: create Secret from env vars
-  README.md                       # This file
-```
-
-## Runtime configuration (ConfigMap)
-
-Edit `config.yaml` before deploying to change defaults:
-
-| Key | Default | Description |
-|---|---|---|
-| `DEFAULT_PROVIDER` | `openai` | Provider selected by default in the UI |
-| `ENABLED_PROVIDERS` | `openai,anthropic,gemini` | Comma-separated list shown in the UI |
-
-## Ingress (optional)
-
-The `frontend.yaml` contains a commented-out Ingress resource. Uncomment and
-set `spec.rules[0].host` to expose the demo on a stable hostname:
-
-```bash
-# Requires nginx-ingress or another ingress controller
-kubectl apply -f frontend.yaml
-```
-
 ## Speedscale traffic capture
 
-An nginx reverse proxy (`llm-simulation-nginx`) sits in front of the frontend specifically to enable full traffic capture. Browser traffic is accessed via `kubectl port-forward` to the nginx pod — port-forwarded traffic arrives on the pod's loopback interface (`127.0.0.1`) and is not subject to the CNI bridge SNAT that prevents capture on NodePort/LoadBalancer services.
-
-The only Speedscale annotation required is on the nginx Deployment:
+The Speedscale sidecar annotations required are:
 
 ```yaml
 metadata:
@@ -133,8 +97,6 @@ metadata:
     sidecar.speedscale.com/inject: "true"
     sidecar.speedscale.com/tls-out: "true"
 ```
-
-The frontend and backend get their sidecars injected automatically by the operator (namespace is managed by Speedscale). No additional annotations are needed.
 
 ### Traffic layers captured
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import json
 import os
 import time
 import uuid
@@ -10,18 +12,19 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.request import RunRequest
-from app.models.result import OutputEnvelope, RunResult, TimingInfo
+from app.models.result import LLMStep, OutputEnvelope, RunResult, TimingInfo
 from app.models.tool_call import ToolCallRecord
-from app.providers.base import ProviderError
+from app.providers.base import AdapterResult, ProviderError
 from app.providers.openai_adapter import OpenAIAdapter
 from app.providers.anthropic_adapter import AnthropicAdapter
 from app.providers.gemini_adapter import GeminiAdapter
+from app.providers.xai_adapter import XAIAdapter
 from app.tools import router as tools_router
 
 app = FastAPI(
     title="Ticket Triage API",
-    description="AI-powered support ticket analysis backend.",
-    version="1.3.6",
+    description="AI-powered support ticket analysis backend — 3-step pipeline per ticket.",
+    version="1.3.7",
 )
 
 app.add_middleware(
@@ -34,19 +37,17 @@ app.add_middleware(
 app.include_router(tools_router)
 
 _ADAPTERS: Dict[str, Any] = {
-    "openai": OpenAIAdapter(),
+    "openai":    OpenAIAdapter(),
     "anthropic": AnthropicAdapter(),
-    "gemini": GeminiAdapter(),
+    "gemini":    GeminiAdapter(),
+    "xai":       XAIAdapter(),
 }
 
 _PROVIDER_MODELS: Dict[str, List[str]] = {
-    "openai": ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"],
-    "anthropic": [
-        "claude-haiku-4-5",
-        "claude-sonnet-4-5",
-        "claude-opus-4-5",
-    ],
-    "gemini": ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
+    "openai":    ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"],
+    "anthropic": ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5"],
+    "gemini":    ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
+    "xai":       ["grok-3-mini", "grok-3", "grok-2-1212"],
 }
 
 _run_store: Dict[str, RunResult] = {}
@@ -109,31 +110,40 @@ async def run_task(request: RunRequest) -> RunResult:
         raise HTTPException(status_code=400, detail=f"Unknown provider: {request.provider}")
 
     model_used = request.model or adapter.default_model
-    output: Optional[OutputEnvelope] = None
+
+    # Fetch tool data in parallel before calling the LLM so results can
+    # enrich the analysis prompt.
+    order_tool, policy_tool = await asyncio.gather(
+        _call_tool("lookup_order", f"/tools/order/{request.input.ticket_id}"),
+        _call_tool("lookup_policy", "/tools/policy/return-policy-v2"),
+    )
+    tool_calls = [order_tool, policy_tool]
+
+    # Build a context string from tool results to pass into the LLM prompts.
+    context_parts: list[str] = []
+    if order_tool.status == "ok" and order_tool.result:
+        context_parts.append(f"Order Data: {json.dumps(order_tool.result)}")
+    if policy_tool.status == "ok" and policy_tool.result:
+        context_parts.append(f"Return Policy: {json.dumps(policy_tool.result)}")
+    context = "\n".join(context_parts)
+
+    adapter_result: Optional[AdapterResult] = None
     provider_error: Optional[str] = None
 
     provider_start = time.monotonic()
     try:
-        output = await adapter.run(request)
+        adapter_result = await adapter.run(request, context=context)
     except ProviderError as exc:
         provider_error = str(exc)
     provider_ms = int((time.monotonic() - provider_start) * 1000)
 
-    if output is None:
-        output = OutputEnvelope(
+    if adapter_result is None:
+        fallback_output = OutputEnvelope(
             summary="Unable to process the ticket due to a provider error.",
             severity="high",
             recommended_action="Check the provider API key configuration and retry.",
         )
-
-    tool_calls: List[ToolCallRecord] = []
-    order_tool = await _call_tool(
-        "lookup_order", f"/tools/order/{request.input.ticket_id}"
-    )
-    tool_calls.append(order_tool)
-
-    policy_tool = await _call_tool("lookup_policy", "/tools/policy/return-policy-v2")
-    tool_calls.append(policy_tool)
+        adapter_result = AdapterResult(output=fallback_output)
 
     total_ms = int((time.monotonic() - total_start) * 1000)
 
@@ -141,9 +151,12 @@ async def run_task(request: RunRequest) -> RunResult:
         request_id=request_id,
         provider=request.provider,
         model=model_used,
-        output=output,
+        output=adapter_result.output,
+        steps=adapter_result.steps,
         tool_calls=tool_calls,
         timing=TimingInfo(provider_ms=provider_ms, total_ms=total_ms),
+        total_tokens=adapter_result.total_tokens,
+        cost_usd=adapter_result.cost_usd,
         error=provider_error,
     )
 

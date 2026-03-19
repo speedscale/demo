@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.models.request import RunRequest, TicketInput
-from app.models.result import OutputEnvelope, RunResult, TimingInfo
+from app.models.result import LLMStep, OutputEnvelope, RunResult, TimingInfo
 from app.models.tool_call import ToolCallRecord
 
 
@@ -101,10 +101,16 @@ class TestRunResultSerialization:
             model="gpt-4o-mini",
             output=OutputEnvelope(summary="s", severity="low",
                                   recommended_action="none"),
+            steps=[
+                LLMStep(name="triage", prompt_tokens=100, completion_tokens=50,
+                        cost_usd=0.00006, duration_ms=300),
+            ],
             tool_calls=[
                 ToolCallRecord(name="lookup_order", status="ok", duration_ms=50)
             ],
             timing=TimingInfo(provider_ms=100, total_ms=150),
+            total_tokens=150,
+            cost_usd=0.00006,
         )
         dumped = result.model_dump()
         assert dumped["request_id"] == "req_abc123"
@@ -112,3 +118,7 @@ class TestRunResultSerialization:
         assert dumped["model"] == "gpt-4o-mini"
         assert dumped["tool_calls"][0]["name"] == "lookup_order"
         assert dumped["error"] is None
+        assert dumped["total_tokens"] == 150
+        assert dumped["cost_usd"] == 0.00006
+        assert len(dumped["steps"]) == 1
+        assert dumped["steps"][0]["name"] == "triage"

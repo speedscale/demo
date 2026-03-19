@@ -11,6 +11,7 @@ from app.main import app
 from app.models.request import RunRequest, TicketInput
 from app.models.result import OutputEnvelope
 from app.models.tool_call import ToolCallRecord
+from app.providers.base import AdapterResult
 
 
 # ---------------------------------------------------------------------------
@@ -75,12 +76,13 @@ def mock_tool_error() -> ToolCallRecord:
 
 def make_mock_adapter(name: str, output: OutputEnvelope | None = None,
                       raises: Exception | None = None) -> MagicMock:
-    """Return a mock ProviderAdapter that either returns output or raises."""
+    """Return a mock ProviderAdapter that either returns an AdapterResult or raises."""
     adapter = MagicMock()
     adapter.name = name
     adapter.default_model = f"{name}-default"
     if raises:
         adapter.run = AsyncMock(side_effect=raises)
     else:
-        adapter.run = AsyncMock(return_value=output)
+        result = AdapterResult(output=output) if output else None
+        adapter.run = AsyncMock(return_value=result)
     return adapter

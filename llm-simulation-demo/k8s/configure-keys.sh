@@ -10,6 +10,7 @@
 #   export OPENAI_API_KEY=sk-...
 #   export ANTHROPIC_API_KEY=sk-ant-...
 #   export GEMINI_API_KEY=AIza...
+#   export XAI_API_KEY=xai-...
 #   ./configure-keys.sh
 #
 # Or inline:
@@ -54,8 +55,7 @@ echo "Keys:"
 add_key OPENAI_API_KEY
 add_key ANTHROPIC_API_KEY
 add_key GEMINI_API_KEY
-add_key COHERE_API_KEY
-add_key MISTRAL_API_KEY
+add_key XAI_API_KEY
 
 if [[ ${#LITERALS[@]} -eq 0 ]]; then
   echo ""
@@ -64,6 +64,7 @@ if [[ ${#LITERALS[@]} -eq 0 ]]; then
   echo "  export OPENAI_API_KEY=sk-..."
   echo "  export ANTHROPIC_API_KEY=sk-ant-..."
   echo "  export GEMINI_API_KEY=AIza..."
+  echo "  export XAI_API_KEY=xai-..."
   echo ""
   exit 1
 fi

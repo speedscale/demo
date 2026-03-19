@@ -5,4 +5,4 @@ metadata:
   namespace: llm-simulation
 data:
   DEFAULT_PROVIDER: "openai"
-  ENABLED_PROVIDERS: "openai,anthropic,gemini"
+  ENABLED_PROVIDERS: "openai,anthropic,gemini,xai"

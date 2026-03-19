@@ -1,147 +1,160 @@
-"""Unit tests for provider adapter parse helpers and message builder.
+"""Unit tests for provider adapters.
 
-These tests never make real HTTP requests.  They exercise the private
-_parse_output functions directly and use httpx.MockTransport to simulate
-provider API responses for the full adapter.run() path.
+All HTTP calls are mocked so no real network requests are made.
+Each adapter now makes 3 sequential LLM calls (triage → analysis → response).
 """
 from __future__ import annotations
 
 import json
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
 
 from app.models.request import RunRequest
-from app.models.result import OutputEnvelope
-from app.providers.base import ProviderError, build_user_message
-from app.providers.openai_adapter import OpenAIAdapter, _parse_output as oai_parse
-from app.providers.anthropic_adapter import AnthropicAdapter, _parse_output as ant_parse
-from app.providers.gemini_adapter import GeminiAdapter, _parse_output as gem_parse
+from app.providers.base import (
+    AdapterResult,
+    ProviderError,
+    build_triage_message,
+    _safe_json,
+    calculate_cost,
+)
+from app.providers.openai_adapter import OpenAIAdapter
+from app.providers.anthropic_adapter import AnthropicAdapter
+from app.providers.gemini_adapter import GeminiAdapter
 
 
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
 
-def _make_request(**sim_overrides) -> RunRequest:
+def _make_request() -> RunRequest:
     return RunRequest(
-        task="summarize_ticket",
         provider="openai",
         input={
             "ticket_id": "INC-99",
             "customer_tier": "enterprise",
             "transcript": "App crashes on checkout.",
         },
-        simulation=sim_overrides or {},
     )
 
 
-GOOD_OUTPUT_JSON = json.dumps({
-    "summary": "App crashes on checkout.",
+TRIAGE_JSON = json.dumps({
     "severity": "high",
+    "category": "technical",
+    "urgency_score": 8,
+    "escalation_required": True,
+    "affected_component": "checkout flow",
+    "customer_sentiment": "frustrated",
+})
+
+ANALYSIS_JSON = json.dumps({
+    "root_cause": "Null pointer in checkout controller.",
+    "customer_impact": "All checkout attempts fail.",
+    "affected_systems": ["order-service", "payment-service"],
+    "estimated_resolution_time": "2 hours",
+    "investigation_steps": ["Check logs", "Rollback deploy"],
+    "summary": "App crashes on checkout.",
+})
+
+RESPONSE_JSON = json.dumps({
+    "subject_line": "Re: INC-99 - Checkout Issue",
+    "response_body": "We are investigating your checkout issue.",
     "recommended_action": "Rollback last deploy.",
+    "follow_up_required": True,
+    "internal_notes": "P1 — escalate immediately.",
 })
 
 
 # ---------------------------------------------------------------------------
-# build_user_message
+# base.py helpers
 # ---------------------------------------------------------------------------
 
-class TestBuildUserMessage:
-    def test_contains_all_ticket_fields(self):
+class TestBuildTriageMessage:
+    def test_contains_ticket_fields(self):
         req = _make_request()
-        msg = build_user_message(req)
+        msg = build_triage_message(req)
         assert "INC-99" in msg
         assert "enterprise" in msg
         assert "App crashes on checkout." in msg
 
     def test_format_labels_present(self):
         req = _make_request()
-        msg = build_user_message(req)
+        msg = build_triage_message(req)
         assert "Ticket ID:" in msg
         assert "Customer Tier:" in msg
-        assert "Transcript:" in msg
+
+
+class TestSafeJson:
+    def test_valid_json_returns_dict(self):
+        result = _safe_json('{"key": "value"}', {})
+        assert result == {"key": "value"}
+
+    def test_invalid_json_returns_default(self):
+        result = _safe_json("not json {{", {"fallback": True})
+        assert result == {"fallback": True}
+
+    def test_empty_string_returns_default(self):
+        result = _safe_json("", {})
+        assert result == {}
+
+
+class TestCalculateCost:
+    def test_known_model(self):
+        cost = calculate_cost("gpt-4.1-mini", 1_000_000, 0)
+        assert abs(cost - 0.40) < 0.001
+
+    def test_output_tokens_more_expensive(self):
+        cost_in = calculate_cost("gpt-4.1-mini", 1000, 0)
+        cost_out = calculate_cost("gpt-4.1-mini", 0, 1000)
+        assert cost_out > cost_in
+
+    def test_unknown_model_uses_default(self):
+        cost = calculate_cost("unknown-model-xyz", 1000, 1000)
+        assert cost > 0
 
 
 # ---------------------------------------------------------------------------
-# OpenAI _parse_output
+# OpenAIAdapter — 3 sequential HTTP calls
 # ---------------------------------------------------------------------------
 
-class TestOpenAIParse:
-    def test_valid_json(self):
-        out = oai_parse(GOOD_OUTPUT_JSON)
-        assert isinstance(out, OutputEnvelope)
-        assert out.severity == "high"
-        assert "checkout" in out.summary
-
-    def test_missing_severity_defaults_to_medium(self):
-        raw = json.dumps({"summary": "x", "recommended_action": "y"})
-        out = oai_parse(raw)
-        assert out.severity == "medium"
-
-    def test_invalid_json_raises_provider_error(self):
-        with pytest.raises(ProviderError) as exc_info:
-            oai_parse("not valid json {{")
-        assert exc_info.value.status_code == 502
-
-    def test_empty_string_raises_provider_error(self):
-        with pytest.raises(ProviderError):
-            oai_parse("")
-
-
-# ---------------------------------------------------------------------------
-# Anthropic _parse_output
-# ---------------------------------------------------------------------------
-
-class TestAnthropicParse:
-    def test_valid_json(self):
-        out = ant_parse(GOOD_OUTPUT_JSON)
-        assert out.severity == "high"
-
-    def test_invalid_json_raises_provider_error(self):
-        with pytest.raises(ProviderError) as exc_info:
-            ant_parse("{broken")
-        assert exc_info.value.status_code == 502
-
-
-# ---------------------------------------------------------------------------
-# Gemini _parse_output
-# ---------------------------------------------------------------------------
-
-class TestGeminiParse:
-    def test_valid_json(self):
-        out = gem_parse(GOOD_OUTPUT_JSON)
-        assert out.recommended_action == "Rollback last deploy."
-
-    def test_invalid_json_raises_provider_error(self):
-        with pytest.raises(ProviderError):
-            gem_parse("[]")  # valid JSON but wrong type (list not dict)
-
-
-# ---------------------------------------------------------------------------
-# OpenAIAdapter.run — full path with mocked HTTP
-# ---------------------------------------------------------------------------
-
-def _openai_http_response(content: str, status: int = 200) -> httpx.Response:
-    body = {
-        "choices": [{"message": {"content": content}}]
-    }
-    return httpx.Response(status, json=body)
+def _openai_response(content: str, prompt_tokens: int = 100, completion_tokens: int = 50) -> httpx.Response:
+    return httpx.Response(200, json={
+        "choices": [{"message": {"content": content}}],
+        "usage": {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens},
+    })
 
 
 class TestOpenAIAdapterRun:
-    async def test_happy_path(self, monkeypatch):
+    async def test_happy_path_returns_adapter_result(self, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         adapter = OpenAIAdapter()
+        responses = [
+            _openai_response(TRIAGE_JSON),
+            _openai_response(ANALYSIS_JSON),
+            _openai_response(RESPONSE_JSON),
+        ]
+        call_count = 0
 
         async def mock_post(*args, **kwargs):
-            return _openai_http_response(GOOD_OUTPUT_JSON)
+            nonlocal call_count
+            resp = responses[call_count]
+            call_count += 1
+            return resp
 
         with patch("httpx.AsyncClient.post", new=AsyncMock(side_effect=mock_post)):
             result = await adapter.run(_make_request())
 
-        assert result.severity == "high"
+        assert isinstance(result, AdapterResult)
+        assert result.output.severity == "high"
+        assert result.output.summary == "App crashes on checkout."
+        assert result.output.recommended_action == "Rollback last deploy."
+        assert len(result.steps) == 3
+        assert result.steps[0].name == "triage"
+        assert result.steps[1].name == "analysis"
+        assert result.steps[2].name == "response"
+        assert result.total_tokens > 0
+        assert result.cost_usd > 0
 
     async def test_missing_api_key_raises_503(self, monkeypatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -176,26 +189,39 @@ class TestOpenAIAdapterRun:
 
 
 # ---------------------------------------------------------------------------
-# AnthropicAdapter.run — full path with mocked HTTP
+# AnthropicAdapter — 3 sequential HTTP calls
 # ---------------------------------------------------------------------------
 
-def _anthropic_http_response(content: str, status: int = 200) -> httpx.Response:
-    body = {"content": [{"text": content}]}
-    return httpx.Response(status, json=body)
+def _anthropic_response(content: str, input_tokens: int = 100, output_tokens: int = 50) -> httpx.Response:
+    return httpx.Response(200, json={
+        "content": [{"text": content}],
+        "usage": {"input_tokens": input_tokens, "output_tokens": output_tokens},
+    })
 
 
 class TestAnthropicAdapterRun:
-    async def test_happy_path(self, monkeypatch):
+    async def test_happy_path_returns_adapter_result(self, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
         adapter = AnthropicAdapter()
+        responses = [
+            _anthropic_response(TRIAGE_JSON),
+            _anthropic_response(ANALYSIS_JSON),
+            _anthropic_response(RESPONSE_JSON),
+        ]
+        call_count = 0
 
         async def mock_post(*args, **kwargs):
-            return _anthropic_http_response(GOOD_OUTPUT_JSON)
+            nonlocal call_count
+            resp = responses[call_count]
+            call_count += 1
+            return resp
 
         with patch("httpx.AsyncClient.post", new=AsyncMock(side_effect=mock_post)):
             result = await adapter.run(_make_request())
 
-        assert result.severity == "high"
+        assert isinstance(result, AdapterResult)
+        assert result.output.severity == "high"
+        assert len(result.steps) == 3
 
     async def test_missing_api_key_raises_503(self, monkeypatch):
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
@@ -218,26 +244,42 @@ class TestAnthropicAdapterRun:
 
 
 # ---------------------------------------------------------------------------
-# GeminiAdapter.run — full path with mocked HTTP
+# GeminiAdapter — 3 sequential HTTP calls
 # ---------------------------------------------------------------------------
 
-def _gemini_http_response(content: str, status: int = 200) -> httpx.Response:
-    body = {"candidates": [{"content": {"parts": [{"text": content}]}}]}
-    return httpx.Response(status, json=body)
+def _gemini_response(content: str, prompt_tokens: int = 100, candidates_tokens: int = 50) -> httpx.Response:
+    return httpx.Response(200, json={
+        "candidates": [{"content": {"parts": [{"text": content}]}}],
+        "usageMetadata": {
+            "promptTokenCount": prompt_tokens,
+            "candidatesTokenCount": candidates_tokens,
+        },
+    })
 
 
 class TestGeminiAdapterRun:
-    async def test_happy_path(self, monkeypatch):
+    async def test_happy_path_returns_adapter_result(self, monkeypatch):
         monkeypatch.setenv("GEMINI_API_KEY", "AIza-test")
         adapter = GeminiAdapter()
+        responses = [
+            _gemini_response(TRIAGE_JSON),
+            _gemini_response(ANALYSIS_JSON),
+            _gemini_response(RESPONSE_JSON),
+        ]
+        call_count = 0
 
         async def mock_post(*args, **kwargs):
-            return _gemini_http_response(GOOD_OUTPUT_JSON)
+            nonlocal call_count
+            resp = responses[call_count]
+            call_count += 1
+            return resp
 
         with patch("httpx.AsyncClient.post", new=AsyncMock(side_effect=mock_post)):
             result = await adapter.run(_make_request())
 
-        assert result.severity == "high"
+        assert isinstance(result, AdapterResult)
+        assert result.output.severity == "high"
+        assert len(result.steps) == 3
 
     async def test_missing_api_key_raises_503(self, monkeypatch):
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)

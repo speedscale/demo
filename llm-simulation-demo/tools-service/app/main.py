@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 app = FastAPI(
     title="Tools Service",
     description="Order and policy lookup microservice for the ticket triage demo.",
-    version="1.3.7",
+    version="1.3.8",
 )
 
 app.add_middleware(

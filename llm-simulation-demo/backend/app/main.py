@@ -44,7 +44,7 @@ _PROVIDER_MODELS: Dict[str, List[str]] = {
     "openai":    ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"],
     "anthropic": ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5"],
     "gemini":    ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
-    "xai":       ["grok-3-mini", "grok-3", "grok-2-1212"],
+    "xai":       ["grok-3", "grok-3-mini", "grok-2-1212"],
 }
 
 _run_store: Dict[str, RunResult] = {}

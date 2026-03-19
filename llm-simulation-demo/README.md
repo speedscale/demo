@@ -2,7 +2,25 @@
 
 AI-powered customer support triage that runs a multi-step LLM pipeline across
 multiple providers at scale — and shows how [Speedscale](https://speedscale.com)
-simulation eliminates API costs during testing.
+simulation eliminates API costs during testing and load validation.
+
+## When to pay for LLM tokens — and when not to
+
+Every call to an LLM API costs money. At support-center scale those costs
+compound fast:
+
+| Scenario | Pay real tokens? | Why |
+|---|---|---|
+| **Production** — live customer tickets | ✅ Yes | Real customers, real responses required |
+| **Prompt evals** — measuring output quality changes | ✅ Yes | You need real model output to evaluate |
+| **Development** — iterating on pipeline logic, prompt wording | ❌ No | You're testing code paths, not LLM quality |
+| **Functional testing** — CI, regression, integration tests | ❌ No | Deterministic replays are faster and cheaper |
+| **Load testing** — validating the pipeline handles 10K tickets/hour | ❌ No | Costs hundreds of dollars per run; blocks scale testing |
+
+**The Speedscale approach:** record one real run (paying for tokens once to capture
+authentic LLM responses), then replay that captured traffic at any volume — 1 ticket
+or 1,000,000 — without touching the API again. Your pipeline gets realistic responses,
+your costs stay at zero, and your load tests can run as often as needed.
 
 ## Architecture
 
@@ -59,7 +77,7 @@ Each ticket goes through a **3-step LLM pipeline**:
 | OpenAI | `gpt-4.1-mini` | `OPENAI_API_KEY` |
 | Anthropic | `claude-haiku-4-5` | `ANTHROPIC_API_KEY` |
 | Google Gemini | `gemini-flash-latest` | `GEMINI_API_KEY` |
-| xAI / Grok | `grok-3-mini` | `XAI_API_KEY` |
+| xAI / Grok | `grok-3` | `XAI_API_KEY` |
 
 Any combination of keys works — providers without a key are skipped in batch runs.
 

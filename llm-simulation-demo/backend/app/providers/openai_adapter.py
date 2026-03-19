@@ -109,6 +109,7 @@ class OpenAIAdapter:
             ],
             "response_format": {"type": "json_object"},
             "temperature": 0.2,
+            "max_tokens": 2048,
         }
         t0 = time.monotonic()
         async with httpx.AsyncClient(timeout=60.0) as client:

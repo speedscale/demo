@@ -11,121 +11,121 @@ const SAMPLE_TICKETS = [
     id: "INC-4201",
     tier: "enterprise",
     transcript:
-      "Customer cannot complete checkout after an address update triggered a tax recalculation error. They have been unable to place orders for 6 hours. This is blocking $47,000 in pending orders for their Q4 inventory restock. They report seeing a 500 error on the /checkout/confirm endpoint. Affects all 12 users in their organization.",
+      "[Customer — Initial report, 09:14 UTC]\nWe cannot complete checkout since this morning. Every attempt hits a 500 error on /checkout/confirm after we updated our shipping address. This is blocking $47,000 in Q4 inventory restock orders across all 12 users in our org.\n\n[L1 Agent — 09:31 UTC]\nThank you for reaching out. Can you confirm when the address change was made and whether this affects all product types or only specific SKUs?\n\n[Customer — 09:45 UTC]\nAddress was updated yesterday at ~18:00 UTC. Affects every SKU, every user. Error appears after the tax recalculation step. Here's the stack trace from our browser console: TypeError: Cannot read property 'total' of undefined at checkout.js:441. We've had no ability to place orders for 6 hours now. Q4 campaign launches tomorrow.",
   },
   {
     id: "INC-4202",
     tier: "standard",
     transcript:
-      "Payment declined on every retry since the last deploy went out at 14:00 UTC. Customer tried Visa, Mastercard, and PayPal — all fail with 'payment processor unavailable'. No error message shown to the customer. Started exactly at 14:02 UTC based on their logs.",
+      "[Customer — Initial report, 14:18 UTC]\nAll payment methods are being declined since about 14:02 UTC today. We tried Visa, Mastercard, and PayPal. All fail with the message 'payment processor unavailable' but no further detail.\n\n[L1 Agent — 14:35 UTC]\nWe see the deploy went out at 14:00 UTC today. Are you seeing this for all customers or just specific accounts?\n\n[Customer — 14:41 UTC]\nAll customers, all payment methods. We've had zero successful transactions in the past 40 minutes. Our own logs show the payment-service returning 503 starting at exactly 14:02. We process roughly $8,000/hour so this is significant lost revenue. The error message shown to customers gives them no actionable information, which is making them think their cards are the problem.",
   },
   {
     id: "INC-4203",
     tier: "vip",
     transcript:
-      "Order tracking page shows no data for any orders placed in the last 48 hours. The customer manages logistics for 200+ daily orders and their warehouse team is completely blind. They are considering reverting to manual tracking which would cost them 8 staff hours per day. Need immediate resolution.",
+      "[Customer — Initial report, 07:22 UTC]\nOrder tracking page is blank for all orders placed in the last 48 hours. Our warehouse team manages 200+ shipments daily and is completely blind right now.\n\n[L1 Agent — 07:38 UTC]\nSorry for the disruption. Can you confirm whether this is the web portal, mobile app, or both? And are older orders (pre-48h) showing correctly?\n\n[Customer — 07:52 UTC]\nBoth web and mobile. Orders older than 48 hours show fine. We've confirmed with three different carrier integrations (FedEx, UPS, DHL) and none have changed on their end. We're now considering reverting to manual tracking spreadsheets which will consume 8 staff hours per day. We have a major retailer client who receives automated tracking updates from us — if they notice the delay we risk losing a $400K annual contract. This is our second major outage this quarter.",
   },
   {
     id: "INC-4204",
     tier: "standard",
     transcript:
-      "Subscription renewal charged twice this billing cycle. Customer shows two identical charges of $299 on their credit card statement dated March 1st at 03:14 and 03:16 UTC. They want a refund for the duplicate charge and assurance this won't happen again. Very frustrated.",
+      "[Customer — Initial report, 08:05 UTC]\nMy credit card was charged twice for my March subscription renewal — two identical charges of $299 on March 1st at 03:14 and 03:16 UTC.\n\n[L1 Agent — 08:20 UTC]\nWe're sorry to hear that. I can see two transactions in our system. Can you share your bank statement reference numbers so we can cross-reference with our payment processor?\n\n[Customer — 08:34 UTC]\nBank references: TXN-884421 and TXN-884423. Both show as posted. My bank says both already cleared so a standard decline/retry scenario doesn't apply here — these were two separate successful charges 2 minutes apart. I've been a customer for 3 years and this is the first billing issue. I want the duplicate refunded and a written explanation of what happened so I can verify my other charges weren't affected. If this isn't resolved today I'll dispute both charges.",
   },
   {
     id: "INC-4205",
     tier: "enterprise",
     transcript:
-      "App crashes immediately on iOS 17.4 when attempting to upload a profile photo larger than 2MB. Reproducible 100% of the time. Works fine on Android. The crash happens in the image compression library. This is blocking our entire mobile field team from updating their profiles before an important client presentation tomorrow.",
+      "[Customer — Initial report, 11:30 UTC]\nOur iOS app crashes immediately when field technicians try to upload profile photos larger than 2MB on iOS 17.4. 100% reproducible. Android works fine.\n\n[L1 Agent — 11:48 UTC]\nThank you for the details. Have you seen any crash logs or error codes? And when did this start — after an OS update or app update?\n\n[Customer — 12:02 UTC]\nStarted after iOS updated to 17.4 last week. Crash log shows: SIGSEGV in libvips image compression module at address 0x00000001042d8f40. We have 47 field technicians who cannot update their profiles, which is required before client site visits per our company policy. We have a major client presentation tomorrow at 09:00 UTC where all reps must have current profile photos visible in the app. If this isn't resolved by end of day today we're escalating to your account VP. We've already had to postpone two site visits today.",
   },
   {
     id: "INC-4206",
     tier: "vip",
     transcript:
-      "Our API integration has been returning HTTP 503 errors for the past 3 hours on all endpoints. We are a real-time inventory management system and this outage is causing our downstream systems to accumulate a backlog of 15,000 unprocessed events. Every minute of downtime costs us approximately $200 in SLA penalties to our own customers.",
+      "[Customer — Initial report, 15:03 UTC]\nAll API endpoints returning HTTP 503 for the past 3 hours. We're a real-time inventory management system — our downstream clients are accumulating unprocessed events.\n\n[L1 Agent — 15:19 UTC]\nWe're investigating. Can you provide your API client ID and example request IDs that are failing?\n\n[Customer — 15:27 UTC]\nClient ID: api_8841-vipenterprise. Sample failing request IDs: req_4481992, req_4482103, req_4482215. Backlog is now at 15,000 unprocessed events and growing at ~90/minute. Our SLA with our own customers requires < 5 minute event processing time. We're already 3 hours in violation. Each minute of delay costs approximately $200 in SLA penalties we owe downstream. We've already paid out $36,000 in penalties today. We need an incident commander assigned to this immediately and an ETA within 15 minutes or our CTO is calling your CEO.",
   },
   {
     id: "INC-4207",
     tier: "enterprise",
     transcript:
-      "Bulk order import has been stuck at 0% processing for 6 hours. We uploaded a CSV with 8,500 orders for our holiday campaign. The UI shows the job is queued but no progress. This is our biggest sales event of the year and orders are not being processed. We cannot contact customers with order confirmations.",
+      "[Customer — Initial report, 08:47 UTC]\nBulk order import stuck at 0% for 6 hours. Uploaded 8,500-row CSV for our holiday campaign at 02:30 UTC. Job ID: IMPORT-882941.\n\n[L1 Agent — 09:05 UTC]\nWe can see job IMPORT-882941 in a 'queued' state. Can you confirm the file format and whether you've used bulk import successfully before?\n\n[Customer — 09:18 UTC]\nSame CSV template we've used for 2 years. Last successful import was November 12th. This is our biggest campaign of the year — orders were supposed to start processing at 06:00 UTC. Customers are now receiving no order confirmation emails, which is generating inbound customer service tickets for us. We have a promotional email going out at noon today to 45,000 subscribers about this campaign. If orders aren't processing by then we'll have to cancel the promotion entirely and lose the marketing spend. We need this escalated immediately.",
   },
   {
     id: "INC-4208",
     tier: "standard",
     transcript:
-      "Password reset emails are not arriving. Tested with 5 different email addresses across Gmail, Outlook, and Yahoo. Checked spam folders. No emails received. This has been happening for at least 2 days. Multiple new customers cannot access their accounts, causing us to lose signups.",
+      "[Customer — Initial report, 10:11 UTC]\nPassword reset emails not arriving. Tested with 5 addresses — Gmail, Outlook, Yahoo. Checked spam. Nothing.\n\n[L1 Agent — 10:28 UTC]\nWe're checking our email delivery logs. Can you confirm the account email addresses and approximate times you requested resets?\n\n[Customer — 10:44 UTC]\nAddresses: test1@gmail.com, test2@outlook.com, test3@yahoo.com, and two work domains. Reset requests at 09:50, 10:05, 10:15, 10:22, 10:40 UTC — all today. This has been ongoing for at least 2 days based on customer complaints we've received. We launched a new product last week and have ~200 new signups who cannot access their accounts. Our NPS survey is already showing negative comments about onboarding. We're losing customers before they even complete setup.",
   },
   {
     id: "INC-4209",
     tier: "vip",
     transcript:
-      "Inventory sync has a 45-minute lag causing significant overselling. We have already oversold 340 units of a limited-edition product that we only have 200 units of. Customers are placing orders for items we cannot fulfill. We need the sync frequency increased to under 5 minutes or we face chargebacks and reputation damage.",
+      "[Customer — Initial report, 13:30 UTC]\nInventory sync is showing a 45-minute lag. We've already oversold 340 units of a limited-edition SKU (product ID: SKU-LMTD-2891) that we only have 200 units of.\n\n[L1 Agent — 13:45 UTC]\nWe're looking into the sync delay. Can you confirm your current sync configuration and when this lag started?\n\n[Customer — 14:02 UTC]\nSync was configured for 15-minute intervals. Lag started around 11:00 UTC today. The 340 oversold orders are from real customers — we can't just cancel them without serious brand damage. We need: (1) sync interval reduced to under 5 minutes immediately, (2) an automated inventory lock to prevent further overselling while we assess, and (3) a root cause explanation we can share with affected customers. We're calculating $28,000 in potential chargebacks if we can't fulfill. This is the third sync issue in 6 months. We're evaluating alternative platforms.",
   },
   {
     id: "INC-4210",
     tier: "enterprise",
     transcript:
-      "GDPR right-to-erasure request submitted 15 days ago has not been processed. Under GDPR Article 17 we have a 30-day window but our legal team requires us to act within 15 days. The customer's data is still visible in the admin panel. We face a regulatory audit next week and need this resolved urgently.",
+      "[Customer — Initial report, 16:20 UTC]\nGDPR Article 17 erasure request submitted 15 days ago has not been processed. Customer data still visible in admin panel. User ID: USR-449821.\n\n[L1 Agent — 16:35 UTC]\nWe take GDPR compliance very seriously. Can you provide the original erasure request reference number?\n\n[Customer — 16:48 UTC]\nRequest reference: GDPR-2024-1142. Submitted October 15th. Our DPO requires erasure within 15 days to maintain compliance margin before the 30-day legal deadline. We have a regulatory audit scheduled next Monday and this open erasure request will be a direct finding. If the audit results in an enforcement action due to platform non-compliance, we will be seeking damages. Additionally, the data subject is a former employee with access to sensitive financial records — every additional day of exposure increases our risk. We need confirmation of erasure within 4 hours or our legal team will file a formal complaint with the ICO.",
   },
   {
     id: "INC-4211",
     tier: "standard",
     transcript:
-      "Product page images are broken and showing alt text in Chrome 123 on Windows. Works fine in Firefox and Safari. Started about 3 days ago. Affecting our storefront — potential customers are seeing a broken shopping experience. Images load fine on mobile Chrome.",
+      "[Customer — Initial report, 09:33 UTC]\nProduct images broken on our storefront in Chrome 123 on Windows. Showing alt text only. Firefox and Safari fine.\n\n[L1 Agent — 09:50 UTC]\nThank you for the report. Is this affecting all product images or specific categories? Any recent changes to your store configuration?\n\n[Customer — 10:04 UTC]\nAll product images, all categories, no config changes. Started approximately 3 days ago. We confirmed it on multiple Chrome 123 Windows machines but Chrome on macOS is also fine. Mobile Chrome (Android and iOS) shows images correctly — only desktop Windows Chrome is affected. We've had a 23% drop in conversion rate on Windows devices this week, which correlates exactly with when this started. We're currently running a paid ad campaign targeting Windows users, so we're paying for traffic that sees a broken storefront.",
   },
   {
     id: "INC-4212",
     tier: "enterprise",
     transcript:
-      "Monthly invoice for March shows $12,400 in usage charges that we don't recognize. Line items reference API calls to endpoints we never use. Our normal monthly bill is around $3,200. We need an itemized breakdown and a credit for any incorrect charges before our accounts payable deadline on Friday.",
+      "[Customer — Initial report, 11:15 UTC]\nMarch invoice shows $12,400 in charges. Our normal bill is ~$3,200. The extra $9,200 appears as API overage for endpoints we don't use.\n\n[L1 Agent — 11:32 UTC]\nWe're pulling up your invoice details. Can you specify which line items look incorrect and your account ID?\n\n[Customer — 11:50 UTC]\nAccount: ENT-88421. The unknown line items are: 'Advanced Analytics API — 2.8M calls: $4,200', 'Real-time Sync API — 1.2M calls: $3,100', and 'Custom Webhook Premium — $1,900'. We don't use any of these features — we're on the Standard Enterprise plan which doesn't include them. This looks like either a billing system error or our account was used for API calls we didn't make, which would be a security concern. Our accounts payable deadline is this Friday. If this isn't resolved with a corrected invoice by Thursday, our CFO will instruct us to withhold payment entirely and engage our legal team.",
   },
   {
     id: "INC-4213",
     tier: "vip",
     transcript:
-      "SSO login via SAML is completely broken for all 500 users in our organization since a certificate rotation this morning. Nobody can log in. Our entire team is locked out of the platform during our busiest operational period — end-of-month reporting. We have a board presentation in 4 hours that requires access to the platform.",
+      "[Customer — Initial report, 08:02 UTC]\nSAML SSO broken for all 500 users since 07:15 UTC when we rotated our IdP certificate. Error: 'SAML assertion signature validation failed'.\n\n[L1 Agent — 08:14 UTC]\nWe see the certificate rotation in our logs. Our system may be caching the old certificate fingerprint. Can you provide the new certificate thumbprint?\n\n[Customer — 08:22 UTC]\nNew cert thumbprint: 4A:B2:C8:D1:E5:F3:... (full fingerprint in attached file). Entire company is locked out — 500 users cannot log in. We're in end-of-month reporting period which is our most critical operational window. Finance team cannot access billing data, operations team cannot see dashboards, and we have a board presentation in 4 hours that requires live platform data. We previously reported a similar issue 3 months ago (ticket INC-3891) that took 6 hours to resolve. We cannot have a repeat. We need an L2 engineer with SAML authority assigned NOW and a 15-minute status update cadence.",
   },
   {
     id: "INC-4214",
     tier: "standard",
     transcript:
-      "Refund was processed 8 days ago (refund ID: REF-88921) but credit has not appeared on the customer's card. Bank confirms no pending credit. Amount is $156.00. Customer is threatening a chargeback which will cost us the $15 fee plus damage our merchant rating.",
+      "[Customer — Initial report, 14:05 UTC]\nRefund processed 8 days ago (refund ID: REF-88921, amount $156.00) has not appeared on my card.\n\n[L1 Agent — 14:22 UTC]\nI can confirm refund REF-88921 was processed on our end on the 8th. Processing times vary by bank — typically 5-10 business days.\n\n[Customer — 14:39 UTC]\nI understand typical timelines, but 8 business days have passed. I called my bank (Chase) directly — they confirmed there is no pending credit associated with my account from your company and no record of the refund being initiated by your payment processor. This means either the refund was processed to a different card on file, the refund failed silently on your end, or there's a processor routing error. If I don't see the credit by tomorrow I will file a chargeback, which I understand costs you the transaction fee plus a $15 dispute fee and affects your merchant rating. I'd rather avoid that — can you provide the Stripe refund ID so I can have my bank trace it specifically?",
   },
   {
     id: "INC-4215",
     tier: "enterprise",
     transcript:
-      "Webhook deliveries to our endpoint have been failing silently for 4 days. We only discovered this when we noticed our order management system was out of sync. We missed 2,800 order events. The webhook logs in the dashboard show all deliveries as 'success' but our server logs show no incoming requests. This is a critical data integrity issue.",
+      "[Customer — Initial report, 10:55 UTC]\nWebhook deliveries showing as 'success' in your dashboard but our server is receiving nothing. We've missed 2,800 events over 4 days.\n\n[L1 Agent — 11:12 UTC]\nThat's a serious discrepancy. Can you share your webhook endpoint URL and confirm your server is accessible? Any recent firewall or infrastructure changes?\n\n[Customer — 11:28 UTC]\nEndpoint: https://api.internal.ourplatform.com/webhooks/orders (accessible — verified with external monitoring). No infrastructure changes. Our WAF logs show zero requests from your IP ranges in the past 4 days, but your dashboard claims 2,800 successful deliveries with 200 response codes. This is impossible — if we returned 200, we processed the event. Something in your integration-hub is fabricating success responses. The 2,800 missed events include 840 order completions, 1,200 order updates, and 760 cancellations. Our warehouse OMS is now out of sync with your platform and we don't know which orders to fulfill. This is a data integrity crisis that requires a full event replay and a post-incident explanation of how your system reported false successes.",
   },
   {
     id: "INC-4216",
     tier: "standard",
     transcript:
-      "Mobile app is stuck on the loading screen for all users on Android 14 devices. Force-closing and reinstalling doesn't help. Started after the app update pushed yesterday. Approximately 30% of our mobile users are on Android 14. They are using competitors' apps in the meantime.",
+      "[Customer — Initial report, 09:18 UTC]\nOur mobile app is stuck on loading screen for Android 14 users since the update we pushed yesterday.\n\n[L1 Agent — 09:35 UTC]\nThank you for the report. What version of the app was updated, and are all Android 14 users affected or just some?\n\n[Customer — 09:52 UTC]\nUpdated from v3.0.8 to v3.1.0 yesterday at 16:00 UTC. 100% of Android 14 users affected (approximately 30% of our mobile base — ~4,200 users). Android 13 and below work fine. Force-close, reinstall, cache clear — nothing helps. We've already received 180 support tickets from our own users and our app store rating dropped from 4.3 to 3.9 overnight due to 1-star reviews. We've tried rolling back to v3.0.8 for new downloads but users who updated are stuck. Is there a known compatibility issue with Android 14 in your SDK? We need a hotfix or a rollback mechanism for existing installs.",
   },
   {
     id: "INC-4217",
     tier: "vip",
     transcript:
-      "Our custom domain SSL certificate expired 2 hours ago causing a complete storefront outage. Browsers are showing 'connection not secure' warnings and customers cannot proceed. We are losing approximately $3,000 per hour in revenue. We contacted support 3 weeks ago about the upcoming expiration but received no response.",
+      "[Customer — Initial report, 11:40 UTC]\nOur custom domain SSL cert expired 2 hours ago. Full storefront outage — browsers showing 'connection not secure'. Revenue loss ~$3,000/hour.\n\n[L1 Agent — 11:55 UTC]\nWe're treating this as a P1. Can you confirm the domain and your account ID so we can initiate emergency reissue?\n\n[Customer — 12:03 UTC]\nDomain: store.brightwave-retail.com. Account: VIP-44182. We reported the upcoming expiration 3 weeks ago via ticket INC-4089 and were told it would be handled automatically. That ticket was marked resolved without any action. We're now 2 hours into a complete outage during peak shopping hours. Lost revenue is approximately $6,000 so far. Our PR team is already seeing social media posts from customers about the 'broken website'. We want: (1) immediate certificate reissue, (2) explanation of why auto-renewal failed, (3) written post-incident report, and (4) SLA credit for the outage duration. If this isn't resolved in the next 30 minutes we're escalating to your CTO.",
   },
   {
     id: "INC-4218",
     tier: "enterprise",
     transcript:
-      "Automated weekly reports stopped generating as of Monday. Our executive team relies on these for Monday morning review meetings. The reports run at 06:00 UTC via scheduled job. No error emails were sent. The reporting dashboard shows the last successful run as Sunday. This has now missed 2 scheduled runs.",
+      "[Customer — Initial report, 09:00 UTC]\nAutomated weekly reports failed to run Monday at 06:00 UTC. Job ID: RPT-WEEKLY-4421. Second consecutive missed run.\n\n[L1 Agent — 09:18 UTC]\nWe can see the job in our system. No error was logged, which is unusual. Have you made any changes to report configuration or recipients recently?\n\n[Customer — 09:35 UTC]\nNo configuration changes. Last successful run was Sunday November 10th. This report goes to our C-suite every Monday morning as part of their standing review meeting — it includes revenue, churn, and operational KPIs. The Monday meeting had to be postponed both weeks due to missing data, which reflects poorly on our operations team. We've now manually compiled the data twice, consuming 4 hours of analyst time each time. Additionally, we suspect the root cause may be related to an uptick in data volume — we crossed 50M records last month. If so, we need the report job split or the worker allocated more resources before next Monday.",
   },
   {
     id: "INC-4219",
     tier: "standard",
     transcript:
-      "Two-factor authentication setup keeps looping back to the setup screen after scanning the QR code with Google Authenticator. The verification code appears to be accepted (no error shown) but the account shows 2FA as 'not configured'. Customer has tried 3 different authenticator apps. Cannot enable 2FA which is required for their company security policy.",
+      "[Customer — Initial report, 13:45 UTC]\n2FA setup looping — scanned QR code, entered verification code, app accepted it but account still shows 2FA as 'not configured'.\n\n[L1 Agent — 14:02 UTC]\nThis sounds like the verification isn't completing the enrollment flow. Which authenticator app are you using, and are you on web or mobile?\n\n[Customer — 14:18 UTC]\nTried Google Authenticator, Authy, and Microsoft Authenticator — same result on all three. Tried both web browser (Chrome, Firefox) and mobile app. The QR code scans fine, the 6-digit code is accepted (no error message), but then redirects back to the setup screen as if no action was taken. This has been broken for at least a week — I know because my company's new security policy requires 2FA enabled by end of this week and I'm one of 15 employees trying to set it up. If we can't enable 2FA, my company's security audit next week will flag us. I need this working today.",
   },
   {
     id: "INC-4220",
     tier: "vip",
     transcript:
-      "Data export for compliance audit returns a corrupted CSV file. We requested a full export of all transaction records for the past 24 months (approximately 180,000 rows). The downloaded file is 2KB instead of the expected ~50MB. The file contains only headers and 3 rows. Our auditors arrive on Thursday and require this data.",
+      "[Customer — Initial report, 08:30 UTC]\nData export returned a 2KB corrupted CSV instead of the expected ~50MB. Request ID: EXP-884120. Contains only headers and 3 rows out of ~180,000.\n\n[L1 Agent — 08:47 UTC]\nWe're investigating. This may be related to a timeout on large exports. Can you confirm the date range and exact filters you applied?\n\n[Customer — 09:05 UTC]\nFull transaction history, January 2022 to December 2023, no filters. Request ID EXP-884120. We've tried 4 times with the same result. Our external auditors from Deloitte arrive on Thursday for our SOC 2 Type II audit — this transaction data is the primary evidence package. If we cannot produce it, the audit will be paused and rescheduled, at a cost of $45,000 in auditor fees and a 3-month delay to our compliance certification. This certification is required to close a $2M enterprise contract we're finalizing. We need the complete dataset by Wednesday 17:00 UTC at the latest. Please treat this as a business-critical emergency.",
   },
 ];
 

@@ -1,209 +1,137 @@
-# LLM Simulation Demo
+# Support Triage Demo
 
-A self-contained demo app that shows why AI systems need more than prompt evals.
-It lets you send support tickets through OpenAI, Anthropic, or Google Gemini and inject
-real failure modes — provider timeouts, rate limits, schema drift, and tool failures —
-to show what runtime validation for LLM systems actually looks like.
+AI-powered customer support triage that runs a multi-step LLM pipeline across
+multiple providers at scale — and shows how [Speedscale](https://speedscale.com)
+simulation eliminates API costs during testing.
 
-Built as a companion to the Speedscale blog post on LLM simulation.
+## Architecture
 
-## What it does
+```
+                        ┌─────────────────────────────────────────────┐
+                        │             Kubernetes Cluster               │
+                        │                                              │
+  Browser               │  ┌─────────┐    ┌──────────┐               │
+    │                   │  │  nginx  │    │ frontend │               │
+    │ :3000             │  │ (proxy) │───▶│ Next.js  │               │
+    └──────────────────▶│  │         │    │          │               │
+                        │  └─────────┘    └────┬─────┘               │
+                        │   LoadBalancer        │ /api/*              │
+                        │                       ▼                     │
+                        │                ┌──────────┐                 │
+                        │                │ backend  │                 │
+                        │                │ FastAPI  │                 │
+                        │                └──┬───┬───┘                 │
+                        │          ┌────────┘   └─────────┐           │
+                        │          ▼                       ▼           │
+                        │  ┌───────────────┐    ┌──────────────────┐  │
+                        │  │ tools-service │    │   LLM Providers  │  │
+                        │  │  order lookup │    │                  │  │
+                        │  │ policy lookup │    │  OpenAI  GPT-4   │  │
+                        │  └───────────────┘    │  Anthropic Claude │  │
+                        │                       │  Google Gemini   │  │
+                        │                       │  xAI / Grok      │  │
+                        │                       └──────────────────┘  │
+                        └─────────────────────────────────────────────┘
+```
 
-- Run a support-ticket triage task against any of three LLM providers
-- Inject latency, 429 rate-limits, 500 tool errors, or malformed JSON with one toggle
-- Watch the backend fall back from one provider to another
-- Compare two runs side by side to see output drift, severity changes, and latency differences
-- Inspect the full normalized envelope and tool-call sequence in the trace view
-- Record and replay the entire workflow with Speedscale / proxymock
+Each ticket goes through a **3-step LLM pipeline**:
+
+```
+  Ticket ──▶ tools-service (order context + return policy)
+               │
+               ▼
+  Step 1: Triage      classify severity (low / medium / high / critical)
+  Step 2: Analysis    identify root cause, summarize impact
+  Step 3: Response    draft customer reply, recommend next action
+```
+
+## What the demo shows
+
+- **Real costs** — every run tracks tokens and USD cost per LLM call
+- **Cross-provider comparison** — run all 20 sample tickets against every configured provider in parallel and compare how OpenAI, Anthropic, Gemini, and Grok differ in severity, root cause, and draft quality
+- **Scale economics** — drag the "tickets per day" slider to your support volume and see annual LLM spend projected ($12K startup → $180K mid-size → $1.8M enterprise)
+- **Simulation savings** — Speedscale captures the exact traffic pattern (ticket → tool calls → 3 LLM calls → response) and replays it at any scale for $0
+
+## Providers
+
+| Provider | Default model | Env variable |
+|---|---|---|
+| OpenAI | `gpt-4.1-mini` | `OPENAI_API_KEY` |
+| Anthropic | `claude-haiku-4-5` | `ANTHROPIC_API_KEY` |
+| Google Gemini | `gemini-flash-latest` | `GEMINI_API_KEY` |
+| xAI / Grok | `grok-3-mini` | `XAI_API_KEY` |
+
+Any combination of keys works — providers without a key are skipped in batch runs.
 
 ## Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14, TypeScript, Tailwind CSS |
-| Backend | FastAPI (Python 3.11+), async httpx |
-| Providers | OpenAI, Anthropic, Google Gemini |
-| Tool simulation | Built-in fake order + policy endpoints |
+| Frontend | Next.js 14, TypeScript |
+| Backend | FastAPI (Python 3.11), async httpx |
+| Tools service | FastAPI (Python 3.11) |
+| Ingress | nginx reverse proxy |
+| Orchestration | Kubernetes + kustomize |
 
 ## Local development (no Docker)
 
-### 1. Backend
-
 ```bash
-cd backend
-cp .env.example .env          # fill in your API keys
-python -m venv .venv
-source .venv/bin/activate
+# Tools service (port 8001)
+cd tools-service && pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8001
+
+# Backend (port 8000)
+cd backend && cp .env.example .env   # add API keys
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+TOOL_BASE_URL=http://localhost:8001 uvicorn app.main:app --reload --port 8000
+
+# Frontend (port 3000)
+cd frontend && npm install
+BACKEND_URL=http://localhost:8000 npm run dev
 ```
-
-OpenAPI docs available at http://localhost:8000/docs
-
-### 2. Frontend
-
-```bash
-cd frontend
-cp .env.local.example .env.local
-npm install
-npm run dev
-```
-
-Open http://localhost:3000
-
-## Docker Compose
-
-```bash
-cp backend/.env.example .env   # set OPENAI_API_KEY etc.
-docker compose up --build
-```
-
-Frontend: http://localhost:3000  
-Backend: http://localhost:8000
 
 ## Kubernetes
 
-See [`k8s/README.md`](k8s/README.md) for full instructions. Quick start:
-
 ```bash
-# Supply API keys (creates the llm-api-keys Secret)
+# Install API keys as a cluster secret
 export OPENAI_API_KEY=sk-...
 export ANTHROPIC_API_KEY=sk-ant-...
 export GEMINI_API_KEY=AIza...
+export XAI_API_KEY=xai-...
 ./k8s/configure-keys.sh
 
-# Deploy everything
-kubectl apply -k k8s/
+# Deploy (public images)
+./deploy-local.sh
 
-# Open UI (minikube)
-minikube service llm-simulation-frontend -n llm-simulation
+# Minikube only: tunnel so localhost:3000 reaches the nginx LoadBalancer
+./deploy-local.sh tunnel
+
+# Rebuild from local source before deploying
+BUILD=1 ./deploy-local.sh all
 ```
+
+See [`k8s/README.md`](k8s/README.md) for Speedscale traffic capture setup.
 
 ## Environment variables
 
-### Backend
-
-| Variable | Description |
-|---|---|
-| `OPENAI_API_KEY` | OpenAI API key |
-| `ANTHROPIC_API_KEY` | Anthropic API key |
-| `GEMINI_API_KEY` | Google Gemini API key |
-| `DEFAULT_PROVIDER` | Provider selected by default (`openai`) |
-| `ENABLE_SIMULATION_MODE` | Enable simulation controls (`true`) |
-
-### Frontend
-
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | Backend URL (`http://localhost:8000`) |
+| Variable | Default | Description |
+|---|---|---|
+| `OPENAI_API_KEY` | — | OpenAI API key |
+| `ANTHROPIC_API_KEY` | — | Anthropic API key |
+| `GEMINI_API_KEY` | — | Google Gemini API key |
+| `XAI_API_KEY` | — | xAI / Grok API key |
+| `DEFAULT_PROVIDER` | `openai` | Default provider for single-ticket runs |
+| `TOOL_BASE_URL` | `http://llm-simulation-tools` | Tools service base URL |
+| `BACKEND_URL` | `http://localhost:8000` | Backend URL (frontend, server-side) |
 
 ## API reference
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/api/run` | Execute one task |
+| `POST` | `/api/run` | Analyze one ticket (3-step pipeline) |
 | `GET` | `/api/providers` | List configured providers and models |
-| `GET` | `/api/scenarios` | List built-in simulation scenarios |
-| `POST` | `/api/scenarios/{id}/run` | Run a preset scenario |
 | `GET` | `/api/runs` | List all recorded runs |
 | `GET` | `/api/runs/{id}` | Fetch one recorded run |
-| `GET` | `/tools/order/{order_id}` | Fake order lookup (injectable) |
-| `GET` | `/tools/policy/{policy_id}` | Fake policy lookup (injectable) |
+| `GET` | `/tools/order/{order_id}` | Order details lookup (tools-service) |
+| `GET` | `/tools/policy/{policy_id}` | Policy lookup (tools-service) |
 | `GET` | `/healthz` | Health check |
-
-## Simulation scenarios
-
-| ID | What it demonstrates |
-|---|---|
-| `baseline-ticket` | Happy path, no failures |
-| `provider-timeout` | 3 s latency on Anthropic → fallback to OpenAI |
-| `fallback-to-openai` | Anthropic 429 → retry with OpenAI |
-| `malformed-tool-response` | Order tool returns schema-drifted JSON |
-| `tool-failure` | Order tool returns 500 |
-
-Run any scenario with:
-
-```bash
-curl -X POST http://localhost:8000/api/scenarios/fallback-to-openai/run | jq
-```
-
-## Speedscale / proxymock walkthrough
-
-### Record a clean baseline run
-
-```bash
-# Start the backend behind the proxymock recorder
-# (configure proxymock to listen on 8001 and forward to 8000)
-proxymock record --port 8001 --target http://localhost:8000
-
-# Run the baseline scenario through the proxy
-curl -X POST http://localhost:8001/api/scenarios/baseline-ticket/run | jq
-```
-
-### Replay with providers mocked
-
-```bash
-proxymock replay --in-directory ./snapshots/baseline
-```
-
-### Replay with injected failures
-
-```bash
-proxymock replay --in-directory ./snapshots/baseline \
-  --chaos inject_latency_ms=2000
-```
-
-### Compare baseline against changed provider
-
-1. Run `baseline-ticket` and note the `request_id`
-2. Run `fallback-to-openai` and note the second `request_id`
-3. Open http://localhost:3000/compare?a=REQUEST_ID_1 and select the second run as B
-
-The compare screen highlights every changed field — severity, provider, latency, and tool status.
-
-## Project structure
-
-```
-llm-simulation-demo/
-  README.md
-  docker-compose.yml
-  backend/
-    Dockerfile
-    requirements.txt
-    .env.example
-    app/
-      main.py          # FastAPI app, routes, run logic
-      tools.py         # Fake order + policy endpoints
-      models/
-        request.py
-        result.py
-        tool_call.py
-      providers/
-        base.py
-        openai_adapter.py
-        anthropic_adapter.py
-        gemini_adapter.py
-  frontend/
-    Dockerfile
-    package.json
-    next.config.js
-    src/
-      app/
-        page.tsx        # Main demo screen
-        runs/page.tsx   # Run list
-        runs/[id]/page.tsx  # Trace view
-        compare/page.tsx    # Side-by-side comparison
-      components/
-        ResultCard.tsx
-        SeverityBadge.tsx
-        ToolCallList.tsx
-      lib/
-        api.ts
-        types.ts
-  scenarios/
-    baseline-ticket.json
-    provider-timeout.json
-    malformed-tool-response.json
-    fallback-to-openai.json
-    tool-failure.json
-```

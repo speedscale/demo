@@ -5,31 +5,127 @@ import { runTask, getProviders } from "@/lib/api";
 import type { ProviderInfo, RunResult } from "@/lib/types";
 import { SeverityBadge } from "@/components/SeverityBadge";
 
+// ── 20 sample tickets ───────────────────────────────────────────────────────
 const SAMPLE_TICKETS = [
   {
     id: "INC-4201",
     tier: "enterprise",
-    transcript: "Customer cannot complete checkout after an address update triggered a tax recalculation error.",
+    transcript:
+      "Customer cannot complete checkout after an address update triggered a tax recalculation error. They have been unable to place orders for 6 hours. This is blocking $47,000 in pending orders for their Q4 inventory restock. They report seeing a 500 error on the /checkout/confirm endpoint. Affects all 12 users in their organization.",
   },
   {
     id: "INC-4202",
     tier: "standard",
-    transcript: "Payment declined on every retry since the last deploy went out at 14:00 UTC.",
+    transcript:
+      "Payment declined on every retry since the last deploy went out at 14:00 UTC. Customer tried Visa, Mastercard, and PayPal — all fail with 'payment processor unavailable'. No error message shown to the customer. Started exactly at 14:02 UTC based on their logs.",
   },
   {
     id: "INC-4203",
     tier: "vip",
-    transcript: "Order tracking page shows no data for orders placed in the last 48 hours.",
+    transcript:
+      "Order tracking page shows no data for any orders placed in the last 48 hours. The customer manages logistics for 200+ daily orders and their warehouse team is completely blind. They are considering reverting to manual tracking which would cost them 8 staff hours per day. Need immediate resolution.",
   },
   {
     id: "INC-4204",
     tier: "standard",
-    transcript: "Subscription renewal charged twice this billing cycle; customer is requesting a refund.",
+    transcript:
+      "Subscription renewal charged twice this billing cycle. Customer shows two identical charges of $299 on their credit card statement dated March 1st at 03:14 and 03:16 UTC. They want a refund for the duplicate charge and assurance this won't happen again. Very frustrated.",
   },
   {
     id: "INC-4205",
     tier: "enterprise",
-    transcript: "App crashes on iOS 17 when uploading a profile photo larger than 2MB.",
+    transcript:
+      "App crashes immediately on iOS 17.4 when attempting to upload a profile photo larger than 2MB. Reproducible 100% of the time. Works fine on Android. The crash happens in the image compression library. This is blocking our entire mobile field team from updating their profiles before an important client presentation tomorrow.",
+  },
+  {
+    id: "INC-4206",
+    tier: "vip",
+    transcript:
+      "Our API integration has been returning HTTP 503 errors for the past 3 hours on all endpoints. We are a real-time inventory management system and this outage is causing our downstream systems to accumulate a backlog of 15,000 unprocessed events. Every minute of downtime costs us approximately $200 in SLA penalties to our own customers.",
+  },
+  {
+    id: "INC-4207",
+    tier: "enterprise",
+    transcript:
+      "Bulk order import has been stuck at 0% processing for 6 hours. We uploaded a CSV with 8,500 orders for our holiday campaign. The UI shows the job is queued but no progress. This is our biggest sales event of the year and orders are not being processed. We cannot contact customers with order confirmations.",
+  },
+  {
+    id: "INC-4208",
+    tier: "standard",
+    transcript:
+      "Password reset emails are not arriving. Tested with 5 different email addresses across Gmail, Outlook, and Yahoo. Checked spam folders. No emails received. This has been happening for at least 2 days. Multiple new customers cannot access their accounts, causing us to lose signups.",
+  },
+  {
+    id: "INC-4209",
+    tier: "vip",
+    transcript:
+      "Inventory sync has a 45-minute lag causing significant overselling. We have already oversold 340 units of a limited-edition product that we only have 200 units of. Customers are placing orders for items we cannot fulfill. We need the sync frequency increased to under 5 minutes or we face chargebacks and reputation damage.",
+  },
+  {
+    id: "INC-4210",
+    tier: "enterprise",
+    transcript:
+      "GDPR right-to-erasure request submitted 15 days ago has not been processed. Under GDPR Article 17 we have a 30-day window but our legal team requires us to act within 15 days. The customer's data is still visible in the admin panel. We face a regulatory audit next week and need this resolved urgently.",
+  },
+  {
+    id: "INC-4211",
+    tier: "standard",
+    transcript:
+      "Product page images are broken and showing alt text in Chrome 123 on Windows. Works fine in Firefox and Safari. Started about 3 days ago. Affecting our storefront — potential customers are seeing a broken shopping experience. Images load fine on mobile Chrome.",
+  },
+  {
+    id: "INC-4212",
+    tier: "enterprise",
+    transcript:
+      "Monthly invoice for March shows $12,400 in usage charges that we don't recognize. Line items reference API calls to endpoints we never use. Our normal monthly bill is around $3,200. We need an itemized breakdown and a credit for any incorrect charges before our accounts payable deadline on Friday.",
+  },
+  {
+    id: "INC-4213",
+    tier: "vip",
+    transcript:
+      "SSO login via SAML is completely broken for all 500 users in our organization since a certificate rotation this morning. Nobody can log in. Our entire team is locked out of the platform during our busiest operational period — end-of-month reporting. We have a board presentation in 4 hours that requires access to the platform.",
+  },
+  {
+    id: "INC-4214",
+    tier: "standard",
+    transcript:
+      "Refund was processed 8 days ago (refund ID: REF-88921) but credit has not appeared on the customer's card. Bank confirms no pending credit. Amount is $156.00. Customer is threatening a chargeback which will cost us the $15 fee plus damage our merchant rating.",
+  },
+  {
+    id: "INC-4215",
+    tier: "enterprise",
+    transcript:
+      "Webhook deliveries to our endpoint have been failing silently for 4 days. We only discovered this when we noticed our order management system was out of sync. We missed 2,800 order events. The webhook logs in the dashboard show all deliveries as 'success' but our server logs show no incoming requests. This is a critical data integrity issue.",
+  },
+  {
+    id: "INC-4216",
+    tier: "standard",
+    transcript:
+      "Mobile app is stuck on the loading screen for all users on Android 14 devices. Force-closing and reinstalling doesn't help. Started after the app update pushed yesterday. Approximately 30% of our mobile users are on Android 14. They are using competitors' apps in the meantime.",
+  },
+  {
+    id: "INC-4217",
+    tier: "vip",
+    transcript:
+      "Our custom domain SSL certificate expired 2 hours ago causing a complete storefront outage. Browsers are showing 'connection not secure' warnings and customers cannot proceed. We are losing approximately $3,000 per hour in revenue. We contacted support 3 weeks ago about the upcoming expiration but received no response.",
+  },
+  {
+    id: "INC-4218",
+    tier: "enterprise",
+    transcript:
+      "Automated weekly reports stopped generating as of Monday. Our executive team relies on these for Monday morning review meetings. The reports run at 06:00 UTC via scheduled job. No error emails were sent. The reporting dashboard shows the last successful run as Sunday. This has now missed 2 scheduled runs.",
+  },
+  {
+    id: "INC-4219",
+    tier: "standard",
+    transcript:
+      "Two-factor authentication setup keeps looping back to the setup screen after scanning the QR code with Google Authenticator. The verification code appears to be accepted (no error shown) but the account shows 2FA as 'not configured'. Customer has tried 3 different authenticator apps. Cannot enable 2FA which is required for their company security policy.",
+  },
+  {
+    id: "INC-4220",
+    tier: "vip",
+    transcript:
+      "Data export for compliance audit returns a corrupted CSV file. We requested a full export of all transaction records for the past 24 months (approximately 180,000 rows). The downloaded file is 2KB instead of the expected ~50MB. The file contains only headers and 3 rows. Our auditors arrive on Thursday and require this data.",
   },
 ];
 
@@ -39,6 +135,22 @@ const SEVERITY_COLORS: Record<string, string> = {
   high: "#f97316",
   critical: "#ef4444",
 };
+
+// ── Pricing note shown in the savings estimator ─────────────────────────────
+const PROVIDER_DISPLAY: Record<string, string> = {
+  openai: "OpenAI",
+  anthropic: "Anthropic",
+  gemini: "Gemini",
+  xai: "xAI / Grok",
+};
+
+function fmt$(n: number): string {
+  if (n === 0) return "$0.00";
+  if (n < 0.01) return `$${n.toFixed(4)}`;
+  return `$${n.toFixed(2)}`;
+}
+
+// ── Small UI primitives ─────────────────────────────────────────────────────
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -88,9 +200,12 @@ function ToolCard({ title, data }: { title: string; data: Record<string, unknown
   );
 }
 
+// ── Single-run result panel ─────────────────────────────────────────────────
+
 function ResultPanel({ result }: { result: RunResult }) {
   const order = result.tool_calls.find((t) => t.name === "lookup_order");
   const policy = result.tool_calls.find((t) => t.name === "lookup_policy");
+  const [expanded, setExpanded] = useState(false);
 
   const severityBg: Record<string, string> = {
     low: "#10b98111",
@@ -101,24 +216,70 @@ function ResultPanel({ result }: { result: RunResult }) {
 
   return (
     <div className="space-y-4">
+      {/* Header row: severity + cost */}
       <div
         className="rounded-xl p-5 space-y-4"
         style={{ background: severityBg[result.output.severity] ?? "var(--surface)", border: "1px solid var(--border)" }}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <SeverityBadge severity={result.output.severity} />
-          <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{result.request_id}</span>
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-mono px-2 py-1 rounded-md font-bold" style={{ background: "#10b98122", color: "#10b981", border: "1px solid #10b98133" }}>
+              {fmt$(result.cost_usd)} · {result.total_tokens.toLocaleString()} tokens
+            </span>
+            <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{result.request_id}</span>
+          </div>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Summary</p>
           <p className="text-sm leading-relaxed">{result.output.summary}</p>
         </div>
+        {result.output.root_cause && (
+          <div>
+            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Root Cause</p>
+            <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{result.output.root_cause}</p>
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl p-5" style={{ background: "#10b98108", border: "1px solid #10b98133" }}>
         <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#10b981" }}>Recommended Action</p>
         <p className="text-sm leading-relaxed">{result.output.recommended_action}</p>
       </div>
+
+      {result.output.response_draft && (
+        <div className="rounded-xl p-5 space-y-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center justify-between">
+            <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Draft Customer Response</p>
+            <button className="text-xs underline" style={{ color: "var(--text-muted)" }} onClick={() => setExpanded((v) => !v)}>
+              {expanded ? "collapse" : "expand"}
+            </button>
+          </div>
+          {expanded && (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{result.output.response_draft}</p>
+          )}
+          {!expanded && (
+            <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>{result.output.response_draft}</p>
+          )}
+        </div>
+      )}
+
+      {/* LLM pipeline steps */}
+      {result.steps.length > 0 && (
+        <div className="rounded-xl p-4 space-y-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Pipeline Steps ({result.steps.length} LLM calls)</p>
+          {result.steps.map((step) => (
+            <div key={step.name} className="flex items-center justify-between text-xs py-1.5 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
+              <span className="font-mono capitalize">{step.name}</span>
+              <div className="flex gap-4" style={{ color: "var(--text-muted)" }}>
+                <span>{(step.prompt_tokens + step.completion_tokens).toLocaleString()} tok</span>
+                <span>{step.duration_ms}ms</span>
+                <span className="font-semibold" style={{ color: "#10b981" }}>{fmt$(step.cost_usd)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {order?.result ? (
@@ -145,7 +306,7 @@ function ResultPanel({ result }: { result: RunResult }) {
   );
 }
 
-// ── Batch results ──────────────────────────────────────────────────────────
+// ── Batch results ───────────────────────────────────────────────────────────
 
 interface BatchItem {
   ticket: (typeof SAMPLE_TICKETS)[number];
@@ -155,28 +316,135 @@ interface BatchItem {
   error?: string;
 }
 
+function SavingsEstimator({ items, runsPerDay }: { items: BatchItem[]; runsPerDay: number }) {
+  const completed = items.filter((i) => i.status === "done" && i.result);
+  if (completed.length === 0) return null;
+
+  // Total cost for this batch
+  const batchCost = completed.reduce((sum, i) => sum + (i.result?.cost_usd ?? 0), 0);
+  // Cost per individual run (one ticket, one provider)
+  const costPerRun = batchCost / completed.length;
+  const dailyCost = costPerRun * runsPerDay;
+  const monthlyCost = dailyCost * 30;
+  const yearlyWithSimulation = 0; // Simulation = $0 API cost
+
+  // Per-provider breakdown
+  const byProvider: Record<string, { cost: number; count: number }> = {};
+  for (const item of completed) {
+    if (!item.result) continue;
+    const p = item.provider;
+    if (!byProvider[p]) byProvider[p] = { cost: 0, count: 0 };
+    byProvider[p].cost += item.result.cost_usd;
+    byProvider[p].count += 1;
+  }
+
+  return (
+    <div
+      className="rounded-xl p-5 space-y-4"
+      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-bold">💰 Cost Story</span>
+        <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "#f59e0b22", color: "#f59e0b", border: "1px solid #f59e0b44" }}>
+          Live data from this run
+        </span>
+      </div>
+
+      {/* This batch */}
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <div className="rounded-lg p-3" style={{ background: "#ef444411", border: "1px solid #ef444433" }}>
+          <p className="text-lg font-bold" style={{ color: "#ef4444" }}>{fmt$(batchCost)}</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>This batch</p>
+        </div>
+        <div className="rounded-lg p-3" style={{ background: "#f59e0b11", border: "1px solid #f59e0b33" }}>
+          <p className="text-lg font-bold" style={{ color: "#f59e0b" }}>{fmt$(monthlyCost)}</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>/month @ {runsPerDay}×/day</p>
+        </div>
+        <div className="rounded-lg p-3" style={{ background: "#10b98111", border: "1px solid #10b98133" }}>
+          <p className="text-lg font-bold" style={{ color: "#10b981" }}>{fmt$(yearlyWithSimulation)}</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>with simulation</p>
+        </div>
+      </div>
+
+      {/* Per-provider cost */}
+      <div className="space-y-1.5">
+        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Cost per run by provider</p>
+        {Object.entries(byProvider)
+          .sort((a, b) => b[1].cost / b[1].count - a[1].cost / a[1].count)
+          .map(([prov, { cost, count }]) => {
+            const perRun = cost / count;
+            const perMonth = perRun * runsPerDay * 30;
+            return (
+              <div key={prov} className="flex items-center gap-3 text-xs">
+                <span className="w-24 font-medium">{PROVIDER_DISPLAY[prov] ?? prov}</span>
+                <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.min(100, (perRun / (Object.values(byProvider).reduce((m, v) => Math.max(m, v.cost / v.count), 0.001))) * 100)}%`,
+                      background: "var(--accent)",
+                    }}
+                  />
+                </div>
+                <span className="w-16 text-right font-mono">{fmt$(perRun)}/run</span>
+                <span className="w-20 text-right font-mono" style={{ color: "#ef4444" }}>{fmt$(perMonth)}/mo</span>
+              </div>
+            );
+          })}
+        <div className="flex items-center gap-3 text-xs mt-1">
+          <span className="w-24 font-bold" style={{ color: "#10b981" }}>Simulation</span>
+          <div className="flex-1 h-1.5 rounded-full" style={{ background: "var(--surface2)" }}>
+            <div className="h-full w-px rounded-full" style={{ background: "#10b981" }} />
+          </div>
+          <span className="w-16 text-right font-mono font-bold" style={{ color: "#10b981" }}>$0.00/run</span>
+          <span className="w-20 text-right font-mono font-bold" style={{ color: "#10b981" }}>$0.00/mo</span>
+        </div>
+      </div>
+
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        Simulation captures this exact traffic, replays it locally, and returns identical responses — without ever hitting the LLM API.
+      </p>
+    </div>
+  );
+}
+
 function BatchResultsPanel({
   items,
   done,
   total,
+  runsPerDay,
 }: {
   items: BatchItem[];
   done: number;
   total: number;
+  runsPerDay: number;
 }) {
   const completed = items.filter((i) => i.status === "done");
   const errored = items.filter((i) => i.status === "error");
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const totalCost = completed.reduce((sum, i) => sum + (i.result?.cost_usd ?? 0), 0);
+  const totalTokens = completed.reduce((sum, i) => sum + (i.result?.total_tokens ?? 0), 0);
+
+  const uniqueTicketIds = [...new Set(items.map((i) => i.ticket.id))];
 
   return (
     <div className="space-y-4">
       {/* Progress header */}
       <div className="rounded-xl p-4 space-y-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-between text-sm flex-wrap gap-2">
           <span className="font-semibold">
-            {done < total ? `Analyzing… ${done} / ${total}` : `Complete — ${completed.length} succeeded, ${errored.length} failed`}
+            {done < total
+              ? `Analyzing… ${done} / ${total}`
+              : `Complete — ${completed.length} succeeded, ${errored.length} failed`}
           </span>
-          <span style={{ color: "var(--text-muted)" }}>{pct}%</span>
+          <div className="flex items-center gap-3">
+            {totalCost > 0 && (
+              <span className="text-xs font-mono font-bold px-2 py-1 rounded-md" style={{ background: "#ef444422", color: "#ef4444", border: "1px solid #ef444433" }}>
+                {fmt$(totalCost)} · {totalTokens.toLocaleString()} tok
+              </span>
+            )}
+            <span style={{ color: "var(--text-muted)" }}>{pct}%</span>
+          </div>
         </div>
         <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
           <div
@@ -186,20 +454,30 @@ function BatchResultsPanel({
         </div>
       </div>
 
-      {/* Results grid — one row per ticket, one column per provider */}
+      {/* Savings estimator */}
+      {done > 0 && <SavingsEstimator items={items} runsPerDay={runsPerDay} />}
+
+      {/* Results grid — one row per ticket, columns per provider */}
       {done > 0 && (
         <div className="space-y-2">
-          {SAMPLE_TICKETS.map((ticket) => {
-            const ticketItems = items.filter((i) => i.ticket.id === ticket.id);
+          {uniqueTicketIds.map((ticketId) => {
+            const ticket = items.find((i) => i.ticket.id === ticketId)!.ticket;
+            const ticketItems = items.filter((i) => i.ticket.id === ticketId);
             return (
               <div
-                key={ticket.id}
+                key={ticketId}
                 className="rounded-xl p-4 space-y-3"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-xs font-mono font-semibold">{ticket.id}</span>
-                  <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{ticket.transcript.slice(0, 60)}…</span>
+                  <span
+                    className="text-xs px-1.5 py-0.5 rounded capitalize"
+                    style={{ background: "var(--surface2)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  >
+                    {ticket.tier}
+                  </span>
+                  <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{ticket.transcript.slice(0, 70)}…</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {ticketItems.map((item) => (
@@ -230,14 +508,14 @@ function BatchCell({ item }: { item: BatchItem }) {
 
   return (
     <div
-      className="rounded-lg px-3 py-2 min-w-[120px] space-y-1"
+      className="rounded-lg px-3 py-2 min-w-[130px] space-y-1"
       style={{
         background: color ? `${color}11` : "var(--surface2)",
         border: `1px solid ${color ? `${color}44` : "var(--border)"}`,
       }}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold">{item.provider}</span>
+        <span className="text-xs font-semibold">{PROVIDER_DISPLAY[item.provider] ?? item.provider}</span>
         {item.status === "running" && (
           <span className="text-xs animate-pulse" style={{ color: "var(--text-muted)" }}>…</span>
         )}
@@ -254,9 +532,14 @@ function BatchCell({ item }: { item: BatchItem }) {
         )}
       </div>
       {item.result && (
-        <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>
-          {item.result.output.summary.slice(0, 80)}
-        </p>
+        <>
+          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>
+            {item.result.output.summary.slice(0, 80)}
+          </p>
+          <p className="text-xs font-mono font-semibold" style={{ color: "#10b981" }}>
+            {fmt$(item.result.cost_usd)}
+          </p>
+        </>
       )}
       {item.error && (
         <p className="text-xs" style={{ color: "#ef4444" }}>{item.error.slice(0, 60)}</p>
@@ -283,18 +566,18 @@ function BatchCell({ item }: { item: BatchItem }) {
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────
+// ── Main page ───────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [provider, setProvider] = useState("openai");
   const [model, setModel] = useState("");
-  const [ticketId, setTicketId] = useState(SAMPLE_TICKETS[0].id);
-  const [tier, setTier] = useState(SAMPLE_TICKETS[0].tier);
+  const [ticketIdx, setTicketIdx] = useState(0);
   const [transcript, setTranscript] = useState(SAMPLE_TICKETS[0].transcript);
   const [result, setResult] = useState<RunResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runsPerDay, setRunsPerDay] = useState(200);
 
   // Batch state
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
@@ -304,6 +587,7 @@ export default function HomePage() {
 
   const isBusy = loading || batchRunning;
   const showBatch = batchTotal > 0;
+  const currentTicket = SAMPLE_TICKETS[ticketIdx];
 
   useEffect(() => {
     getProviders()
@@ -317,6 +601,10 @@ export default function HomePage() {
   const selectedProvider = providers.find((p) => p.id === provider);
   const models = selectedProvider?.models ?? [];
 
+  function dispatchCostEvent(cost: number, tokens: number) {
+    window.dispatchEvent(new CustomEvent("run-complete", { detail: { cost, tokens } }));
+  }
+
   async function handleRun() {
     setBatchTotal(0);
     setBatchItems([]);
@@ -326,9 +614,14 @@ export default function HomePage() {
       const res = await runTask({
         provider,
         model: model || undefined,
-        input: { ticket_id: ticketId, customer_tier: tier, transcript },
+        input: {
+          ticket_id: currentTicket.id,
+          customer_tier: currentTicket.tier,
+          transcript,
+        },
       });
       setResult(res);
+      dispatchCostEvent(res.cost_usd, res.total_tokens);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -346,7 +639,6 @@ export default function HomePage() {
     setResult(null);
     setError(null);
 
-    // Build the full matrix of (ticket, provider) pairs
     const pairs: BatchItem[] = SAMPLE_TICKETS.flatMap((ticket) =>
       configured.map((p) => ({
         ticket,
@@ -361,7 +653,6 @@ export default function HomePage() {
     setBatchDone(0);
     setBatchRunning(true);
 
-    // Run all in parallel, updating state as each completes
     await Promise.all(
       pairs.map(async (item, idx) => {
         setBatchItems((prev) =>
@@ -379,6 +670,7 @@ export default function HomePage() {
           setBatchItems((prev) =>
             prev.map((it, i) => (i === idx ? { ...it, status: "done", result: res } : it))
           );
+          dispatchCostEvent(res.cost_usd, res.total_tokens);
         } catch (e) {
           setBatchItems((prev) =>
             prev.map((it, i) =>
@@ -396,14 +688,17 @@ export default function HomePage() {
     setBatchRunning(false);
   }
 
+  const configuredCount = providers.filter((p) => p.configured).length;
+  const totalCalls = SAMPLE_TICKETS.length * configuredCount * 3; // 3 LLM steps per ticket
+
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-8">
+    <div className="grid grid-cols-1 xl:grid-cols-[440px_1fr] gap-8">
       {/* ── Left panel: form ── */}
       <div className="space-y-5">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Ticket Triage</h1>
           <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-            AI-powered analysis for support tickets.
+            3-step AI pipeline: classify → analyze → draft response.
           </p>
         </div>
 
@@ -426,7 +721,7 @@ export default function HomePage() {
                 {providers.length > 0 ? (
                   providers.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.id}{!p.configured ? " (no key)" : ""}
+                      {PROVIDER_DISPLAY[p.id] ?? p.id}{!p.configured ? " (no key)" : ""}
                     </option>
                   ))
                 ) : (
@@ -456,44 +751,39 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Ticket ID</Label>
-              <Input value={ticketId} onChange={(e) => setTicketId(e.target.value)} placeholder="INC-4201" />
+              <Input value={currentTicket.id} readOnly style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", opacity: 0.7 }} />
             </div>
             <div>
               <Label>Customer Tier</Label>
-              <Select value={tier} onChange={(e) => setTier(e.target.value)}>
-                <option value="standard">Standard</option>
-                <option value="enterprise">Enterprise</option>
-                <option value="vip">VIP</option>
-              </Select>
+              <Input value={currentTicket.tier} readOnly style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", opacity: 0.7, textTransform: "capitalize" }} />
             </div>
           </div>
 
           <div>
-            <Label>Transcript</Label>
-            <div className="flex gap-1 mb-1.5 flex-wrap">
+            <Label>Sample Ticket</Label>
+            <div className="flex gap-1 mb-2 flex-wrap">
               {SAMPLE_TICKETS.map((t, i) => (
                 <button
                   key={t.id}
                   onClick={() => {
-                    setTicketId(t.id);
-                    setTier(t.tier);
+                    setTicketIdx(i);
                     setTranscript(t.transcript);
                   }}
                   className="text-xs px-2 py-0.5 rounded transition-colors"
                   style={{
-                    background: transcript === t.transcript ? "var(--accent)" : "var(--surface2)",
-                    color: transcript === t.transcript ? "white" : "var(--text-muted)",
+                    background: ticketIdx === i ? "var(--accent)" : "var(--surface2)",
+                    color: ticketIdx === i ? "white" : "var(--text-muted)",
                     border: "1px solid var(--border)",
                   }}
                 >
-                  #{i + 1}
+                  {t.id.replace("INC-", "")}
                 </button>
               ))}
             </div>
             <textarea
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
-              rows={3}
+              rows={4}
               className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-none"
               style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}
             />
@@ -515,18 +805,40 @@ export default function HomePage() {
             disabled={isBusy}
             className="py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
             style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
-            title={`Run all 5 tickets against all configured providers`}
+            title={`Run all 20 tickets × ${configuredCount} providers × 3 LLM steps = ${totalCalls} calls`}
           >
             {batchRunning ? `${batchDone} / ${batchTotal}…` : "Analyze All"}
           </button>
         </div>
 
         {providers.length > 0 && (
-          <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-            Analyze All runs{" "}
-            <strong>{SAMPLE_TICKETS.length} tickets × {providers.filter((p) => p.configured).length} provider{providers.filter((p) => p.configured).length !== 1 ? "s" : ""}</strong>
-            {" "}= {SAMPLE_TICKETS.length * providers.filter((p) => p.configured).length} calls
-          </p>
+          <div className="space-y-2">
+            <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+              Analyze All:{" "}
+              <strong>{SAMPLE_TICKETS.length} tickets × {configuredCount} provider{configuredCount !== 1 ? "s" : ""} × 3 steps = {totalCalls} LLM calls</strong>
+            </p>
+            {/* Runs/day slider for savings estimator */}
+            <div className="rounded-lg p-3 space-y-1.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <div className="flex items-center justify-between text-xs">
+                <label style={{ color: "var(--text-muted)" }}>Runs / day (for savings estimate)</label>
+                <span className="font-semibold">{runsPerDay}</span>
+              </div>
+              <input
+                type="range"
+                min={10}
+                max={1000}
+                step={10}
+                value={runsPerDay}
+                onChange={(e) => setRunsPerDay(Number(e.target.value))}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs" style={{ color: "var(--text-muted)" }}>
+                <span>10 (dev team)</span>
+                <span>500 (CI pipeline)</span>
+                <span>1000 (load test)</span>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -546,7 +858,7 @@ export default function HomePage() {
         )}
 
         {showBatch ? (
-          <BatchResultsPanel items={batchItems} done={batchDone} total={batchTotal} />
+          <BatchResultsPanel items={batchItems} done={batchDone} total={batchTotal} runsPerDay={runsPerDay} />
         ) : (
           <>
             {loading && (
@@ -554,16 +866,17 @@ export default function HomePage() {
                 className="rounded-xl p-8 text-center text-sm animate-pulse"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
               >
-                Calling provider…
+                Running 3-step pipeline (triage → analysis → response)…
               </div>
             )}
 
             {!loading && !result && !error && (
               <div
-                className="rounded-xl p-8 text-center text-sm"
+                className="rounded-xl p-8 text-center space-y-2"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
               >
-                Select a ticket and click <strong>Analyze Ticket</strong> to see the AI analysis here.
+                <p className="text-sm">Select a ticket and click <strong>Analyze Ticket</strong>.</p>
+                <p className="text-xs">Each analysis makes <strong>3 LLM calls</strong> — triage, root-cause analysis, and customer response draft.</p>
               </div>
             )}
 

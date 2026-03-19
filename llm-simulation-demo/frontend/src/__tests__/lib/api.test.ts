@@ -19,8 +19,11 @@ const GOOD_RESULT = {
   provider: "openai",
   model: "gpt-4o-mini",
   output: { summary: "Test", severity: "low", recommended_action: "None" },
+  steps: [],
   tool_calls: [],
   timing: { provider_ms: 100, total_ms: 120 },
+  total_tokens: 0,
+  cost_usd: 0,
 };
 
 const GOOD_REQUEST: RunRequest = {

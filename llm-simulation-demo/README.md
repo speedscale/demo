@@ -2,19 +2,19 @@
 
 A support ticket triage app built to demonstrate [Speedscale](https://speedscale.com) LLM simulation. The backend runs a 3-step AI pipeline on each ticket (classify → analyze → draft response) and calls out to a separate tools service for order data and policy lookups. You can run any of four LLM providers and compare their outputs side by side.
 
-## The simulation angle
+## When to use simulation
 
-Every run against a real LLM costs money. At support-center scale that adds up fast — $180K/year for a mid-size operation running Claude Sonnet. Most of that spend isn't production traffic; it's developers iterating on prompts, CI pipelines running regression tests, and load tests validating scale. None of that needs to hit a real API.
+A mid-size support center running Claude Sonnet at 10K tickets/day spends around $180K/year on LLM API calls. Most of that isn't production traffic. It's engineers tweaking prompts, CI running the same tickets on every PR, and load tests that someone runs once and never again because it costs $400 each time.
 
-| When | Pay real tokens? | Why |
-|---|---|---|
-| Production — live customer tickets | Yes | Real customers need real responses |
-| Prompt evals — measuring output quality | Yes | You need authentic model output to score |
-| Development — iterating on pipeline logic | No | You're testing code paths, not the LLM |
-| CI / regression tests | No | Deterministic replays are faster and free |
-| Load testing | No | Would cost hundreds of dollars per run |
+| | Use real API |
+|---|---|
+| Production traffic | Yes |
+| Prompt quality evals | Yes |
+| Developing pipeline logic | No |
+| CI / regression tests | No |
+| Load testing | No |
 
-Speedscale captures one real run — paying for tokens once — then replays that traffic at any volume without touching the API again. The slider on the main page shows what the bill would be at your actual ticket volume.
+Speedscale records one real run and replays it locally at any volume. The slider on the main page projects what the real bill would be at your ticket volume.
 
 ## How it works
 

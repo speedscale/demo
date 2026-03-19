@@ -3,8 +3,8 @@ import "./globals.css";
 import { NavBar } from "@/components/NavBar";
 
 export const metadata: Metadata = {
-  title: "Ticket Triage",
-  description: "AI-powered support ticket analysis — 3-step pipeline with real cost tracking",
+  title: "Support Triage",
+  description: "AI-powered customer support — classify severity, identify root cause, draft responses at scale",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

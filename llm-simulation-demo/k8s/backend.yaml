@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: gcr.io/speedscale-demos/llm-simulation-backend:v1.3.6
+          image: gcr.io/speedscale-demos/llm-simulation-backend:v1.3.7
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
@@ -44,17 +44,11 @@ spec:
                   name: llm-api-keys
                   key: GEMINI_API_KEY
                   optional: true
-            - name: COHERE_API_KEY
+            - name: XAI_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: llm-api-keys
-                  key: COHERE_API_KEY
-                  optional: true
-            - name: MISTRAL_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: llm-api-keys
-                  key: MISTRAL_API_KEY
+                  key: XAI_API_KEY
                   optional: true
           readinessProbe:
             httpGet:

@@ -35,9 +35,10 @@ async def client():
 
 def _patched_adapters():
     return {
-        "openai": make_mock_adapter("openai", output=_GOOD_OUTPUT),
+        "openai":    make_mock_adapter("openai",    output=_GOOD_OUTPUT),
         "anthropic": make_mock_adapter("anthropic", output=_GOOD_OUTPUT),
-        "gemini": make_mock_adapter("gemini", output=_GOOD_OUTPUT),
+        "gemini":    make_mock_adapter("gemini",    output=_GOOD_OUTPUT),
+        "xai":       make_mock_adapter("xai",       output=_GOOD_OUTPUT),
     }
 
 
@@ -57,14 +58,14 @@ class TestHealthz:
 # ---------------------------------------------------------------------------
 
 class TestProviders:
-    async def test_returns_three_providers(self, client):
+    async def test_returns_four_providers(self, client):
         r = await client.get("/api/providers")
         assert r.status_code == 200
         data = r.json()
         assert "providers" in data
         assert "default_provider" in data
         ids = {p["id"] for p in data["providers"]}
-        assert ids == {"openai", "anthropic", "gemini"}
+        assert ids == {"openai", "anthropic", "gemini", "xai"}
 
     async def test_each_provider_has_required_keys(self, client):
         r = await client.get("/api/providers")
@@ -75,7 +76,7 @@ class TestProviders:
             assert "configured" in p
 
     async def test_configured_false_without_env_keys(self, client, monkeypatch):
-        for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"):
+        for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "XAI_API_KEY"):
             monkeypatch.delenv(key, raising=False)
         r = await client.get("/api/providers")
         for p in r.json()["providers"]:

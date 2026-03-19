@@ -14,6 +14,16 @@ export interface OutputEnvelope {
   summary: string;
   severity: "low" | "medium" | "high" | "critical";
   recommended_action: string;
+  root_cause?: string;
+  response_draft?: string;
+}
+
+export interface LLMStep {
+  name: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  cost_usd: number;
+  duration_ms: number;
 }
 
 export interface ToolCallRecord {
@@ -34,8 +44,11 @@ export interface RunResult {
   provider: string;
   model: string;
   output: OutputEnvelope;
+  steps: LLMStep[];
   tool_calls: ToolCallRecord[];
   timing: TimingInfo;
+  total_tokens: number;
+  cost_usd: number;
   error?: string;
 }
 

@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import time
+import os
 from typing import Tuple
 
-import httpx
-
 from app.models.request import RunRequest
-from app.models.result import LLMStep, OutputEnvelope
 from app.providers.base import (
     AdapterResult,
     ProviderError,
@@ -19,19 +16,22 @@ from app.providers.base import (
     build_analysis_message,
     build_response_message,
 )
-import os
+from app.models.result import LLMStep, OutputEnvelope
+from app.providers.openai_adapter import OpenAIAdapter
 
-_OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+_XAI_API_URL = "https://api.x.ai/v1/chat/completions"
 
 
-class OpenAIAdapter:
-    name = "openai"
-    default_model = "gpt-4.1-mini"
+class XAIAdapter(OpenAIAdapter):
+    """Grok (xAI) adapter — uses the same OpenAI-compatible API at a different base URL."""
+
+    name = "xai"
+    default_model = "grok-3-mini"
 
     async def run(self, request: RunRequest, context: str = "") -> AdapterResult:
-        api_key = os.getenv("OPENAI_API_KEY", "")
+        api_key = os.getenv("XAI_API_KEY", "")
         if not api_key:
-            raise ProviderError("OPENAI_API_KEY not configured", status_code=503)
+            raise ProviderError("XAI_API_KEY not configured", status_code=503)
 
         model = request.model or self.default_model
         steps: list[LLMStep] = []
@@ -40,6 +40,7 @@ class OpenAIAdapter:
             api_key, model,
             system=SYSTEM_PROMPT_TRIAGE,
             user=build_triage_message(request),
+            base_url=_XAI_API_URL,
         )
         triage = _safe_json(triage_raw, {})
         steps.append(LLMStep(
@@ -53,6 +54,7 @@ class OpenAIAdapter:
             api_key, model,
             system=SYSTEM_PROMPT_ANALYSIS,
             user=build_analysis_message(request, triage, context),
+            base_url=_XAI_API_URL,
         )
         analysis = _safe_json(analysis_raw, {})
         steps.append(LLMStep(
@@ -66,6 +68,7 @@ class OpenAIAdapter:
             api_key, model,
             system=SYSTEM_PROMPT_RESPONSE,
             user=build_response_message(request, triage, analysis),
+            base_url=_XAI_API_URL,
         )
         response = _safe_json(response_raw, {})
         steps.append(LLMStep(
@@ -89,38 +92,3 @@ class OpenAIAdapter:
             total_tokens=total_tokens,
             cost_usd=round(sum(s.cost_usd for s in steps), 6),
         )
-
-    async def _call(
-        self,
-        api_key: str,
-        model: str,
-        system: str,
-        user: str,
-        base_url: str = _OPENAI_API_URL,
-        auth_header: str | None = None,
-    ) -> Tuple[str, int, int, int]:
-        """Returns (content, prompt_tokens, completion_tokens, duration_ms)."""
-        headers = {"Authorization": f"Bearer {auth_header or api_key}"}
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            "response_format": {"type": "json_object"},
-            "temperature": 0.2,
-        }
-        t0 = time.monotonic()
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(base_url, headers=headers, json=payload)
-        duration_ms = int((time.monotonic() - t0) * 1000)
-
-        if resp.status_code == 429:
-            raise ProviderError("OpenAI rate limit exceeded", status_code=429)
-        if resp.status_code != 200:
-            raise ProviderError(f"OpenAI returned {resp.status_code}: {resp.text}", status_code=502)
-
-        data = resp.json()
-        content = data["choices"][0]["message"]["content"]
-        usage = data.get("usage", {})
-        return content, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0), duration_ms

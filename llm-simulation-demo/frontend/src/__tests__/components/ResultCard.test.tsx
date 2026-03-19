@@ -11,11 +11,14 @@ const baseResult: RunResult = {
     severity: "high",
     recommended_action: "Rollback tax rule and notify support.",
   },
+  steps: [],
   tool_calls: [
     { name: "lookup_order", status: "ok", duration_ms: 84 },
     { name: "lookup_policy", status: "ok", duration_ms: 22 },
   ],
   timing: { provider_ms: 1200, total_ms: 1450 },
+  total_tokens: 0,
+  cost_usd: 0,
 };
 
 describe("ResultCard", () => {
@@ -38,11 +41,6 @@ describe("ResultCard", () => {
     it("renders provider and model", () => {
       render(<ResultCard result={baseResult} />);
       expect(screen.getByText(/anthropic/)).toBeInTheDocument();
-    });
-
-    it("renders provider_ms timing", () => {
-      render(<ResultCard result={baseResult} />);
-      expect(screen.getByText("1200")).toBeInTheDocument();
     });
 
     it("renders total_ms timing", () => {

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-simulation-tools
+  namespace: llm-simulation
+  annotations:
+    sidecar.speedscale.com/inject: "true"
+    sidecar.speedscale.com/tls-out: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-simulation-tools
+  template:
+    metadata:
+      labels:
+        app: llm-simulation-tools
+    spec:
+      containers:
+        - name: tools
+          image: gcr.io/speedscale-demos/llm-simulation-tools:v1.3.7
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8001
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-simulation-tools
+  namespace: llm-simulation
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8001
+  selector:
+    app: llm-simulation-tools

@@ -5,6 +5,7 @@ namespace: llm-simulation
 resources:
   - namespace.yaml
   - config.yaml
+  - tools.yaml
   - backend.yaml
   - frontend.yaml
   - nginx.yaml

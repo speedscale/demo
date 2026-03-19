@@ -19,7 +19,6 @@ from app.providers.openai_adapter import OpenAIAdapter
 from app.providers.anthropic_adapter import AnthropicAdapter
 from app.providers.gemini_adapter import GeminiAdapter
 from app.providers.xai_adapter import XAIAdapter
-from app.tools import router as tools_router
 
 app = FastAPI(
     title="Ticket Triage API",
@@ -33,8 +32,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.include_router(tools_router)
 
 _ADAPTERS: Dict[str, Any] = {
     "openai":    OpenAIAdapter(),
@@ -52,7 +49,7 @@ _PROVIDER_MODELS: Dict[str, List[str]] = {
 
 _run_store: Dict[str, RunResult] = {}
 
-_TOOL_BASE_URL = os.getenv("TOOL_BASE_URL", "http://localhost:8000")
+_TOOL_BASE_URL = os.getenv("TOOL_BASE_URL", "http://llm-simulation-tools")
 
 
 async def _call_tool(tool_name: str, path: str) -> ToolCallRecord:

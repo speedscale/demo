@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: smart-replace-demo
-          image: gcr.io/speedscale-demos/smart-replace-demo:v1.3.7
+          image: gcr.io/speedscale-demos/smart-replace-demo:v1.3.8
           imagePullPolicy: Always
           readinessProbe:
             httpGet:

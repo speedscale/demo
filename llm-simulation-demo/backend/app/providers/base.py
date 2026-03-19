@@ -60,6 +60,107 @@ def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> fl
     return round(input_cost + output_cost, 8)
 
 
+# ── Knowledge base articles injected into the analysis prompt ───────────────
+# Keyed by the category value returned in the triage step.
+
+KB_ARTICLES: Dict[str, str] = {
+    "billing": (
+        "KB-1042 — Billing & Refund Procedures\n"
+        "Duplicate charges: check payment-service idempotency logs for double-fire events within a 5-minute window. "
+        "Common cause is client-side retry without idempotency key. Refund via admin panel → Billing → Issue Credit. "
+        "SLA: full refund processed within 5 business days, credit card may take 7-10 days to appear.\n"
+        "Disputed invoices: pull usage export from reporting-service. Compare line items against customer's plan entitlements. "
+        "Any overage > 20% of expected MRR requires L2 approval before issuing credit.\n"
+        "Subscription double-charge: most common after plan upgrade mid-cycle. Prorate logic lives in billing-service/proration.py. "
+        "Check audit log for concurrent webhook deliveries from payment processor."
+    ),
+    "technical": (
+        "KB-2001 — Platform Incident Runbook\n"
+        "Post-deployment regressions (14:00 UTC daily deploy): check Datadog deployment marker. Compare p99 error rate before/after. "
+        "Rollback command: kubectl rollout undo deployment/<service> -n production.\n"
+        "Checkout 500 errors: most common causes are (1) tax calculation service timeout, (2) stale session token, "
+        "(3) inventory hold race condition. Check order-service logs for CHECKOUT_CONFIRM_FAILED events.\n"
+        "Payment processor unavailable: verify stripe.com/status. If processor is healthy, check payment-service circuit breaker "
+        "state in Redis (key: cb:payment:state). Circuit may have tripped; reset with admin CLI: platform cb reset payment.\n"
+        "Auth failures post-cert-rotation: SAML certificate fingerprints are cached in auth-service for 1 hour. "
+        "Force refresh: platform auth clear-cert-cache --tenant <tenant_id>."
+    ),
+    "integration": (
+        "KB-3015 — Webhook & Integration Troubleshooting\n"
+        "Silent webhook failures: integration-hub logs all delivery attempts even when customer endpoint returns 2xx. "
+        "Check integration_hub.webhook_deliveries table — status='success' with response_code=200 but no payload in body "
+        "indicates customer endpoint is swallowing requests. Replay missed events: platform webhooks replay --from <timestamp> --to <timestamp>.\n"
+        "API 503 errors: check integration-hub rate limiter. Default: 1000 req/min per tenant. "
+        "Enterprise tenants can request quota increase via platform quota increase --tenant <id> --limit <n>.\n"
+        "Inventory sync lag: default sync interval is 15 minutes. VIP customers can request 1-minute sync. "
+        "Current lag visible at: GET /api/v2/inventory/sync-status. Overselling guard available but opt-in only."
+    ),
+    "account": (
+        "KB-4008 — Account & Authentication\n"
+        "SSO / SAML issues: verify IdP metadata URL is accessible. Common issue is IP allowlist on customer firewall blocking "
+        "our assertion consumer service at sso.platform.io. Certificate rotation: new cert takes up to 1 hour to propagate "
+        "across all auth-service replicas. Immediate fix: platform auth force-reload-cert --tenant <id>.\n"
+        "2FA setup loop: known bug in mobile-api-gateway when TOTP verification response arrives > 5s after QR scan. "
+        "Workaround: user should complete setup on web, not mobile. Fix in v1.4.0 (next sprint).\n"
+        "GDPR erasure: right-to-erasure pipeline runs nightly at 02:00 UTC. Manual trigger available for urgent requests: "
+        "platform gdpr erase --user <id> --reason '<legal_request_ref>'. Audit trail preserved for 30 days post-erasure."
+    ),
+    "performance": (
+        "KB-5003 — Performance & Latency Issues\n"
+        "Order tracking latency: tracking-service polls carrier APIs every 10 minutes. If no update for 48h, "
+        "check carrier_integration.stale_orders table. Manual refresh: platform tracking refresh --order <id>.\n"
+        "Mobile app load issues: iOS image compression uses libvips. Bug in v2.3.1 of our iOS SDK causes crash on HEIC images > 1.5MB on iOS 17.4+. "
+        "Hotfix SDK v2.3.2 available. Android 14 blank screen: caused by incompatible WebView version in Android System WebView 124. "
+        "Fix: force update via Google Play System Update.\n"
+        "Report generation timeout: scheduled reports run on reporting-service worker pool (4 workers). "
+        "Jobs queued > 30 min indicate worker starvation. Check: platform jobs status --type=report."
+    ),
+    "data": (
+        "KB-6002 — Data Export & Compliance\n"
+        "Corrupt CSV exports: known issue when export > 100K rows and request times out at the load balancer (120s default). "
+        "Workaround: split into date ranges of 6 months max, or request async export (returns download link via email). "
+        "Async export: POST /api/v2/exports with 'async': true.\n"
+        "GDPR Article 17 (right to erasure): 30-day legal window, but internal SLA is 15 days. Urgent requests can be manually "
+        "triggered. All data deletion is soft-delete for 7 days before hard delete runs.\n"
+        "Webhook event replay for audit: available for 90 days. Beyond that requires data warehouse query."
+    ),
+    "shipping": (
+        "KB-7001 — Order & Shipping Issues\n"
+        "Bulk import stuck: CSV import pipeline uses async job queue (Redis-backed). Max job size: 10K rows. "
+        "Jobs > 10K rows are automatically split. If job shows 'queued' for > 30 min, likely a worker crash. "
+        "Check: platform jobs status --id <job_id>. Restart worker: kubectl rollout restart deployment/import-worker.\n"
+        "SSL certificate expiry: certificates are managed via Let's Encrypt with auto-renewal 30 days before expiry. "
+        "Renewal failure notification should have gone to the account's technical contact. "
+        "Emergency reissue: platform ssl reissue --domain <domain>. Takes 2-5 minutes.\n"
+        "Order confirmation emails: sent by notification-service. Check delivery status in SendGrid dashboard. "
+        "Bulk import jobs trigger batch notifications after job completion, not per-order."
+    ),
+    "mobile": (
+        "KB-8001 — Mobile Application Issues\n"
+        "iOS crash on image upload: affects iOS 17.4 with images > 2MB. Root cause: libvips 8.14.x memory alignment bug. "
+        "Fixed in SDK v2.3.2. Push update immediately or advise customer to reduce image size < 2MB as workaround.\n"
+        "Android 14 blank screen on startup: WebView compatibility issue with Android System WebView 124. "
+        "Affects ~30% of Android 14 devices. Fix: advise users to update Android System WebView from Play Store. "
+        "Our app update v3.1.1 includes a WebView version check and fallback.\n"
+        "Push notification failures: notification-service uses FCM for Android, APNs for iOS. "
+        "Check certificate expiry for APNs (yearly). FCM keys rotate quarterly — verify in firebase console."
+    ),
+    "other": (
+        "KB-9000 — General Escalation Procedures\n"
+        "L1 to L2 escalation: use Jira 'Escalate to Engineering' workflow. Include ticket ID, customer tier, "
+        "reproduction steps, and relevant log snippets. L2 SLA: 2h for critical/VIP, 4h for enterprise, 24h for standard.\n"
+        "Customer compensation: standard = account credit up to $50; enterprise = up to $500 or 1-month subscription credit; "
+        "VIP = coordinated with CSM, no hard limit, requires VP approval > $1000.\n"
+        "Post-incident review: required for all critical tickets. PIR template in Confluence."
+    ),
+}
+
+
+def get_kb_article(category: str) -> str:
+    """Return the most relevant KB article for a ticket category."""
+    return KB_ARTICLES.get(category.lower(), KB_ARTICLES["other"])
+
+
 # ── System prompts ──────────────────────────────────────────────────────────
 
 SYSTEM_PROMPT_TRIAGE = (
@@ -131,12 +232,15 @@ def build_triage_message(request: RunRequest) -> str:
 def build_analysis_message(request: RunRequest, triage: dict, context: str) -> str:
     inp = request.input
     triage_str = json.dumps(triage, indent=2)
+    category = triage.get("category", "other")
+    kb_article = get_kb_article(category)
     return (
         f"Ticket ID: {inp.ticket_id}\n"
         f"Customer Tier: {inp.customer_tier}\n"
         f"Ticket Content:\n{inp.transcript}\n\n"
         f"Initial Triage Result:\n{triage_str}\n\n"
-        f"Supporting Data from Platform Tools:\n{context if context else 'No tool data available.'}"
+        f"Supporting Data from Platform Tools:\n{context if context else 'No tool data available.'}\n\n"
+        f"Relevant Knowledge Base Article:\n{kb_article}"
     )
 
 

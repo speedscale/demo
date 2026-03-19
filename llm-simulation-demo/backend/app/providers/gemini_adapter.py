@@ -101,6 +101,7 @@ class GeminiAdapter:
             "generationConfig": {
                 "temperature": 0.2,
                 "responseMimeType": "application/json",
+                "maxOutputTokens": 2048,
             },
         }
         t0 = time.monotonic()

@@ -23,7 +23,7 @@ from app.providers.xai_adapter import XAIAdapter
 app = FastAPI(
     title="Ticket Triage API",
     description="AI-powered support ticket analysis backend — 3-step pipeline per ticket.",
-    version="1.3.7",
+    version="1.3.8",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ _PROVIDER_MODELS: Dict[str, List[str]] = {
     "openai":    ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"],
     "anthropic": ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5"],
     "gemini":    ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
-    "xai":       ["grok-3-mini", "grok-3", "grok-2-1212"],
+    "xai":       ["grok-3", "grok-3-mini", "grok-2-1212"],
 }
 
 _run_store: Dict[str, RunResult] = {}

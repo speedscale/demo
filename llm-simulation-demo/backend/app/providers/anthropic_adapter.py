@@ -97,7 +97,7 @@ class AnthropicAdapter:
         """Returns (content, prompt_tokens, completion_tokens, duration_ms)."""
         payload = {
             "model": model,
-            "max_tokens": 1024,
+            "max_tokens": 2048,
             "system": system,
             "messages": [{"role": "user", "content": user}],
         }

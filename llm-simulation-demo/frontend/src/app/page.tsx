@@ -320,15 +320,12 @@ function SavingsEstimator({ items, runsPerDay }: { items: BatchItem[]; runsPerDa
   const completed = items.filter((i) => i.status === "done" && i.result);
   if (completed.length === 0) return null;
 
-  // Total cost for this batch
   const batchCost = completed.reduce((sum, i) => sum + (i.result?.cost_usd ?? 0), 0);
-  // Cost per individual run (one ticket, one provider)
-  const costPerRun = batchCost / completed.length;
-  const dailyCost = costPerRun * runsPerDay;
+  const costPerTicket = batchCost / completed.length;
+  const dailyCost = costPerTicket * runsPerDay;
   const monthlyCost = dailyCost * 30;
-  const yearlyWithSimulation = 0; // Simulation = $0 API cost
+  const annualCost = dailyCost * 365;
 
-  // Per-provider breakdown
   const byProvider: Record<string, { cost: number; count: number }> = {};
   for (const item of completed) {
     if (!item.result) continue;
@@ -338,72 +335,81 @@ function SavingsEstimator({ items, runsPerDay }: { items: BatchItem[]; runsPerDa
     byProvider[p].count += 1;
   }
 
+  function fmtLarge(n: number): string {
+    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
+    return fmt$(n);
+  }
+
+  const maxAnnualPerProvider = Math.max(
+    ...Object.values(byProvider).map((v) => (v.cost / v.count) * runsPerDay * 365),
+    0.001
+  );
+
   return (
-    <div
-      className="rounded-xl p-5 space-y-4"
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-    >
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-bold">💰 Cost Story</span>
-        <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "#f59e0b22", color: "#f59e0b", border: "1px solid #f59e0b44" }}>
-          Live data from this run
+    <div className="rounded-xl p-5 space-y-5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <p className="text-sm font-bold">Cost at Scale</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+            Projected from live run · {runsPerDay.toLocaleString()} tickets/day
+          </p>
+        </div>
+        <span className="text-xs px-2 py-0.5 rounded-full font-mono" style={{ background: "#f59e0b22", color: "#f59e0b", border: "1px solid #f59e0b44" }}>
+          {fmt$(costPerTicket)} avg / ticket · 3 LLM calls
         </span>
       </div>
 
-      {/* This batch */}
-      <div className="grid grid-cols-3 gap-3 text-center">
-        <div className="rounded-lg p-3" style={{ background: "#ef444411", border: "1px solid #ef444433" }}>
-          <p className="text-lg font-bold" style={{ color: "#ef4444" }}>{fmt$(batchCost)}</p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>This batch</p>
+      {/* Hero: annual real vs simulation */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl p-4 text-center space-y-1" style={{ background: "#ef444411", border: "1px solid #ef444433" }}>
+          <p className="text-xs uppercase tracking-wider" style={{ color: "#ef4444" }}>Annual LLM spend</p>
+          <p className="text-3xl font-bold leading-none" style={{ color: "#ef4444" }}>{fmtLarge(annualCost)}</p>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>{fmt$(dailyCost)}/day · {fmtLarge(monthlyCost)}/mo</p>
         </div>
-        <div className="rounded-lg p-3" style={{ background: "#f59e0b11", border: "1px solid #f59e0b33" }}>
-          <p className="text-lg font-bold" style={{ color: "#f59e0b" }}>{fmt$(monthlyCost)}</p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>/month @ {runsPerDay}×/day</p>
-        </div>
-        <div className="rounded-lg p-3" style={{ background: "#10b98111", border: "1px solid #10b98133" }}>
-          <p className="text-lg font-bold" style={{ color: "#10b981" }}>{fmt$(yearlyWithSimulation)}</p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>with simulation</p>
+        <div className="rounded-xl p-4 text-center space-y-1" style={{ background: "#10b98111", border: "1px solid #10b98133" }}>
+          <p className="text-xs uppercase tracking-wider" style={{ color: "#10b981" }}>With simulation</p>
+          <p className="text-3xl font-bold leading-none" style={{ color: "#10b981" }}>$0</p>
+          <p className="text-xs font-semibold" style={{ color: "#10b981" }}>Save {fmtLarge(annualCost)} / year</p>
         </div>
       </div>
 
-      {/* Per-provider cost */}
-      <div className="space-y-1.5">
-        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Cost per run by provider</p>
+      {/* Per-provider annual breakdown */}
+      <div className="space-y-2">
+        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Annual spend by provider</p>
         {Object.entries(byProvider)
           .sort((a, b) => b[1].cost / b[1].count - a[1].cost / a[1].count)
           .map(([prov, { cost, count }]) => {
-            const perRun = cost / count;
-            const perMonth = perRun * runsPerDay * 30;
+            const perTicket = cost / count;
+            const annual = perTicket * runsPerDay * 365;
             return (
               <div key={prov} className="flex items-center gap-3 text-xs">
                 <span className="w-24 font-medium">{PROVIDER_DISPLAY[prov] ?? prov}</span>
                 <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface2)" }}>
                   <div
                     className="h-full rounded-full"
-                    style={{
-                      width: `${Math.min(100, (perRun / (Object.values(byProvider).reduce((m, v) => Math.max(m, v.cost / v.count), 0.001))) * 100)}%`,
-                      background: "var(--accent)",
-                    }}
+                    style={{ width: `${Math.min(100, (annual / maxAnnualPerProvider) * 100)}%`, background: "var(--accent)" }}
                   />
                 </div>
-                <span className="w-16 text-right font-mono">{fmt$(perRun)}/run</span>
-                <span className="w-20 text-right font-mono" style={{ color: "#ef4444" }}>{fmt$(perMonth)}/mo</span>
+                <span className="w-16 text-right font-mono">{fmt$(perTicket)}/tkt</span>
+                <span className="w-20 text-right font-mono font-semibold" style={{ color: "#ef4444" }}>{fmtLarge(annual)}/yr</span>
               </div>
             );
           })}
-        <div className="flex items-center gap-3 text-xs mt-1">
+        <div className="flex items-center gap-3 text-xs">
           <span className="w-24 font-bold" style={{ color: "#10b981" }}>Simulation</span>
           <div className="flex-1 h-1.5 rounded-full" style={{ background: "var(--surface2)" }}>
-            <div className="h-full w-px rounded-full" style={{ background: "#10b981" }} />
+            <div className="h-full w-0.5 rounded-full" style={{ background: "#10b981" }} />
           </div>
-          <span className="w-16 text-right font-mono font-bold" style={{ color: "#10b981" }}>$0.00/run</span>
-          <span className="w-20 text-right font-mono font-bold" style={{ color: "#10b981" }}>$0.00/mo</span>
+          <span className="w-16 text-right font-mono font-bold" style={{ color: "#10b981" }}>$0.00/tkt</span>
+          <span className="w-20 text-right font-mono font-bold" style={{ color: "#10b981" }}>$0/yr</span>
         </div>
       </div>
 
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        Simulation captures this exact traffic, replays it locally, and returns identical responses — without ever hitting the LLM API.
-      </p>
+      <div className="rounded-lg p-3 text-xs space-y-1" style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+        <p><strong style={{ color: "var(--text)" }}>How simulation eliminates this cost:</strong></p>
+        <p>Speedscale captures the exact traffic pattern from this run — real tickets, real LLM responses — and replays it at any scale without calling the API. Your support pipeline gets realistic responses in testing and load scenarios for $0.</p>
+      </div>
     </div>
   );
 }
@@ -577,7 +583,7 @@ export default function HomePage() {
   const [result, setResult] = useState<RunResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [runsPerDay, setRunsPerDay] = useState(200);
+  const [runsPerDay, setRunsPerDay] = useState(10000);
 
   // Batch state
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
@@ -696,9 +702,9 @@ export default function HomePage() {
       {/* ── Left panel: form ── */}
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Ticket Triage</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Support Ticket Triage</h1>
           <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-            3-step AI pipeline: classify → analyze → draft response.
+            AI-powered support: classify severity, identify root cause, and draft a customer response.
           </p>
         </div>
 
@@ -805,7 +811,7 @@ export default function HomePage() {
             disabled={isBusy}
             className="py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
             style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
-            title={`Run all 20 tickets × ${configuredCount} providers × 3 LLM steps = ${totalCalls} calls`}
+            title={`Run all ${SAMPLE_TICKETS.length} tickets × ${configuredCount} providers × 3 LLM calls = ${totalCalls} total`}
           >
             {batchRunning ? `${batchDone} / ${batchTotal}…` : "Analyze All"}
           </button>
@@ -814,28 +820,28 @@ export default function HomePage() {
         {providers.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-              Analyze All:{" "}
-              <strong>{SAMPLE_TICKETS.length} tickets × {configuredCount} provider{configuredCount !== 1 ? "s" : ""} × 3 steps = {totalCalls} LLM calls</strong>
+              Runs all {SAMPLE_TICKETS.length} tickets against each configured provider —{" "}
+              <strong>{totalCalls} LLM calls total</strong>
             </p>
             {/* Runs/day slider for savings estimator */}
             <div className="rounded-lg p-3 space-y-1.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
               <div className="flex items-center justify-between text-xs">
-                <label style={{ color: "var(--text-muted)" }}>Runs / day (for savings estimate)</label>
-                <span className="font-semibold">{runsPerDay}</span>
+                <label style={{ color: "var(--text-muted)" }}>Support tickets / day</label>
+                <span className="font-semibold">{runsPerDay.toLocaleString()}</span>
               </div>
               <input
                 type="range"
-                min={10}
-                max={1000}
-                step={10}
+                min={1000}
+                max={100000}
+                step={1000}
                 value={runsPerDay}
                 onChange={(e) => setRunsPerDay(Number(e.target.value))}
                 className="w-full"
               />
               <div className="flex justify-between text-xs" style={{ color: "var(--text-muted)" }}>
-                <span>10 (dev team)</span>
-                <span>500 (CI pipeline)</span>
-                <span>1000 (load test)</span>
+                <span>1K startup</span>
+                <span>10K growing</span>
+                <span>100K enterprise</span>
               </div>
             </div>
           </div>
@@ -876,7 +882,7 @@ export default function HomePage() {
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
               >
                 <p className="text-sm">Select a ticket and click <strong>Analyze Ticket</strong>.</p>
-                <p className="text-xs">Each analysis makes <strong>3 LLM calls</strong> — triage, root-cause analysis, and customer response draft.</p>
+                <p className="text-xs">Each ticket triggers <strong>3 sequential LLM calls</strong>: severity triage, root-cause analysis, and a draft customer response.</p>
               </div>
             )}
 

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 function fmt$(n: number): string {
   if (n === 0) return "$0.00";
   if (n < 0.01) return `$${n.toFixed(4)}`;
-  return `$${n.toFixed(4)}`;
+  return `$${n.toFixed(2)}`;
 }
 
 export function NavBar() {
@@ -27,7 +27,7 @@ export function NavBar() {
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-8">
         <div className="flex items-center gap-8">
           <span className="font-bold text-lg tracking-tight" style={{ color: "var(--accent)" }}>
-            Ticket Triage
+            Support Triage
           </span>
           <div className="flex gap-6 text-sm" style={{ color: "var(--text-muted)" }}>
             <a href="/" className="hover:text-white transition-colors">Analyze</a>

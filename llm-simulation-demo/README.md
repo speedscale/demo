@@ -4,9 +4,17 @@ A support ticket triage app built to demonstrate [Speedscale](https://speedscale
 
 ## The simulation angle
 
-Every run against a real LLM costs money. That's fine in production where you need real responses, and it's fine when you're running evals to measure quality. But most of the time you're not doing either of those things — you're writing pipeline logic, fixing a prompt, running CI, or load testing. Paying API rates for that is wasteful and it slows you down.
+Every run against a real LLM costs money. At support-center scale that adds up fast — $180K/year for a mid-size operation running Claude Sonnet. Most of that spend isn't production traffic; it's developers iterating on prompts, CI pipelines running regression tests, and load tests validating scale. None of that needs to hit a real API.
 
-The demo lets you capture a real run once, then replay that captured traffic at any scale without touching the API again. Load test at 10,000 tickets/hour, your CI runs in seconds, and the cost is zero. The slider on the main page shows what the real API bill would have been.
+| When | Pay real tokens? | Why |
+|---|---|---|
+| Production — live customer tickets | Yes | Real customers need real responses |
+| Prompt evals — measuring output quality | Yes | You need authentic model output to score |
+| Development — iterating on pipeline logic | No | You're testing code paths, not the LLM |
+| CI / regression tests | No | Deterministic replays are faster and free |
+| Load testing | No | Would cost hundreds of dollars per run |
+
+Speedscale captures one real run — paying for tokens once — then replays that traffic at any volume without touching the API again. The slider on the main page shows what the bill would be at your actual ticket volume.
 
 ## How it works
 

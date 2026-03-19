@@ -45,6 +45,10 @@ jobs:
             path: csharp
             setup: dotnet
             test_cmd: dotnet test
+          - name: llm-simulation-tools
+            path: llm-simulation-demo/tools-service
+            setup: python
+            test_cmd: make test
           - name: llm-simulation-backend
             path: llm-simulation-demo/backend
             setup: python
@@ -337,6 +341,9 @@ jobs:
             target: docker-multi
           - service: gateway
             path: scenarios/microservices/gateway
+            target: docker-multi
+          - service: llm-simulation-tools
+            path: llm-simulation-demo/tools-service
             target: docker-multi
           - service: llm-simulation-backend
             path: llm-simulation-demo/backend

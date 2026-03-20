@@ -124,11 +124,11 @@ class TestRunTask:
              patch("app.main._call_tool", new=AsyncMock(return_value=_MOCK_TOOL)):
             r = await client.post("/api/run", json={
                 "provider": "openai",
-                "model": "gpt-4.1",
+                "model": "gpt-5.4",
                 "input": {"ticket_id": "INC-003", "customer_tier": "vip",
                           "transcript": "Test"},
             })
-        assert r.json()["model"] == "gpt-4.1"
+        assert r.json()["model"] == "gpt-5.4"
 
     async def test_unknown_provider_returns_400(self, client):
         r = await client.post("/api/run", json={

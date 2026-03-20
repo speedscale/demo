@@ -17,7 +17,7 @@ const mockFetch = (body: unknown, status = 200) =>
 const GOOD_RESULT = {
   request_id: "req_test",
   provider: "openai",
-  model: "gpt-4o-mini",
+  model: "gpt-5.4-mini",
   output: { summary: "Test", severity: "low", recommended_action: "None" },
   steps: [],
   tool_calls: [],
@@ -84,7 +84,7 @@ describe("getProviders", () => {
 
   const PROVIDERS_RESPONSE = {
     providers: [
-      { id: "openai", models: ["gpt-4o"], default_model: "gpt-4o-mini", configured: true },
+      { id: "openai", models: ["gpt-5.4"], default_model: "gpt-5.4-mini", configured: true },
     ],
     default_provider: "openai",
   };

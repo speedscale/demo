@@ -101,12 +101,12 @@ class TestSafeJson:
 
 class TestCalculateCost:
     def test_known_model(self):
-        cost = calculate_cost("gpt-4.1-mini", 1_000_000, 0)
-        assert abs(cost - 0.40) < 0.001
+        cost = calculate_cost("gpt-5.4-mini", 1_000_000, 0)
+        assert abs(cost - 0.75) < 0.001
 
     def test_output_tokens_more_expensive(self):
-        cost_in = calculate_cost("gpt-4.1-mini", 1000, 0)
-        cost_out = calculate_cost("gpt-4.1-mini", 0, 1000)
+        cost_in = calculate_cost("gpt-5.4-mini", 1000, 0)
+        cost_out = calculate_cost("gpt-5.4-mini", 0, 1000)
         assert cost_out > cost_in
 
     def test_unknown_model_uses_default(self):

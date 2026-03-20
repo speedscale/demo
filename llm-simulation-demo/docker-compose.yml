@@ -1,6 +1,23 @@
-version: "3.9"
-
 services:
+  tools:
+    build:
+      context: ./tools-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/healthz')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   backend:
     build:
       context: ./backend
@@ -8,18 +25,30 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - TOOL_BASE_URL=http://tools:8001
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - XAI_API_KEY=${XAI_API_KEY:-}
       - COHERE_API_KEY=${COHERE_API_KEY:-}
       - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
       - DEFAULT_PROVIDER=${DEFAULT_PROVIDER:-openai}
       - ENABLE_SIMULATION_MODE=${ENABLE_SIMULATION_MODE:-true}
+    depends_on:
+      tools:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
 
   frontend:
     build:
@@ -28,7 +57,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://backend:8000
+      - BACKEND_URL=http://backend:8000
     depends_on:
       backend:
         condition: service_healthy

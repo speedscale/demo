@@ -8,8 +8,11 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 import httpx
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+load_dotenv()
 
 from app.models.request import RunRequest
 from app.models.result import LLMStep, OutputEnvelope, RunResult, TimingInfo
@@ -41,10 +44,10 @@ _ADAPTERS: Dict[str, Any] = {
 }
 
 _PROVIDER_MODELS: Dict[str, List[str]] = {
-    "openai":    ["gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"],
+    "openai":    ["gpt-5.4-mini", "gpt-5.4", "gpt-5.4-nano"],
     "anthropic": ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5"],
     "gemini":    ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
-    "xai":       ["grok-3", "grok-3-mini", "grok-2-1212"],
+    "xai":       ["grok-4-1-fast-non-reasoning", "grok-4-1-fast-reasoning", "grok-4.20-0309-non-reasoning"],
 }
 
 _run_store: Dict[str, RunResult] = {}

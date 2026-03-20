@@ -22,23 +22,23 @@ Speedscale records one real run and replays it locally at any volume. The slider
                         ┌─────────────────────────────────────────────┐
                         │             Kubernetes Cluster              │
                         │                                             │
-  Browser               │  ┌─────────┐    ┌──────────┐               │
-    │                   │  │  nginx  │    │ frontend │               │
-    │ :3000             │  │ (proxy) │───▶│ Next.js  │               │
-    └──────────────────▶│  │         │    │          │               │
-                        │  └─────────┘    └────┬─────┘               │
-                        │   LoadBalancer        │ /api/*              │
-                        │                       ▼                     │
+  Browser               │  ┌─────────┐    ┌──────────┐                │
+    │                   │  │  nginx  │    │ frontend │                │
+    │ :3000             │  │ (proxy) │───▶│ Next.js  │                │
+    └──────────────────▶│  │         │    │          │                │
+                        │  └─────────┘    └────┬─────┘                │
+                        │   LoadBalancer       │ /api/*               │
+                        │                      ▼                      │
                         │                ┌──────────┐                 │
                         │                │ backend  │                 │
                         │                │ FastAPI  │                 │
                         │                └──┬───┬───┘                 │
                         │          ┌────────┘   └─────────┐           │
-                        │          ▼                       ▼           │
+                        │          ▼                      ▼           │
                         │  ┌───────────────┐    ┌───────────────────┐ │
                         │  │ tools-service │    │   LLM Providers   │ │
                         │  │  order lookup │    │                   │ │
-                        │  │ policy lookup │    │  OpenAI  GPT-4    │ │
+                        │  │ policy lookup │    │  OpenAI  GPT-5.4   │ │
                         │  └───────────────┘    │  Anthropic Claude │ │
                         │                       │  Google Gemini    │ │
                         │                       │  xAI / Grok       │ │
@@ -60,29 +60,63 @@ The tools service adds realistic latency (80–220ms for order lookups, 15–60m
 
 | Provider | Default model | Key |
 |---|---|---|
-| OpenAI | `gpt-4.1-mini` | `OPENAI_API_KEY` |
+| OpenAI | `gpt-5.4-mini` | `OPENAI_API_KEY` |
 | Anthropic | `claude-haiku-4-5` | `ANTHROPIC_API_KEY` |
 | Google Gemini | `gemini-flash-latest` | `GEMINI_API_KEY` |
-| xAI / Grok | `grok-3` | `XAI_API_KEY` |
+| xAI / Grok | `grok-4-1-fast-non-reasoning` | `XAI_API_KEY` |
 
 You only need one key to run the demo. The "Analyze All" button runs all 20 sample tickets against whichever providers are configured.
 
 ## Running locally
 
+All commands assume you are in the `llm-simulation-demo` directory.
+
+### Prerequisites
+
+- **Python 3.11+** and **pip** (virtual environments recommended)
+- **Node.js 20+** and **npm**
+- At least **one** provider API key (see [Providers](#providers)); the UI lists only configured providers
+
+The app has three parts: **tools-service** (mock order/policy HTTP API), **backend** (FastAPI + LLM calls), and **frontend** (Next.js). Start them in that order in separate terminals.
+
+### 1. Tools service (port 8001)
+
 ```bash
-# tools service
-cd tools-service && pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
-
-# backend
-cd backend && cp .env.example .env   # add your API keys
+cd tools-service
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-TOOL_BASE_URL=http://localhost:8001 uvicorn app.main:app --reload --port 8000
-
-# frontend
-cd frontend && npm install
-BACKEND_URL=http://localhost:8000 npm run dev
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
+
+Quick check: `curl -s http://127.0.0.1:8001/healthz`
+
+### 2. Backend (port 8000)
+
+```bash
+cd backend
+cp .env.example .env
+# Edit .env: set API keys and TOOL_BASE_URL=http://127.0.0.1:8001
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+The backend loads variables from `backend/.env` on startup (`python-dotenv`). You can still override any variable in your shell if you prefer.
+
+Quick check: `curl -s http://127.0.0.1:8000/healthz` and `curl -s http://127.0.0.1:8000/api/providers`
+
+### 3. Frontend (port 3000)
+
+```bash
+cd frontend
+cp .env.local.example .env.local   # default BACKEND_URL matches native backend
+npm install
+npm run dev
+```
+
+Open **http://localhost:3000**. The browser talks to Next.js; server-side code proxies `/api/*` to `BACKEND_URL` (see `src/app/api/[...path]/route.ts`).
+
+Automated tests (no real LLM calls) are described in [TESTING.md](TESTING.md).
 
 ## Kubernetes
 

@@ -33,7 +33,10 @@ class ProviderAdapter(Protocol):
 
 # Per-model pricing in USD per 1M tokens (input_price, output_price)
 MODEL_PRICING: Dict[str, Tuple[float, float]] = {
-    # OpenAI
+    # OpenAI (see https://platform.openai.com/docs/models )
+    "gpt-5.4-mini":             (0.75,   4.50),
+    "gpt-5.4":                  (2.50,  15.00),
+    "gpt-5.4-nano":             (0.20,   1.25),
     "gpt-4.1-mini":             (0.40,   1.60),
     "gpt-4.1":                  (2.00,   8.00),
     "gpt-4o-mini":              (0.15,   0.60),
@@ -45,7 +48,10 @@ MODEL_PRICING: Dict[str, Tuple[float, float]] = {
     "gemini-flash-latest":      (0.10,   0.40),
     "gemini-flash-lite-latest": (0.075,  0.30),
     "gemini-pro-latest":        (1.25,   5.00),
-    # xAI / Grok
+    # xAI / Grok (see https://docs.x.ai/docs/models )
+    "grok-4-1-fast-non-reasoning":  (0.20,   0.50),
+    "grok-4-1-fast-reasoning":      (0.20,   0.50),
+    "grok-4.20-0309-non-reasoning": (2.00,   6.00),
     "grok-3":                   (3.00,  15.00),
     "grok-3-mini":              (0.30,   0.50),
     "grok-2-1212":              (2.00,  10.00),

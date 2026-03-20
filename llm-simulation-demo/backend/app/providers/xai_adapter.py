@@ -26,7 +26,7 @@ class XAIAdapter(OpenAIAdapter):
     """Grok (xAI) adapter — uses the same OpenAI-compatible API at a different base URL."""
 
     name = "xai"
-    default_model = "grok-3"
+    default_model = "grok-4-1-fast-non-reasoning"
 
     async def run(self, request: RunRequest, context: str = "") -> AdapterResult:
         api_key = os.getenv("XAI_API_KEY", "")

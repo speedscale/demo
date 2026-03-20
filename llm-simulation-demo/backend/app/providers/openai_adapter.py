@@ -26,7 +26,7 @@ _OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 
 class OpenAIAdapter:
     name = "openai"
-    default_model = "gpt-4.1-mini"
+    default_model = "gpt-5.4-mini"
 
     async def run(self, request: RunRequest, context: str = "") -> AdapterResult:
         api_key = os.getenv("OPENAI_API_KEY", "")

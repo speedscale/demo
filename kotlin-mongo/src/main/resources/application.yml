@@ -1,0 +1,8 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://testuser:testpass@localhost:27017/admin?authSource=admin&directConnection=true}
+      database: data-service-performance-test_karate-test-data-service

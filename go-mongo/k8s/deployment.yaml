@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-service
+  namespace: mongo-repro
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-service
+  template:
+    metadata:
+      labels:
+        app: data-service
+      annotations:
+        sidecar.speedscale.com/inject: "true"
+        sidecar.speedscale.com/tls-out: "true"
+    spec:
+      containers:
+        - name: data-service
+          image: gcr.io/speedscale-demos/go-mongo:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGODB_URI
+              value: "mongodb://testuser:testpass@0c37a-perf-cobras-share.susxb.mongodb.net:27017/admin?authSource=admin&replicaSet=speedscale&tls=true&tlsInsecure=true"
+            - name: MONGODB_CREDENTIALS_FROM_FILE_USERNAME
+              value: "/etc/atlas/mongodb/credentials/username"
+            - name: MONGODB_CREDENTIALS_FROM_FILE_PASSWORD
+              value: "/etc/atlas/mongodb/credentials/password"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi

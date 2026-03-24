@@ -1,0 +1,40 @@
+services:
+  # ---------------------------------------------------------------------------
+  # MariaDB with TLS
+  # ---------------------------------------------------------------------------
+  mariadb:
+    image: mariadb:11
+    container_name: demo-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: demo
+      MARIADB_USER: demo
+      MARIADB_PASSWORD: demo_password
+    volumes:
+      - ./certs:/etc/mysql/certs:ro
+      - ./mariadb-tls.cnf:/etc/mysql/conf.d/tls.cnf:ro
+      - db-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # KrakenD API Gateway
+  # Proxies to the Node.js app running on the host via host.docker.internal
+  # ---------------------------------------------------------------------------
+  krakend:
+    image: devopsfaith/krakend:2.7
+    container_name: demo-krakend
+    volumes:
+      - ./krakend.json:/etc/krakend/krakend.json:ro
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  db-data:

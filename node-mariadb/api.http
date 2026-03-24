@@ -1,0 +1,31 @@
+### Health check (via KrakenD)
+GET http://localhost:8080/health
+
+### List all products
+GET http://localhost:8080/products
+
+### Get product by ID
+GET http://localhost:8080/products/1
+
+### Create a product
+POST http://localhost:8080/products
+Content-Type: application/json
+
+{
+  "name": "New Widget",
+  "price": 14.99,
+  "quantity": 42
+}
+
+### Update a product
+PUT http://localhost:8080/products/1
+Content-Type: application/json
+
+{
+  "name": "Updated Widget A",
+  "price": 12.99,
+  "quantity": 80
+}
+
+### Delete a product
+DELETE http://localhost:8080/products/3

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://www.krakend.io/schema/krakend.json",
+  "version": 3,
+  "name": "Node-MariaDB Demo Gateway",
+  "port": 8080,
+  "timeout": "3s",
+  "cache_ttl": "0s",
+  "output_encoding": "no-op",
+  "endpoints": [
+    {
+      "endpoint": "/health",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/health",
+          "host": ["http://host.docker.internal:3000"],
+          "encoding": "no-op"
+        }
+      ]
+    },
+    {
+      "endpoint": "/products",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/products",
+          "host": ["http://host.docker.internal:3000"],
+          "encoding": "no-op"
+        }
+      ]
+    },
+    {
+      "endpoint": "/products/{id}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/products/{id}",
+          "host": ["http://host.docker.internal:3000"],
+          "encoding": "no-op"
+        }
+      ]
+    },
+    {
+      "endpoint": "/products",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/products",
+          "host": ["http://host.docker.internal:3000"],
+          "encoding": "no-op"
+        }
+      ]
+    },
+    {
+      "endpoint": "/products/{id}",
+      "method": "PUT",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/products/{id}",
+          "host": ["http://host.docker.internal:3000"],
+          "encoding": "no-op"
+        }
+      ]
+    },
+    {
+      "endpoint": "/products/{id}",
+      "method": "DELETE",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/products/{id}",
+          "host": ["http://host.docker.internal:3000"],
+          "encoding": "no-op"
+        }
+      ]
+    }
+  ]
+}

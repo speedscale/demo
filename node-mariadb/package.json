@@ -1,0 +1,16 @@
+{
+  "name": "node-mariadb-demo",
+  "version": "1.3.8",
+  "description": "Node.js Express API with MariaDB (TLS) and KrakenD gateway",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["mariadb", "krakend", "tls", "demo"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.0",
+    "mariadb": "^3.4.0"
+  }
+}

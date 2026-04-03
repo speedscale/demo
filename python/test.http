@@ -1,4 +1,7 @@
 @host = localhost:5001
 
+### Health check
+GET http://{{host}}/healthz
+
 ### List available API calls
 GET http://{{host}}/spacex/launches

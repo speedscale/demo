@@ -1,37 +1,50 @@
-# SpaceX Launches API Demo
+# Python SpaceX Demo
 
-A simple Flask application that proxies SpaceX API data.
+Small Flask service used for Proxymock capture, mock, and replay.
 
 ## Setup
 
-1. Create and activate a virtual environment:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+make install
 ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-## Running the Application
+## Run
 
 ```bash
-python app.py
+make local
 ```
 
-The application will start on `http://0.0.0.0:5001`
+The app listens on `http://localhost:5001`.
 
-## API Endpoints
+## Endpoints
 
-- `GET /spacex/launches` - Returns the latest SpaceX launch data
+- `GET /healthz`
+- `GET /spacex/launches`
 
-## Testing
+## Proxymock
 
-You can test the endpoint using curl:
+Record a real SpaceX request flow:
+
 ```bash
-curl http://localhost:5001/spacex/launches
+make capture
 ```
 
-Or use the provided `test.http` file if you have a REST client extension.
+Run against recorded traffic:
+
+```bash
+make mock
+```
+
+Replay the same flow against the local app:
+
+```bash
+make replay
+```
+
+## Test
+
+```bash
+make test
+```
+
+Or use `test.http` for a REST client.

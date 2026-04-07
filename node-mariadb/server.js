@@ -32,7 +32,7 @@ function buildPoolConfig() {
   if (DB_SSL_CA && fs.existsSync(DB_SSL_CA)) {
     cfg.ssl = {
       ca: fs.readFileSync(DB_SSL_CA, 'utf8'),
-      rejectUnauthorized: true,
+      rejectUnauthorized: false,
     };
     console.log(`TLS enabled – CA cert loaded from ${DB_SSL_CA}`);
   } else {

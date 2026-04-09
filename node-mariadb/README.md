@@ -7,7 +7,7 @@ A CRUD products API built with **Node.js/Express**, backed by **MariaDB** with *
 ```mermaid
 graph LR
     Client -->|":8080"| KrakenD
-    KrakenD -->|":3000"| Node["Node.js Express"]
+    KrakenD -->|":3001"| Node["Node.js Express"]
     Node -->|":3306 TLS"| MariaDB
 
     subgraph Docker
@@ -26,7 +26,7 @@ graph LR
 
 ## API Endpoints
 
-All endpoints are available through KrakenD on port `8080` (or directly on `3000`):
+All endpoints are available through KrakenD on port `8080` (or directly on `3001`):
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -112,7 +112,7 @@ make infra
 make local
 ```
 
-This runs the Node.js API directly on the host on port 3000. KrakenD (in Docker) proxies to it via `host.docker.internal`.
+This runs the Node.js API directly on the host on port 3001. KrakenD (in Docker) proxies to it via `host.docker.internal`.
 
 **5. Test the API**
 
@@ -128,7 +128,7 @@ curl -X POST http://localhost:8080/products \
   -d '{"name":"EC2 Widget","price":29.99,"quantity":5}'
 
 # Direct to Node (bypasses gateway)
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 ```
 
 ## Automated Test Lifecycle (proxymock)
@@ -168,12 +168,12 @@ Records all HTTP and MariaDB traffic flowing through the Node app:
 ```mermaid
 graph LR
     curl -->|":4143"| PM_in["proxymock\n(inbound proxy)"]
-    PM_in -->|":3000"| Node["Node.js"]
+    PM_in -->|":3001"| Node["Node.js"]
     Node -->|":13306"| PM_out["proxymock\n(DB proxy)"]
     PM_out -->|":3306"| MariaDB
 ```
 
-- proxymock intercepts inbound HTTP on port **4143** and forwards to the app on **3000**
+- proxymock intercepts inbound HTTP on port **4143** and forwards to the app on **3001**
 - proxymock intercepts outbound DB traffic on port **13306** and forwards to real MariaDB on **3306**
 - All request/response pairs are saved as RRPair files in `proxymock/recorded-*/`
 
@@ -198,6 +198,8 @@ make test-mock
 ```
 
 Stops the real MariaDB and replays traffic with proxymock **simulating the database**. This proves the app works correctly with mocked backends -- no database needed.
+
+> Note: if your recorded MariaDB traffic is TLS-encrypted end-to-end, protocol-level MySQL mocking may not be available. In that case, use Phase 2 (replay with real DB) as the primary validation path.
 
 ```mermaid
 graph LR
@@ -258,12 +260,13 @@ make capture        # Terminal 1: starts speedctl capture on :4143
 In **Terminal 2**:
 
 ```bash
-export GLOBAL_AGENT_HTTP_PROXY='http://127.0.0.1:4140'
-export GLOBAL_AGENT_HTTPS_PROXY='http://127.0.0.1:4140'
-export GLOBAL_AGENT_NO_PROXY='*127.0.0.1:12557'
+export http_proxy='http://127.0.0.1:4140'
+export https_proxy='http://127.0.0.1:4140'
 export NODE_EXTRA_CA_CERTS=${HOME}/.speedscale/certs/tls.crt
-DB_HOST=127.0.0.1 DB_SSL_CA=./certs/ca.pem npm start
+DB_HOST=127.0.0.1 DB_SSL_CA=./certs/ca.pem PORT=3001 node server.js
 ```
+
+If your Node app is systemd-managed, set the same values in a systemd drop-in and restart the service instead of launching manually.
 
 ### 4. Generate and replay traffic
 
@@ -279,7 +282,7 @@ After creating a snapshot in the [Speedscale UI](https://app.speedscale.com):
 speedctl replay $SNAPSHOT_ID \
   --test-config-id standard \
   --http-port 4140 \
-  --custom-url http://localhost:3000
+  --custom-url http://localhost:3001
 ```
 
 ## Verifying TLS is active
@@ -301,8 +304,8 @@ make help            Show all targets
 make certs           Generate TLS certificates for MariaDB
 make build           Install Node dependencies
 make infra           Start MariaDB + KrakenD in Docker
-make local           Run Node.js API on the host (port 3000)
-make capture         Start speedctl capture proxy (port 4143 -> 3000)
+make local           Run Node.js API on the host (port 3001)
+make capture         Start speedctl capture proxy (port 4143 -> 3001)
 make client          Send sample traffic via KrakenD (:8080)
 make client-capture  Send sample traffic via speedctl proxy (:4143)
 make test-all        Automated: record -> replay -> mock (all 3 phases)
@@ -321,7 +324,7 @@ make logs            Tail Docker logs
 node-mariadb/
   server.js          – Express CRUD API
   package.json       – Node dependencies
-  krakend.json       – KrakenD gateway config (proxies to host.docker.internal:3000)
+  krakend.json       – KrakenD gateway config (proxies to host.docker.internal:3001)
   compose.yaml       – Docker Compose (MariaDB + KrakenD only, Node runs on host)
   Dockerfile         – Multi-stage Node.js image (for optional containerized deploys)
   test-all.sh        – Automated record -> replay -> mock lifecycle
@@ -337,10 +340,10 @@ node-mariadb/
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3000` | Node.js listen port |
+| `PORT` | `3001` | Node.js listen port |
 | `DB_HOST` | `127.0.0.1` | MariaDB hostname |
 | `DB_PORT` | `3306` | MariaDB port |
 | `DB_USER` | `demo` | Database user |
 | `DB_PASSWORD` | `demo_password` | Database password |
 | `DB_NAME` | `demo` | Database name |
-| `DB_SSL_CA` | *(empty)* | Path to CA cert for TLS (leave empty to disable) |
+| `DB_SSL_CA` | `./certs/ca.pem` | Path to CA cert for TLS |

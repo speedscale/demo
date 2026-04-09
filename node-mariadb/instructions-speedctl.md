@@ -1,61 +1,96 @@
-# speedctl Quick Start
+# speedctl Quick Start (KrakenD + systemd Node + MariaDB)
+
+This guide is for environments where Node runs as a service (not directly via `npm`), KrakenD is the gateway, and MariaDB/MySQL is used per tenant.
 
 ## Install
 
 ```bash
 sh -c "$(curl -Lfs https://downloads.speedscale.com/speedctl/install)"
-speedctl init   # authenticate with Speedscale cloud
+
+# If speedctl is not found immediately, reload your shell profile
+# (pick the one your shell uses)
+source ~/.zshrc 2>/dev/null || true
+source ~/.bashrc 2>/dev/null || true
+
+speedctl init
 ```
 
-## Capture
+## 1) Start capture
 
 ```bash
-# Terminal 1: start capture proxy (inbound on :4143, outbound on :4140)
-speedctl capture my-service 3000
+# Node listens on 3001
+speedctl capture my-service 3001
 
-# If app talks to a database, add --reverse-proxy:
-speedctl capture my-service 3000 --reverse-proxy 15432=db-host:5432
-# Then point your app at localhost:15432 instead of db-host:5432
+# Single DB host
+speedctl capture my-service 3001 \
+  --reverse-proxy 13306=db-host.internal:3306
+
+# Multi-tenant pool-cluster (repeat --reverse-proxy per DB host)
+speedctl capture my-service 3001 \
+  --reverse-proxy 13306=tenant-a-db.internal:3306 \
+  --reverse-proxy 13307=tenant-b-db.internal:3306
 ```
 
-## Configure outbound proxy
+While capture is running:
 
-Set these before starting your app so outbound HTTP/HTTPS calls are captured:
+- Route KrakenD backend to `http://127.0.0.1:4143`
+- Point Node DB settings to mapped ports (`13306`, `13307`, ...)
+- Keep MariaDB TLS enabled (`DB_SSL_CA` set) if upstream requires secure transport
+
+## 2) Configure service environment (systemd)
+
+`speedctl` captures outbound HTTP/HTTPS via proxy env vars, plus DB traffic via `--reverse-proxy` mapping.
 
 ```bash
-export http_proxy=http://127.0.0.1:4140
-export https_proxy=http://127.0.0.1:4140
-export NODE_EXTRA_CA_CERTS="${HOME}/.speedscale/certs/tls.crt"  # Node.js
-# Java: -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=4140
-# Python: export REQUESTS_CA_BUNDLE="${HOME}/.speedscale/certs/tls.crt"
+sudo systemctl edit <node-service>
+
+# Add:
+[Service]
+Environment="http_proxy=http://127.0.0.1:4140"
+Environment="https_proxy=http://127.0.0.1:4140"
+Environment="NODE_EXTRA_CA_CERTS=/root/.speedscale/certs/tls.crt"
+Environment="DB_HOST=127.0.0.1"
+Environment="DB_PORT=13306"
+Environment="DB_SSL_CA=/var/www/<api_url>/certs/ca.pem"
+
+sudo systemctl daemon-reload
+sudo systemctl restart <node-service>
 ```
 
-## Send traffic through the proxy
+## 3) Generate traffic
+
+Send requests through normal ingress (KrakenD/public endpoint):
 
 ```bash
-# Terminal 2: start your app with proxy vars set
-npm start  # or java -jar app.jar, python app.py, etc.
-
-# Terminal 3: send requests to :4143 (not directly to your app)
-curl http://localhost:4143/api/health
+curl -k https://<gateway-host>/health
+curl -k https://<gateway-host>/products
 ```
 
-## Create snapshot
+## 4) Create snapshot
 
 ```bash
-# Stop capture (Ctrl+C), wait ~60s, then:
+# Stop capture first, then create snapshot from recent traffic window
 speedctl create snapshot --name "my-capture" --service my-service --start 30m
 speedctl wait snapshot <SNAPSHOT_ID> --timeout 5m
 ```
 
-## Replay
+## 5) Replay
+
+Before replay, restore normal routing:
+
+- KrakenD backend -> `http://127.0.0.1:3001`
+- Node DB port -> real DB (`3306`) for tests-only replay
 
 ```bash
-# Without mocks (real backends)
-speedctl replay <SNAPSHOT_ID> --test-against http://localhost:3000 --mode tests-only
+# Replay against live backends
+speedctl replay <SNAPSHOT_ID> \
+  --test-against http://localhost:3001 \
+  --mode tests-only
 
-# With mocks (no real backends needed -- set proxy vars first)
-speedctl replay <SNAPSHOT_ID> --test-against http://localhost:3000 --mode full-replay
+# Replay with mocks
+speedctl replay <SNAPSHOT_ID> \
+  --test-against http://localhost:3001 \
+  --mode full-replay
 ```
 
-View results in the [Speedscale dashboard](https://app.speedscale.com).
+View replay results in the [Speedscale dashboard](https://app.speedscale.com).

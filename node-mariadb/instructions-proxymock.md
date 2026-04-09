@@ -1,91 +1,125 @@
-# proxymock Quick Start
+# proxymock Quick Start (Gateway + systemd + MySQL)
+
+Use this when your app is started by systemd/ansible (not `npm start`), is behind a gateway (KrakenD, NGINX, etc.), and talks to MySQL/MariaDB.
 
 ## Install
 
 ```bash
 sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
-proxymock init   # authenticate with Speedscale cloud
+
+# If proxymock is not found immediately, reload your shell profile
+# (pick the one your shell uses)
+source ~/.zshrc 2>/dev/null || true
+source ~/.bashrc 2>/dev/null || true
+
+proxymock init
 ```
 
-## Capture (Record)
+## Variables (set for your environment)
 
 ```bash
-# Record traffic — proxymock launches your app and intercepts all I/O
-proxymock record -- npm start
-
-# If app talks to a database, map the DB port through the proxy:
-proxymock record --map 15432=localhost:5432 -- npm start
-# Then point your app at localhost:15432 instead of the real DB host
-
-# Recordings land in proxymock/recorded-<timestamp>/
+APP_PORT=3001
+GATEWAY_URL=https://<gateway-host>
+DB_UPSTREAM_PORT=3306
+DB_MAP_PORT=13306
 ```
 
-Inbound traffic arrives on `:4143`; outbound HTTP/HTTPS is intercepted via `:4140`.
+## 1) Record traffic
 
-## Configure outbound proxy (when launching app separately)
-
-If you need to start your app yourself instead of via `proxymock record -- <cmd>`, set these env vars first:
+Start proxymock in one terminal:
 
 ```bash
-export http_proxy=http://localhost:4140
-export https_proxy=http://localhost:4140
-export NODE_EXTRA_CA_CERTS="${HOME}/.speedscale/certs/tls.crt"  # Node.js
-# Java: -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=4140
-# Python: export REQUESTS_CA_BUNDLE="${HOME}/.speedscale/certs/tls.crt"
+# Single DB host
+proxymock record \
+  --app-port ${APP_PORT} \
+  --map ${DB_MAP_PORT}=<db-host>:${DB_UPSTREAM_PORT} \
+  --out proxymock/recorded-$(date +%Y%m%d-%H%M%S)
+
+# Multi-tenant / pool-cluster example (repeat --map)
+proxymock record \
+  --app-port ${APP_PORT} \
+  --map 13306=<tenant-a-db-host>:3306 \
+  --map 13307=<tenant-b-db-host>:3306 \
+  --out proxymock/recorded-$(date +%Y%m%d-%H%M%S)
 ```
 
-For database traffic over SOCKS5:
+While recording:
+
+- Point gateway upstream to `http://127.0.0.1:4143`
+- Point app DB connection to mapped local port(s) like `13306`
+- Keep DB TLS enabled if your upstream DB enforces secure transport
+
+For systemd apps, apply temporary env overrides:
 
 ```bash
-export all_proxy=socks5h://localhost:4140
+sudo systemctl edit <app-service>
+
+# Add:
+[Service]
+Environment="DB_HOST=127.0.0.1"
+Environment="DB_PORT=13306"
+Environment="DB_SSL_CA=/path/to/ca.pem"
+
+sudo systemctl daemon-reload
+sudo systemctl restart <app-service>
 ```
 
-## Send traffic through the proxy
+Generate traffic through the normal gateway URL:
 
 ```bash
-# Send requests to :4143 (inbound proxy), not directly to your app
-curl http://localhost:4143/api/health
+curl -k ${GATEWAY_URL}/health
+curl -k ${GATEWAY_URL}/<api-path>
 ```
 
-## Inspect recorded traffic
+Stop recording with `Ctrl+C`.
+
+## 2) Inspect
 
 ```bash
-# TUI browser for RRPair files
 proxymock inspect --in proxymock/recorded-<timestamp>
 ```
 
-## Create snapshot (push to cloud)
+## 3) Replay against real backends
+
+Before replay, restore normal routing:
+
+- gateway upstream back to app (`127.0.0.1:${APP_PORT}`)
+- app DB port back to real DB port (`3306` typically)
+- DB TLS settings restored
 
 ```bash
-# Stop capture (Ctrl+C), then push recording to Speedscale Cloud:
-proxymock cloud push snapshot
-
-# To pull a snapshot back (e.g., after applying transforms in the UI):
-proxymock cloud pull snapshot <SNAPSHOT_ID>
+proxymock replay \
+  --in proxymock/recorded-<timestamp> \
+  --test-against http://localhost:${APP_PORT} \
+  --fail-if "requests.failed != 0"
 ```
 
-## Replay
+Optional SLO gates:
 
 ```bash
-# Without mocks (replay requests against real backends)
-proxymock replay --test-against http://localhost:3000
-
-# With performance gates
-proxymock replay --test-against http://localhost:3000 \
+proxymock replay \
+  --in proxymock/recorded-<timestamp> \
+  --test-against http://localhost:${APP_PORT} \
   --fail-if "latency.p99 > 500" \
   --fail-if "requests.failed != 0"
-
-# 10x load (10 virtual users)
-proxymock replay --test-against http://localhost:3000 --vus 10
-
-# With mocks (no real backends needed — start mock server first)
-proxymock mock -- npm start
-# then in another terminal:
-proxymock replay --test-against http://localhost:3000
 ```
 
-Results are printed directly in the terminal as a latency/throughput table.
+## 4) Replay with mocked DB (optional)
 
----
+```bash
+proxymock mock \
+  --in proxymock/recorded-<timestamp> \
+  --map 3306=mysql://<db-host>:3306 \
+  --out proxymock/mocked-$(date +%Y%m%d-%H%M%S)
+```
 
-> **AI benchmark:** An AI agent ran this entire workflow — install check, record 6 API endpoints, push snapshot to cloud, replay against a live target, view results — in **43 seconds** on a MacBook Pro (Node.js + MariaDB via Docker).
+Then run your app against local mock DB (`127.0.0.1:3306`) and replay again.
+
+Note: if DB traffic was captured as end-to-end TLS, protocol-level DB mocking may not work. In that case, rely on replay against real backends.
+
+## Cloud snapshot (optional)
+
+```bash
+proxymock cloud push snapshot
+proxymock cloud pull snapshot <SNAPSHOT_ID>
+```

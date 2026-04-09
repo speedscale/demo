@@ -89,14 +89,20 @@ jobs:
         (cd ruby-api/client && bundle install --jobs 4 --retry 3 && bundle-audit check)
         echo "::endgroup::"
 
+    # Pin Go to the toolchain used in go.mod (go1.26.2). setup-go@v5 + go-version-file may follow only
+    # the `go` line (1.23.x), leaving a stale preinstalled Go (e.g. 1.24) on PATH — then `go install
+    # govulncheck` builds against 1.24 and govulncheck fails loading stdlib (fips140only_go1.26.go).
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.24.x'
+        go-version: '1.26.2'
 
     - name: govulncheck (Go modules)
+      env:
+        GOTOOLCHAIN: go1.26.2
       run: |
         set -euo pipefail
+        go version
         go install golang.org/x/vuln/cmd/govulncheck@latest
         export PATH="$(go env GOPATH)/bin:${PATH}"
         for dir in go go-mongo go-postgres go-ses-demo aws/service/dynamodb/go go-rabbitmq/producer go-rabbitmq/consumer go-rabbitmq/generator; do

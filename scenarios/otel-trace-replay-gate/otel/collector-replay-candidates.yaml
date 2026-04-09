@@ -1,0 +1,18 @@
+processors:
+  filter/replay_candidates:
+    traces:
+      span:
+        - 'attributes["service.name"] == "checkout-service"'
+        - 'attributes["http.route"] == "/api/v2/payments/authorize"'
+
+  tail_sampling/replay_priority:
+    decision_wait: 10s
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: slow_requests
+        type: latency
+        latency:
+          threshold_ms: 2500

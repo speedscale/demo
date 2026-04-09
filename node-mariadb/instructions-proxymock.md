@@ -1,55 +1,94 @@
 # proxymock Quick Start (Gateway + systemd + MySQL)
 
-Use this when your app is started by systemd/ansible (not `npm start`), is behind a gateway (KrakenD, NGINX, etc.), and talks to MySQL/MariaDB.
+Use this when your app is managed outside proxymock (systemd/ansible), sits behind a gateway, and uses MySQL/MariaDB.
 
-## Install
+## Setup
+
+1) Install proxymock:
 
 ```bash
 sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
-
-# If proxymock is not found immediately, reload your shell profile
-# (pick the one your shell uses)
 source ~/.zshrc 2>/dev/null || true
 source ~/.bashrc 2>/dev/null || true
-
 proxymock init
 ```
 
-## Variables (set for your environment)
+2) Ensure DB TLS certs exist (if DB requires TLS):
+
+```bash
+# from node-mariadb/
+make certs
+# or
+./gen-certs.sh
+```
+
+3) Set shared variables:
 
 ```bash
 APP_PORT=3001
 GATEWAY_URL=https://<gateway-host>
-DB_UPSTREAM_PORT=3306
-DB_MAP_PORT=13306
 ```
 
-## 1) Record traffic
+## Phase 1 (Inbound Only)
 
-Start proxymock in one terminal:
+Goal: capture inbound HTTP only first, with no outbound mapping.
+
+Start capture:
 
 ```bash
-# Single DB host
 proxymock record \
   --app-port ${APP_PORT} \
-  --map ${DB_MAP_PORT}=<db-host>:${DB_UPSTREAM_PORT} \
-  --out proxymock/recorded-$(date +%Y%m%d-%H%M%S)
+  --out proxymock/recorded-inbound-$(date +%Y%m%d-%H%M%S)
+```
 
-# Multi-tenant / pool-cluster example (repeat --map)
+During capture:
+
+- point gateway upstream to `http://127.0.0.1:4143`
+- keep app DB settings unchanged
+- send traffic through normal gateway URL
+
+```bash
+curl -k ${GATEWAY_URL}/health
+curl -k ${GATEWAY_URL}/<api-path>
+```
+
+Stop capture (`Ctrl+C`) and replay:
+
+```bash
+proxymock replay \
+  --in proxymock/recorded-inbound-<timestamp> \
+  --test-against http://localhost:${APP_PORT} \
+  --fail-if "requests.failed != 0"
+```
+
+## Phase 2 (Inbound + Outbound)
+
+Goal: capture inbound HTTP plus outbound DB (and optional outbound HTTP/HTTPS).
+
+Start capture with DB mapping:
+
+```bash
+# single DB host
+proxymock record \
+  --app-port ${APP_PORT} \
+  --map 13306=<db-host>:3306 \
+  --out proxymock/recorded-inout-$(date +%Y%m%d-%H%M%S)
+
+# multi-tenant / pool-cluster (repeat --map)
 proxymock record \
   --app-port ${APP_PORT} \
   --map 13306=<tenant-a-db-host>:3306 \
   --map 13307=<tenant-b-db-host>:3306 \
-  --out proxymock/recorded-$(date +%Y%m%d-%H%M%S)
+  --out proxymock/recorded-inout-$(date +%Y%m%d-%H%M%S)
 ```
 
-While recording:
+Update app runtime during capture:
 
-- Point gateway upstream to `http://127.0.0.1:4143`
-- Point app DB connection to mapped local port(s) like `13306`
-- Keep DB TLS enabled if your upstream DB enforces secure transport
+- DB host -> `127.0.0.1`
+- DB port -> mapped local port (`13306`, `13307`, ...)
+- keep DB TLS enabled if upstream DB enforces secure transport
 
-For systemd apps, apply temporary env overrides:
+Systemd example:
 
 ```bash
 sudo systemctl edit <app-service>
@@ -64,62 +103,38 @@ sudo systemctl daemon-reload
 sudo systemctl restart <app-service>
 ```
 
-Generate traffic through the normal gateway URL:
+Optional outbound HTTP/HTTPS capture from app process:
 
 ```bash
-curl -k ${GATEWAY_URL}/health
-curl -k ${GATEWAY_URL}/<api-path>
+export http_proxy=http://127.0.0.1:4140
+export https_proxy=http://127.0.0.1:4140
 ```
 
-Stop recording with `Ctrl+C`.
+Stop capture (`Ctrl+C`) and replay:
 
-## 2) Inspect
+```bash
+proxymock replay \
+  --in proxymock/recorded-inout-<timestamp> \
+  --test-against http://localhost:${APP_PORT} \
+  --fail-if "requests.failed != 0"
+```
+
+## Appendix
+
+Inspect capture:
 
 ```bash
 proxymock inspect --in proxymock/recorded-<timestamp>
 ```
 
-## 3) Replay against real backends
-
-Before replay, restore normal routing:
-
-- gateway upstream back to app (`127.0.0.1:${APP_PORT}`)
-- app DB port back to real DB port (`3306` typically)
-- DB TLS settings restored
-
-```bash
-proxymock replay \
-  --in proxymock/recorded-<timestamp> \
-  --test-against http://localhost:${APP_PORT} \
-  --fail-if "requests.failed != 0"
-```
-
-Optional SLO gates:
-
-```bash
-proxymock replay \
-  --in proxymock/recorded-<timestamp> \
-  --test-against http://localhost:${APP_PORT} \
-  --fail-if "latency.p99 > 500" \
-  --fail-if "requests.failed != 0"
-```
-
-## 4) Replay with mocked DB (optional)
-
-```bash
-proxymock mock \
-  --in proxymock/recorded-<timestamp> \
-  --map 3306=mysql://<db-host>:3306 \
-  --out proxymock/mocked-$(date +%Y%m%d-%H%M%S)
-```
-
-Then run your app against local mock DB (`127.0.0.1:3306`) and replay again.
-
-Note: if DB traffic was captured as end-to-end TLS, protocol-level DB mocking may not work. In that case, rely on replay against real backends.
-
-## Cloud snapshot (optional)
+Optional cloud push/pull:
 
 ```bash
 proxymock cloud push snapshot
 proxymock cloud pull snapshot <SNAPSHOT_ID>
 ```
+
+DB mock note:
+
+- if DB wire traffic is captured as end-to-end TLS, protocol-level DB mocking may not work
+- use replay against real backends as the primary gate in that case

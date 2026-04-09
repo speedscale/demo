@@ -15,6 +15,16 @@ proxymock init
 
 2) Ensure you already have the DB CA certificate path used by your app (if DB requires TLS).
 
+TLS trust model (important):
+
+- DB traffic (`--map ...:3306`) keeps using your existing DB trust chain; keep your current DB CA path configured.
+- You do **not** switch DB CA to a proxymock CA for MySQL/MariaDB mapping.
+- If you also proxy outbound HTTP/HTTPS via `:4140`, your app must trust proxymock's local CA:
+
+```bash
+export NODE_EXTRA_CA_CERTS=${HOME}/.speedscale/certs/tls.crt
+```
+
 3) Set shared variables:
 
 ```bash
@@ -101,6 +111,7 @@ Optional outbound HTTP/HTTPS capture from app process:
 ```bash
 export http_proxy=http://127.0.0.1:4140
 export https_proxy=http://127.0.0.1:4140
+export NODE_EXTRA_CA_CERTS=${HOME}/.speedscale/certs/tls.crt
 ```
 
 Stop capture (`Ctrl+C`) and replay:

@@ -15,6 +15,16 @@ speedctl init
 
 2) Ensure you already have the DB CA certificate path used by your app (if DB requires TLS).
 
+TLS trust model (important):
+
+- DB traffic captured with `--reverse-proxy ...:3306` continues to use your existing DB CA trust.
+- Keep your app's normal DB CA configuration; do not replace it with a Speedscale CA for MySQL/MariaDB.
+- If you enable outbound HTTP/HTTPS proxying on `:4140`, your app must trust the Speedscale local CA:
+
+```bash
+export NODE_EXTRA_CA_CERTS=${HOME}/.speedscale/certs/tls.crt
+```
+
 3) Set shared variables:
 
 ```bash
@@ -94,6 +104,7 @@ Environment="DB_PORT=13306"
 Environment="DB_SSL_CA=/path/to/your-db-ca.pem"
 Environment="http_proxy=http://127.0.0.1:4140"
 Environment="https_proxy=http://127.0.0.1:4140"
+Environment="NODE_EXTRA_CA_CERTS=/root/.speedscale/certs/tls.crt"
 
 sudo systemctl daemon-reload
 sudo systemctl restart <app-service>

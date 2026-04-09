@@ -1,0 +1,59 @@
+name: proxymock-replay-gate
+
+on:
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  replay-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install proxymock
+        run: sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
+
+      - name: Install node demo dependencies
+        run: npm install --prefix node
+
+      - name: Record sample traffic
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/pm-node-rec
+          proxymock record --timeout 20s --out /tmp/pm-node-rec --app-port 3000 -- npm start --prefix node > /tmp/pm-node-record.log 2>&1 &
+          PM_PID=$!
+          sleep 6
+          curl -sS http://localhost:4143/healthz >/dev/null
+          curl -sS http://localhost:4143/ >/dev/null
+          wait $PM_PID
+
+      - name: Start node service
+        shell: bash
+        run: |
+          npm start --prefix node > /tmp/pm-node-app.log 2>&1 &
+          echo $! > /tmp/node-app.pid
+          sleep 3
+
+      - name: Replay gate checks
+        shell: bash
+        run: |
+          proxymock replay \
+            --in /tmp/pm-node-rec \
+            --test-against http://localhost:3000 \
+            --fail-if "requests.failed != 0" \
+            --fail-if "latency.p95 > 5000" \
+            --output pretty
+
+      - name: Stop node service
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/node-app.pid ]; then
+            kill "$(cat /tmp/node-app.pid)" || true
+          fi

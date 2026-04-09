@@ -13,14 +13,7 @@ source ~/.bashrc 2>/dev/null || true
 speedctl init
 ```
 
-2) Ensure DB TLS certs exist (if DB requires TLS):
-
-```bash
-# from node-mariadb/
-make certs
-# or
-./gen-certs.sh
-```
+2) Ensure you already have the DB CA certificate path used by your app (if DB requires TLS).
 
 3) Set shared variables:
 
@@ -98,7 +91,7 @@ sudo systemctl edit <app-service>
 [Service]
 Environment="DB_HOST=127.0.0.1"
 Environment="DB_PORT=13306"
-Environment="DB_SSL_CA=/path/to/ca.pem"
+Environment="DB_SSL_CA=/path/to/your-db-ca.pem"
 Environment="http_proxy=http://127.0.0.1:4140"
 Environment="https_proxy=http://127.0.0.1:4140"
 

@@ -21,7 +21,7 @@ infra: certs ## Start infrastructure (MariaDB + KrakenD) in Docker
 	@echo ""
 	@echo "Infrastructure starting..."
 	@echo "  MariaDB:   localhost:3306 (TLS required)"
-	@echo "  KrakenD:   http://localhost:8080 -> host:3000"
+	@echo "  KrakenD:   http://localhost:8080 -> host:3001"
 	@echo ""
 	@printf "Waiting for MariaDB to be healthy..."
 	@until docker compose exec -T mariadb healthcheck.sh --connect --innodb_initialized >/dev/null 2>&1; do \
@@ -31,25 +31,24 @@ infra: certs ## Start infrastructure (MariaDB + KrakenD) in Docker
 	@echo " ready."
 
 .PHONY: local
-local: build ## Run the Node.js API on the host (port 3000)
-	DB_HOST=127.0.0.1 DB_SSL_CA=./certs/ca.pem npm start
+local: build ## Run the Node.js API on the host (port 3001)
+	DB_HOST=127.0.0.1 DB_SSL_CA=./certs/ca.pem PORT=3001 node server.js
 
 .PHONY: capture
 capture: ## Start speedctl capture, then run the Node app through it
-	@echo "Starting speedctl capture for node-mariadb on port 3000..."
+	@echo "Starting speedctl capture for node-mariadb on port 3001..."
 	@echo ""
 	@echo "Step 1: speedctl capture is starting (inbound proxy on :4143)"
 	@echo "Step 2: Open a new terminal and run:"
 	@echo ""
-	@echo "  export GLOBAL_AGENT_HTTP_PROXY='http://127.0.0.1:4140'"
-	@echo "  export GLOBAL_AGENT_HTTPS_PROXY='http://127.0.0.1:4140'"
-	@echo "  export GLOBAL_AGENT_NO_PROXY='*127.0.0.1:12557'"
+	@echo "  export http_proxy='http://127.0.0.1:4140'"
+	@echo "  export https_proxy='http://127.0.0.1:4140'"
 	@echo "  export NODE_EXTRA_CA_CERTS=\$${HOME}/.speedscale/certs/tls.crt"
-	@echo "  DB_HOST=127.0.0.1 DB_SSL_CA=./certs/ca.pem npm start"
+	@echo "  DB_HOST=127.0.0.1 DB_SSL_CA=./certs/ca.pem PORT=3001 node server.js"
 	@echo ""
 	@echo "Step 3: Send traffic to KrakenD on :8080 (or directly to :4143)"
 	@echo ""
-	speedctl capture node-mariadb 3000
+	speedctl capture node-mariadb 3001
 
 .PHONY: client
 client: ## Send sample traffic through KrakenD
@@ -58,17 +57,17 @@ client: ## Send sample traffic through KrakenD
 	@echo "\n==> List products"
 	@curl -sf http://localhost:8080/products | python3 -m json.tool
 	@echo "\n==> Create product"
-	@curl -sf -X POST http://localhost:8080/products \
+	@created=$$(curl -sf -X POST http://localhost:8080/products \
 	  -H 'Content-Type: application/json' \
-	  -d '{"name":"Test Item","price":4.99,"quantity":10}' | python3 -m json.tool
-	@echo "\n==> Get product 1"
-	@curl -sf http://localhost:8080/products/1 | python3 -m json.tool
-	@echo "\n==> Update product 1"
-	@curl -sf -X PUT http://localhost:8080/products/1 \
-	  -H 'Content-Type: application/json' \
-	  -d '{"price":7.99}' | python3 -m json.tool
-	@echo "\n==> Delete product 3"
-	@curl -sf -X DELETE http://localhost:8080/products/3 | python3 -m json.tool
+	  -d '{"name":"Test Item","price":4.99,"quantity":10}'); \
+	printf "%s" "$$created" | python3 -m json.tool; \
+	id=$$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['id'])" "$$created"); \
+	echo "\n==> Get product $$id"; \
+	curl -sf http://localhost:8080/products/$$id | python3 -m json.tool; \
+	echo "\n==> Update product $$id"; \
+	curl -sf -X PUT http://localhost:8080/products/$$id -H 'Content-Type: application/json' -d '{"price":7.99}' | python3 -m json.tool; \
+	echo "\n==> Delete product $$id"; \
+	curl -sf -X DELETE http://localhost:8080/products/$$id | python3 -m json.tool
 	@echo "\nDone."
 
 .PHONY: client-capture
@@ -79,11 +78,13 @@ client-capture: ## Send sample traffic through speedctl capture proxy (:4143)
 	@echo "\n==> List products"
 	@curl -sf http://localhost:4143/products | python3 -m json.tool
 	@echo "\n==> Create product"
-	@curl -sf -X POST http://localhost:4143/products \
+	@created=$$(curl -sf -X POST http://localhost:4143/products \
 	  -H 'Content-Type: application/json' \
-	  -d '{"name":"Captured Item","price":12.99,"quantity":3}' | python3 -m json.tool
-	@echo "\n==> Get product 1"
-	@curl -sf http://localhost:4143/products/1 | python3 -m json.tool
+	  -d '{"name":"Captured Item","price":12.99,"quantity":3}'); \
+	printf "%s" "$$created" | python3 -m json.tool; \
+	id=$$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['id'])" "$$created"); \
+	echo "\n==> Get product $$id"; \
+	curl -sf http://localhost:4143/products/$$id | python3 -m json.tool
 	@echo "\nDone. Check Speedscale traffic viewer for captured data."
 
 .PHONY: test-all

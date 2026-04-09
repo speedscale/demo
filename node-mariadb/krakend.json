@@ -14,7 +14,7 @@
       "backend": [
         {
           "url_pattern": "/health",
-          "host": ["http://host.docker.internal:3000"],
+          "host": ["http://host.docker.internal:3001"],
           "encoding": "no-op"
         }
       ]
@@ -26,7 +26,7 @@
       "backend": [
         {
           "url_pattern": "/products",
-          "host": ["http://host.docker.internal:3000"],
+          "host": ["http://host.docker.internal:3001"],
           "encoding": "no-op"
         }
       ]
@@ -38,7 +38,7 @@
       "backend": [
         {
           "url_pattern": "/products/{id}",
-          "host": ["http://host.docker.internal:3000"],
+          "host": ["http://host.docker.internal:3001"],
           "encoding": "no-op"
         }
       ]
@@ -50,7 +50,7 @@
       "backend": [
         {
           "url_pattern": "/products",
-          "host": ["http://host.docker.internal:3000"],
+          "host": ["http://host.docker.internal:3001"],
           "encoding": "no-op"
         }
       ]
@@ -62,7 +62,7 @@
       "backend": [
         {
           "url_pattern": "/products/{id}",
-          "host": ["http://host.docker.internal:3000"],
+          "host": ["http://host.docker.internal:3001"],
           "encoding": "no-op"
         }
       ]
@@ -74,7 +74,7 @@
       "backend": [
         {
           "url_pattern": "/products/{id}",
-          "host": ["http://host.docker.internal:3000"],
+          "host": ["http://host.docker.internal:3001"],
           "encoding": "no-op"
         }
       ]

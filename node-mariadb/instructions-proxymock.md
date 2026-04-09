@@ -1,91 +1,144 @@
-# proxymock Quick Start
+# proxymock Quick Start (Gateway + systemd + MySQL)
 
-## Install
+Use this when your app is managed outside proxymock (systemd/ansible), sits behind a gateway, and uses MySQL/MariaDB.
+
+## Setup
+
+1) Install proxymock:
 
 ```bash
 sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
-proxymock init   # authenticate with Speedscale cloud
+source ~/.zshrc 2>/dev/null || true
+source ~/.bashrc 2>/dev/null || true
+proxymock init
 ```
 
-## Capture (Record)
+2) Ensure you already have the DB CA certificate path used by your app (if DB requires TLS).
+
+TLS trust model (important):
+
+- DB traffic (`--map ...:3306`) keeps using your existing DB trust chain; keep your current DB CA path configured.
+- You do **not** switch DB CA to a proxymock CA for MySQL/MariaDB mapping.
+- If you also proxy outbound HTTP/HTTPS via `:4140`, your app must trust proxymock's local CA:
 
 ```bash
-# Record traffic — proxymock launches your app and intercepts all I/O
-proxymock record -- npm start
-
-# If app talks to a database, map the DB port through the proxy:
-proxymock record --map 15432=localhost:5432 -- npm start
-# Then point your app at localhost:15432 instead of the real DB host
-
-# Recordings land in proxymock/recorded-<timestamp>/
+export NODE_EXTRA_CA_CERTS=${HOME}/.speedscale/certs/tls.crt
 ```
 
-Inbound traffic arrives on `:4143`; outbound HTTP/HTTPS is intercepted via `:4140`.
-
-## Configure outbound proxy (when launching app separately)
-
-If you need to start your app yourself instead of via `proxymock record -- <cmd>`, set these env vars first:
+3) Set shared variables:
 
 ```bash
-export http_proxy=http://localhost:4140
-export https_proxy=http://localhost:4140
-export NODE_EXTRA_CA_CERTS="${HOME}/.speedscale/certs/tls.crt"  # Node.js
-# Java: -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=4140
-# Python: export REQUESTS_CA_BUNDLE="${HOME}/.speedscale/certs/tls.crt"
+APP_PORT=3001
+GATEWAY_URL=https://<gateway-host>
 ```
 
-For database traffic over SOCKS5:
+## Phase 1 (Inbound Only)
+
+Goal: capture inbound HTTP only first, with no outbound mapping.
+
+Start capture:
 
 ```bash
-export all_proxy=socks5h://localhost:4140
+proxymock record \
+  --app-port ${APP_PORT} \
+  --out proxymock/recorded-inbound-$(date +%Y%m%d-%H%M%S)
 ```
 
-## Send traffic through the proxy
+During capture:
+
+- point gateway upstream to `http://127.0.0.1:4143`
+- keep app DB settings unchanged
+- send traffic through normal gateway URL
 
 ```bash
-# Send requests to :4143 (inbound proxy), not directly to your app
-curl http://localhost:4143/api/health
+curl -k ${GATEWAY_URL}/health
+curl -k ${GATEWAY_URL}/<api-path>
 ```
 
-## Inspect recorded traffic
+Stop capture (`Ctrl+C`) and replay:
 
 ```bash
-# TUI browser for RRPair files
+proxymock replay \
+  --in proxymock/recorded-inbound-<timestamp> \
+  --test-against http://localhost:${APP_PORT} \
+  --fail-if "requests.failed != 0"
+```
+
+## Phase 2 (Inbound + Outbound)
+
+Goal: capture inbound HTTP plus outbound DB (and optional outbound HTTP/HTTPS).
+
+Start capture with DB mapping:
+
+```bash
+# single DB host
+proxymock record \
+  --app-port ${APP_PORT} \
+  --map 13306=<db-host>:3306 \
+  --out proxymock/recorded-inout-$(date +%Y%m%d-%H%M%S)
+
+# multi-tenant / pool-cluster (repeat --map)
+proxymock record \
+  --app-port ${APP_PORT} \
+  --map 13306=<tenant-a-db-host>:3306 \
+  --map 13307=<tenant-b-db-host>:3306 \
+  --out proxymock/recorded-inout-$(date +%Y%m%d-%H%M%S)
+```
+
+Update app runtime during capture:
+
+- DB host -> `127.0.0.1`
+- DB port -> mapped local port (`13306`, `13307`, ...)
+- keep DB TLS enabled if upstream DB enforces secure transport
+
+Systemd example:
+
+```bash
+sudo systemctl edit <app-service>
+
+# Add:
+[Service]
+Environment="DB_HOST=127.0.0.1"
+Environment="DB_PORT=13306"
+Environment="DB_SSL_CA=/path/to/your-db-ca.pem"
+
+sudo systemctl daemon-reload
+sudo systemctl restart <app-service>
+```
+
+Optional outbound HTTP/HTTPS capture from app process:
+
+```bash
+export http_proxy=http://127.0.0.1:4140
+export https_proxy=http://127.0.0.1:4140
+export NODE_EXTRA_CA_CERTS=${HOME}/.speedscale/certs/tls.crt
+```
+
+Stop capture (`Ctrl+C`) and replay:
+
+```bash
+proxymock replay \
+  --in proxymock/recorded-inout-<timestamp> \
+  --test-against http://localhost:${APP_PORT} \
+  --fail-if "requests.failed != 0"
+```
+
+## Appendix
+
+Inspect capture:
+
+```bash
 proxymock inspect --in proxymock/recorded-<timestamp>
 ```
 
-## Create snapshot (push to cloud)
+Optional cloud push/pull:
 
 ```bash
-# Stop capture (Ctrl+C), then push recording to Speedscale Cloud:
 proxymock cloud push snapshot
-
-# To pull a snapshot back (e.g., after applying transforms in the UI):
 proxymock cloud pull snapshot <SNAPSHOT_ID>
 ```
 
-## Replay
+DB mock note:
 
-```bash
-# Without mocks (replay requests against real backends)
-proxymock replay --test-against http://localhost:3000
-
-# With performance gates
-proxymock replay --test-against http://localhost:3000 \
-  --fail-if "latency.p99 > 500" \
-  --fail-if "requests.failed != 0"
-
-# 10x load (10 virtual users)
-proxymock replay --test-against http://localhost:3000 --vus 10
-
-# With mocks (no real backends needed — start mock server first)
-proxymock mock -- npm start
-# then in another terminal:
-proxymock replay --test-against http://localhost:3000
-```
-
-Results are printed directly in the terminal as a latency/throughput table.
-
----
-
-> **AI benchmark:** An AI agent ran this entire workflow — install check, record 6 API endpoints, push snapshot to cloud, replay against a live target, view results — in **43 seconds** on a MacBook Pro (Node.js + MariaDB via Docker).
+- if DB wire traffic is captured as end-to-end TLS, protocol-level DB mocking may not work
+- use replay against real backends as the primary gate in that case

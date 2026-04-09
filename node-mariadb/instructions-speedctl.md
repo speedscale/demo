@@ -1,61 +1,143 @@
-# speedctl Quick Start
+# speedctl Quick Start (Gateway + systemd + MySQL)
 
-## Install
+Use this when your app is managed by systemd/ansible, fronted by a gateway, and backed by MySQL/MariaDB.
+
+## Setup
+
+1) Install speedctl:
 
 ```bash
 sh -c "$(curl -Lfs https://downloads.speedscale.com/speedctl/install)"
-speedctl init   # authenticate with Speedscale cloud
+source ~/.zshrc 2>/dev/null || true
+source ~/.bashrc 2>/dev/null || true
+speedctl init
 ```
 
-## Capture
+2) Ensure you already have the DB CA certificate path used by your app (if DB requires TLS).
+
+TLS trust model (important):
+
+- DB traffic captured with `--reverse-proxy ...:3306` continues to use your existing DB CA trust.
+- Keep your app's normal DB CA configuration; do not replace it with a Speedscale CA for MySQL/MariaDB.
+- If you enable outbound HTTP/HTTPS proxying on `:4140`, your app must trust the Speedscale local CA:
 
 ```bash
-# Terminal 1: start capture proxy (inbound on :4143, outbound on :4140)
-speedctl capture my-service 3000
-
-# If app talks to a database, add --reverse-proxy:
-speedctl capture my-service 3000 --reverse-proxy 15432=db-host:5432
-# Then point your app at localhost:15432 instead of db-host:5432
+export NODE_EXTRA_CA_CERTS=${HOME}/.speedscale/certs/tls.crt
 ```
 
-## Configure outbound proxy
-
-Set these before starting your app so outbound HTTP/HTTPS calls are captured:
+3) Set shared variables:
 
 ```bash
-export http_proxy=http://127.0.0.1:4140
-export https_proxy=http://127.0.0.1:4140
-export NODE_EXTRA_CA_CERTS="${HOME}/.speedscale/certs/tls.crt"  # Node.js
-# Java: -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=4140
-# Python: export REQUESTS_CA_BUNDLE="${HOME}/.speedscale/certs/tls.crt"
+SERVICE_NAME=my-service
+APP_PORT=3001
+GATEWAY_URL=https://<gateway-host>
 ```
 
-## Send traffic through the proxy
+## Phase 1 (Inbound Only)
+
+Goal: start with inbound HTTP capture only.
+
+Start capture:
 
 ```bash
-# Terminal 2: start your app with proxy vars set
-npm start  # or java -jar app.jar, python app.py, etc.
-
-# Terminal 3: send requests to :4143 (not directly to your app)
-curl http://localhost:4143/api/health
+speedctl capture ${SERVICE_NAME} ${APP_PORT}
 ```
 
-## Create snapshot
+During capture:
+
+- point gateway upstream to `http://127.0.0.1:4143`
+- keep app DB settings unchanged
+- generate traffic through normal gateway URL
 
 ```bash
-# Stop capture (Ctrl+C), wait ~60s, then:
-speedctl create snapshot --name "my-capture" --service my-service --start 30m
+curl -k ${GATEWAY_URL}/health
+curl -k ${GATEWAY_URL}/<api-path>
+```
+
+Stop capture, then create snapshot:
+
+```bash
+speedctl create snapshot --name "inbound-capture" --service ${SERVICE_NAME} --start 30m
 speedctl wait snapshot <SNAPSHOT_ID> --timeout 5m
 ```
 
-## Replay
+Replay:
 
 ```bash
-# Without mocks (real backends)
-speedctl replay <SNAPSHOT_ID> --test-against http://localhost:3000 --mode tests-only
+speedctl replay <SNAPSHOT_ID> \
+  --test-against http://localhost:${APP_PORT} \
+  --mode tests-only
+```
 
-# With mocks (no real backends needed -- set proxy vars first)
-speedctl replay <SNAPSHOT_ID> --test-against http://localhost:3000 --mode full-replay
+## Phase 2 (Inbound + Outbound)
+
+Goal: add outbound capture for DB (and optional outbound HTTP/HTTPS).
+
+Start capture with DB reverse-proxy mapping:
+
+```bash
+# single DB host
+speedctl capture ${SERVICE_NAME} ${APP_PORT} \
+  --reverse-proxy 13306=<db-host>:3306
+
+# multi-tenant / pool-cluster
+speedctl capture ${SERVICE_NAME} ${APP_PORT} \
+  --reverse-proxy 13306=<tenant-a-db-host>:3306 \
+  --reverse-proxy 13307=<tenant-b-db-host>:3306
+```
+
+Update app runtime during capture:
+
+- DB host -> `127.0.0.1`
+- DB port -> mapped local port (`13306`, `13307`, ...)
+- keep DB TLS enabled if upstream DB requires secure transport
+
+Systemd example:
+
+```bash
+sudo systemctl edit <app-service>
+
+# Add:
+[Service]
+Environment="DB_HOST=127.0.0.1"
+Environment="DB_PORT=13306"
+Environment="DB_SSL_CA=/path/to/your-db-ca.pem"
+Environment="http_proxy=http://127.0.0.1:4140"
+Environment="https_proxy=http://127.0.0.1:4140"
+Environment="NODE_EXTRA_CA_CERTS=/root/.speedscale/certs/tls.crt"
+
+sudo systemctl daemon-reload
+sudo systemctl restart <app-service>
+```
+
+Stop capture, then create snapshot:
+
+```bash
+speedctl create snapshot --name "inbound-outbound-capture" --service ${SERVICE_NAME} --start 30m
+speedctl wait snapshot <SNAPSHOT_ID> --timeout 5m
+```
+
+Replay:
+
+```bash
+speedctl replay <SNAPSHOT_ID> \
+  --test-against http://localhost:${APP_PORT} \
+  --mode tests-only
+```
+
+## Appendix
+
+Before replay, restore normal routing:
+
+- gateway upstream back to app (`127.0.0.1:${APP_PORT}`)
+- app DB port back to real DB port (typically `3306`)
+
+For full mocked replay mode:
+
+```bash
+speedctl replay <SNAPSHOT_ID> \
+  --test-against http://localhost:${APP_PORT} \
+  --mode full-replay
 ```
 
 View results in the [Speedscale dashboard](https://app.speedscale.com).

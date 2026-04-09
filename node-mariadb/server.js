@@ -6,7 +6,7 @@ const path = require('path');
 // ---------------------------------------------------------------------------
 // Configuration (all from env vars with sensible defaults)
 // ---------------------------------------------------------------------------
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = parseInt(process.env.PORT || '3001', 10);
 const DB_HOST = process.env.DB_HOST || '127.0.0.1';
 const DB_PORT = parseInt(process.env.DB_PORT || '3306', 10);
 const DB_USER = process.env.DB_USER || 'demo';

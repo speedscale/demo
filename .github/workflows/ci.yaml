@@ -17,10 +17,116 @@ jobs:
     - name: Validate version consistency
       run: make validate-version
 
+  # Dependency / supply-chain checks (npm, pip, Composer, Ruby, Go, .NET)
+  dependency-security:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: npm audit (Node demos)
+      run: |
+        set -euo pipefail
+        for dir in node node-auth node-mariadb node-websocket dlp-demo smart-replace-demo llm-simulation-demo/frontend scenarios/microservices/gateway csharp/requestor; do
+          echo "::group::npm ci + audit: ${dir}"
+          (cd "$dir" && npm ci && npm audit --audit-level=moderate)
+          echo "::endgroup::"
+        done
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: pip-audit (Python requirements)
+      run: |
+        set -euo pipefail
+        python -m pip install --upgrade pip pip-audit
+        FILES=(
+          python/requirements.txt
+          xml/requirements.txt
+          llm-simulation-demo/backend/requirements.txt
+          llm-simulation-demo/tools-service/requirements.txt
+        )
+        for f in "${FILES[@]}"; do
+          echo "::group::pip-audit ${f}"
+          pip-audit -r "$f"
+          echo "::endgroup::"
+        done
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        tools: composer
+
+    - name: Composer audit (PHP)
+      working-directory: php
+      run: |
+        composer install --no-interaction --no-progress --prefer-dist
+        composer audit
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+        working-directory: ruby-api
+
+    - name: bundle-audit (Ruby API + client)
+      run: |
+        set -euo pipefail
+        gem install bundler-audit --no-document
+        echo "::group::ruby-api"
+        (cd ruby-api && bundle-audit check)
+        echo "::endgroup::"
+        echo "::group::ruby-api/client"
+        (cd ruby-api/client && bundle install --jobs 4 --retry 3 && bundle-audit check)
+        echo "::endgroup::"
+
+    # Pin Go to the toolchain used in go.mod (go1.26.2). setup-go@v5 + go-version-file may follow only
+    # the `go` line (1.23.x), leaving a stale preinstalled Go (e.g. 1.24) on PATH — then `go install
+    # govulncheck` builds against 1.24 and govulncheck fails loading stdlib (fips140only_go1.26.go).
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.26.2'
+
+    - name: govulncheck (Go modules)
+      env:
+        GOTOOLCHAIN: go1.26.2
+      run: |
+        set -euo pipefail
+        go version
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        export PATH="$(go env GOPATH)/bin:${PATH}"
+        for dir in go go-mongo go-postgres go-ses-demo aws/service/dynamodb/go go-rabbitmq/producer go-rabbitmq/consumer go-rabbitmq/generator; do
+          echo "::group::govulncheck ${dir}"
+          (cd "$dir" && govulncheck ./...)
+          echo "::endgroup::"
+        done
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: dotnet list vulnerable packages
+      run: |
+        set -euo pipefail
+        (cd csharp && dotnet restore weatherService.csproj && dotnet list weatherService.csproj package --vulnerable --include-transitive)
+        (cd csharp/client && dotnet restore client.csproj && dotnet list client.csproj package --vulnerable --include-transitive)
+        (cd csharp/tests && dotnet restore WeatherServiceTests.csproj && dotnet list WeatherServiceTests.csproj package --vulnerable --include-transitive)
+
   # Unit Tests - Fast feedback on code quality
   unit-tests:
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, dependency-security]
     strategy:
       fail-fast: false
       matrix:
@@ -128,7 +234,7 @@ jobs:
   # Integration Tests - Functional correctness with proxymock
   integration-tests:
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, dependency-security]
     strategy:
       fail-fast: false
       matrix:
@@ -175,7 +281,7 @@ jobs:
   # Load Tests - Performance validation under load
   load-tests:
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, dependency-security]
     strategy:
       fail-fast: false
       matrix:

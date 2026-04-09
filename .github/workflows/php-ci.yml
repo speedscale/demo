@@ -28,6 +28,10 @@ jobs:
         working-directory: php
         run: composer install --no-interaction --no-progress --prefer-dist
 
+      - name: Composer audit (security)
+        working-directory: php
+        run: composer audit
+
       - name: Run tests
         working-directory: php
         run: vendor/bin/phpunit --no-coverage
@@ -47,6 +51,10 @@ jobs:
       - name: Install dependencies (composer)
         working-directory: php
         run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Composer audit (security)
+        working-directory: php
+        run: composer audit
 
       - name: Build project via Makefile
         run: make build-php

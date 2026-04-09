@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: node-server
-          image: gcr.io/speedscale-demos/node-server:v1.3.8
+          image: gcr.io/speedscale-demos/node-server:v1.4.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000

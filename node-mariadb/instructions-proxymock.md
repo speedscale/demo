@@ -142,3 +142,50 @@ DB mock note:
 
 - if DB wire traffic is captured as end-to-end TLS, protocol-level DB mocking may not work
 - use replay against real backends as the primary gate in that case
+
+## Multi-User Demo (Shift Workers)
+
+This scenario captures authenticated worker traffic (`/login` + `/products`) and replays it in non-prod with concurrency.
+
+Capture:
+
+```bash
+proxymock record \
+  --app-port 3001 \
+  --map 13306=localhost:3306 \
+  --out proxymock/captured-$(date +%Y%m%d-%H%M%S) \
+  --svc-name node-mariadb-demo
+```
+
+Inspect:
+
+```bash
+proxymock inspect --in proxymock/captured-<timestamp>
+```
+
+Single-user replay (non-prod gate):
+
+```bash
+proxymock replay \
+  --in proxymock/captured-<timestamp> \
+  --test-against http://localhost:3001 \
+  --fail-if "requests.failed != 0"
+```
+
+Multi-user replay (10 VUs, shift-start load):
+
+```bash
+proxymock replay \
+  --in proxymock/captured-<timestamp> \
+  --test-against http://localhost:3001 \
+  --vus 10 \
+  --times 3 \
+  --fail-if "requests.failed != 0"
+```
+
+Auth token handling:
+
+- There is no `--transforms` flag in proxymock CLI for token replacement.
+- Token freshness is preserved by capture/replay ordering.
+- `POST /login` is replayed first for each user session and returns a fresh token.
+- Protected endpoint requests in that session then use the fresh token.

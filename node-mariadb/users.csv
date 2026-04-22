@@ -1,0 +1,11 @@
+username,password,user_id,shift
+aurora,sunrise-key,u-001,day
+basil,brisk-morning,u-002,day
+clover,coffee-break,u-003,day
+dawn,daylight-run,u-004,day
+ember,early-bird,u-005,day
+vesper,twilight-run,u-006,night
+wren,work-late,u-007,night
+xenia,xtra-shift,u-008,night
+yarrow,yard-light,u-009,night
+zephyr,zero-sun,u-010,night

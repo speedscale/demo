@@ -20,6 +20,18 @@
       ]
     },
     {
+      "endpoint": "/login",
+      "method": "POST",
+      "output_encoding": "no-op",
+      "backend": [
+        {
+          "url_pattern": "/login",
+          "host": ["http://host.docker.internal:3001"],
+          "encoding": "no-op"
+        }
+      ]
+    },
+    {
       "endpoint": "/products",
       "method": "GET",
       "output_encoding": "no-op",

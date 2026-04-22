@@ -103,6 +103,48 @@ test-replay: ## Phase 2 only: replay without mocks (uses latest recording)
 test-mock: ## Phase 3 only: replay with mocks (uses latest recording)
 	@./test-all.sh mock
 
+.PHONY: demo-multi-user
+demo-multi-user: build certs ## Run auth + multi-user proxymock demo flow
+	@set -e; \
+	TS=$$(date +%Y%m%d-%H%M%S); \
+	OUT_DIR="proxymock/multi-user-$${TS}"; \
+	echo "Starting multi-user demo run: $${OUT_DIR}"; \
+	docker compose up -d mariadb; \
+	printf "Waiting for MariaDB to be healthy..."; \
+	until docker compose exec -T mariadb healthcheck.sh --connect --innodb_initialized >/dev/null 2>&1; do \
+		printf "."; \
+		sleep 2; \
+	done; \
+	echo " ready."; \
+	proxymock record --app-port 3001 --map 13306=localhost:3306 --out "$${OUT_DIR}" > /tmp/proxymock-multi-user-record.log 2>&1 & \
+	PROXYMOCK_PID=$$!; \
+	sleep 3; \
+	DB_HOST=127.0.0.1 DB_PORT=13306 DB_SSL_CA=./certs/ca.pem PORT=3001 node server.js > /tmp/node-multi-user-record.log 2>&1 & \
+	NODE_PID=$$!; \
+	cleanup() { \
+		kill $$NODE_PID 2>/dev/null || true; \
+		kill $$PROXYMOCK_PID 2>/dev/null || true; \
+	}; \
+	trap cleanup EXIT INT TERM; \
+	sleep 3; \
+	./generate-users-traffic.sh 4143; \
+	kill $$PROXYMOCK_PID 2>/dev/null || true; \
+	wait $$PROXYMOCK_PID 2>/dev/null || true; \
+	PROXYMOCK_PID=""; \
+	kill $$NODE_PID 2>/dev/null || true; \
+	wait $$NODE_PID 2>/dev/null || true; \
+	NODE_PID=""; \
+	DB_HOST=127.0.0.1 DB_PORT=3306 DB_SSL_CA=./certs/ca.pem PORT=3001 node server.js > /tmp/node-multi-user-replay.log 2>&1 & \
+	NODE_PID=$$!; \
+	sleep 3; \
+	proxymock replay --in "$${OUT_DIR}" --test-against http://localhost:3001 --vus 10 --times 3 --fail-if "requests.failed != 0"; \
+	kill $$NODE_PID 2>/dev/null || true; \
+	wait $$NODE_PID 2>/dev/null || true; \
+	trap - EXIT INT TERM; \
+	echo "PASS: multi-user flow complete"; \
+	echo "Recording dir: $${OUT_DIR}"; \
+	echo "Inspect with: proxymock inspect --in $${OUT_DIR}"
+
 .PHONY: inspect
 inspect: ## Open proxymock TUI to inspect recorded traffic
 	@dir=$$(ls -dt proxymock/recorded-* 2>/dev/null | head -1); \

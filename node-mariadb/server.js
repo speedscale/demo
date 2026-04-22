@@ -2,6 +2,7 @@ const express = require('express');
 const mariadb = require('mariadb');
 const fs = require('fs');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 
 // ---------------------------------------------------------------------------
 // Configuration (all from env vars with sensible defaults)
@@ -13,6 +14,7 @@ const DB_USER = process.env.DB_USER || 'demo';
 const DB_PASSWORD = process.env.DB_PASSWORD || 'demo_password';
 const DB_NAME = process.env.DB_NAME || 'demo';
 const DB_SSL_CA = process.env.DB_SSL_CA || '';  // path to CA cert
+const JWT_SECRET = process.env.JWT_SECRET || 'demo-secret-key';
 
 // ---------------------------------------------------------------------------
 // MariaDB connection pool
@@ -75,6 +77,42 @@ async function initDb() {
       );
       console.log('Seeded 3 sample products');
     }
+
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id        INT AUTO_INCREMENT PRIMARY KEY,
+        username  VARCHAR(50)  NOT NULL UNIQUE,
+        password  VARCHAR(100) NOT NULL,
+        user_id   VARCHAR(20)  NOT NULL,
+        shift     VARCHAR(20)  NOT NULL DEFAULT 'day'
+      )
+    `);
+
+    const shiftUsers = [
+      ['aurora', 'sunrise-key', 'u-001', 'day'],
+      ['basil', 'brisk-morning', 'u-002', 'day'],
+      ['clover', 'coffee-break', 'u-003', 'day'],
+      ['dawn', 'daylight-run', 'u-004', 'day'],
+      ['ember', 'early-bird', 'u-005', 'day'],
+      ['vesper', 'twilight-run', 'u-006', 'night'],
+      ['wren', 'work-late', 'u-007', 'night'],
+      ['xenia', 'xtra-shift', 'u-008', 'night'],
+      ['yarrow', 'yard-light', 'u-009', 'night'],
+      ['zephyr', 'zero-sun', 'u-010', 'night'],
+    ];
+
+    for (const user of shiftUsers) {
+      await conn.query(
+        `INSERT INTO users (username, password, user_id, shift)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           password = VALUES(password),
+           user_id = VALUES(user_id),
+           shift = VALUES(shift)`,
+        user
+      );
+    }
+    console.log('Ensured 10 shift workers are present');
   } finally {
     if (conn) conn.release();
   }
@@ -85,6 +123,22 @@ async function initDb() {
 // ---------------------------------------------------------------------------
 const app = express();
 app.use(express.json());
+
+function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or malformed Authorization header' });
+  }
+
+  const token = authHeader.slice(7);
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    return next();
+  } catch (_err) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
 
 // Health check
 app.get('/health', async (_req, res) => {
@@ -100,8 +154,44 @@ app.get('/health', async (_req, res) => {
   }
 });
 
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'username and password required' });
+  }
+
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query(
+      'SELECT * FROM users WHERE username = ? AND password = ?',
+      [username, password]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const user = rows[0];
+    const token = jwt.sign(
+      { id: user.id, username: user.username, user_id: user.user_id, shift: user.shift },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    return res.json({
+      token,
+      user: { id: user.id, username: user.username, user_id: user.user_id, shift: user.shift },
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 // List products
-app.get('/products', async (_req, res) => {
+app.get('/products', requireAuth, async (_req, res) => {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -115,7 +205,7 @@ app.get('/products', async (_req, res) => {
 });
 
 // Get single product
-app.get('/products/:id', async (req, res) => {
+app.get('/products/:id', requireAuth, async (req, res) => {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -130,7 +220,7 @@ app.get('/products/:id', async (req, res) => {
 });
 
 // Create product
-app.post('/products', async (req, res) => {
+app.post('/products', requireAuth, async (req, res) => {
   const { name, price, quantity } = req.body;
   if (!name) return res.status(400).json({ error: 'name is required' });
   let conn;
@@ -150,7 +240,7 @@ app.post('/products', async (req, res) => {
 });
 
 // Update product
-app.put('/products/:id', async (req, res) => {
+app.put('/products/:id', requireAuth, async (req, res) => {
   const { name, price, quantity } = req.body;
   let conn;
   try {
@@ -177,7 +267,7 @@ app.put('/products/:id', async (req, res) => {
 });
 
 // Delete product
-app.delete('/products/:id', async (req, res) => {
+app.delete('/products/:id', requireAuth, async (req, res) => {
   let conn;
   try {
     conn = await pool.getConnection();
@@ -205,11 +295,12 @@ initDb()
       console.log(`\nNode-MariaDB demo listening on http://localhost:${PORT}`);
       console.log('\nEndpoints (via KrakenD on :8080):');
       console.log('  GET    /health');
-      console.log('  GET    /products');
-      console.log('  GET    /products/:id');
-      console.log('  POST   /products');
-      console.log('  PUT    /products/:id');
-      console.log('  DELETE /products/:id');
+      console.log('  POST   /login');
+      console.log('  GET    /products    (auth required)');
+      console.log('  GET    /products/:id (auth required)');
+      console.log('  POST   /products    (auth required)');
+      console.log('  PUT    /products/:id (auth required)');
+      console.log('  DELETE /products/:id (auth required)');
     });
   })
   .catch((err) => {

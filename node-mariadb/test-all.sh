@@ -310,48 +310,60 @@ phase_mock() {
 generate_traffic() {
   local port=$1
 
-  echo "  Creating product..."
-  CREATE_RESP=$(curl -sf -X POST "http://localhost:${port}/products" \
-    -H 'Content-Type: application/json' \
-    -d '{"name":"Widget Alpha","price":19.99,"quantity":50}')
-  PRODUCT_ID=$(echo "$CREATE_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])" 2>/dev/null || echo "1")
-  ok "Created product $PRODUCT_ID"
+  run_user_flow() {
+    local username=$1
+    local password=$2
 
-  echo "  Listing products..."
-  curl -sf "http://localhost:${port}/products" >/dev/null
-  ok "Listed products"
+    echo "  Logging in as ${username}..."
+    login_response_json=$(curl -sf -X POST "http://localhost:${port}/login" \
+      -H 'Content-Type: application/json' \
+      -d "{\"username\":\"${username}\",\"password\":\"${password}\"}")
+    auth_token=$(echo "$login_response_json" | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])" 2>/dev/null || echo "")
+    if [ -z "$auth_token" ]; then
+      fail "Login failed for ${username}: $login_response_json"
+    fi
+    ok "Logged in as ${username}"
 
-  echo "  Getting product $PRODUCT_ID..."
-  curl -sf "http://localhost:${port}/products/${PRODUCT_ID}" >/dev/null
-  ok "Got product $PRODUCT_ID"
+    echo "  ${username}: creating product..."
+    created_product_json=$(curl -sf -X POST "http://localhost:${port}/products" \
+      -H 'Content-Type: application/json' \
+      -H "Authorization: Bearer ${auth_token}" \
+      -d "{\"name\":\"${username} Widget\",\"price\":19.99,\"quantity\":50}")
+    created_product_id=$(echo "$created_product_json" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])" 2>/dev/null || echo "")
+    if [ -z "$created_product_id" ]; then
+      fail "Create product failed for ${username}: $created_product_json"
+    fi
+    ok "${username}: created product ${created_product_id}"
 
-  echo "  Updating product $PRODUCT_ID..."
-  curl -sf -X PUT "http://localhost:${port}/products/${PRODUCT_ID}" \
-    -H 'Content-Type: application/json' \
-    -d '{"name":"Widget Alpha v2","price":24.99,"quantity":42}' >/dev/null
-  ok "Updated product $PRODUCT_ID"
+    echo "  ${username}: listing products..."
+    curl -sf "http://localhost:${port}/products" \
+      -H "Authorization: Bearer ${auth_token}" >/dev/null
+    ok "${username}: listed products"
 
-  echo "  Creating second product..."
-  curl -sf -X POST "http://localhost:${port}/products" \
-    -H 'Content-Type: application/json' \
-    -d '{"name":"Gadget Beta","price":49.99,"quantity":10}' >/dev/null
-  ok "Created second product"
+    echo "  ${username}: getting product ${created_product_id}..."
+    curl -sf "http://localhost:${port}/products/${created_product_id}" \
+      -H "Authorization: Bearer ${auth_token}" >/dev/null
+    ok "${username}: got product ${created_product_id}"
 
-  echo "  Listing all products again..."
-  curl -sf "http://localhost:${port}/products" >/dev/null
-  ok "Listed products"
+    echo "  ${username}: updating product ${created_product_id}..."
+    curl -sf -X PUT "http://localhost:${port}/products/${created_product_id}" \
+      -H 'Content-Type: application/json' \
+      -H "Authorization: Bearer ${auth_token}" \
+      -d "{\"name\":\"${username} Widget v2\",\"price\":24.99,\"quantity\":42}" >/dev/null
+    ok "${username}: updated product ${created_product_id}"
+
+    echo "  ${username}: deleting product ${created_product_id}..."
+    curl -sf -X DELETE "http://localhost:${port}/products/${created_product_id}" \
+      -H "Authorization: Bearer ${auth_token}" >/dev/null
+    ok "${username}: deleted product ${created_product_id}"
+  }
+
+  run_user_flow "aurora" "sunrise-key"
+  run_user_flow "basil" "brisk-morning"
 
   echo "  Health check..."
   curl -sf "http://localhost:${port}/health" >/dev/null
   ok "Health check passed"
-
-  echo "  Deleting product $PRODUCT_ID..."
-  curl -sf -X DELETE "http://localhost:${port}/products/${PRODUCT_ID}" >/dev/null
-  ok "Deleted product $PRODUCT_ID"
-
-  echo "  Final product list..."
-  curl -sf "http://localhost:${port}/products" >/dev/null
-  ok "Final list retrieved"
 }
 
 # ---------------------------------------------------------------------------

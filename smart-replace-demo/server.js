@@ -1,6 +1,6 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const { v4: uuidv4 } = require("uuid");
+const { randomUUID } = require("crypto");
 const http = require("http");
 const https = require("https");
 const { URL } = require("url");
@@ -141,7 +141,7 @@ app.post("/orders", authenticateToken, (req, res) => {
     `[${new Date().toISOString()}] POST /orders - User: ${req.user.email}, Total: $${req.body.totalAmount}`,
   );
   const { items, totalAmount } = req.body;
-  const orderId = `order-${uuidv4()}`;
+  const orderId = `order-${randomUUID()}`;
 
   const order = {
     id: orderId,
@@ -241,7 +241,7 @@ function getOrCreateCart(userId) {
 
   if (!cartId) {
     // Create new cart
-    cartId = `cart-${uuidv4()}`;
+    cartId = `cart-${randomUUID()}`;
     userCartMap.set(userId, cartId);
 
     const cart = {

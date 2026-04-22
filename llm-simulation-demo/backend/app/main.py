@@ -26,7 +26,7 @@ from app.providers.xai_adapter import XAIAdapter
 app = FastAPI(
     title="Ticket Triage API",
     description="AI-powered support ticket analysis backend — 3-step pipeline per ticket.",
-    version="1.4.0",
+    version="1.4.1",
 )
 
 app.add_middleware(

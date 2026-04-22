@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: tools
-          image: gcr.io/speedscale-demos/llm-simulation-tools:v1.4.0
+          image: gcr.io/speedscale-demos/llm-simulation-tools:v1.4.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8001

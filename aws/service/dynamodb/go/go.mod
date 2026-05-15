@@ -2,7 +2,7 @@ module main
 
 go 1.23.2
 
-toolchain go1.26.2
+toolchain go1.26.3
 
 require github.com/aws/aws-sdk-go v1.55.8
 

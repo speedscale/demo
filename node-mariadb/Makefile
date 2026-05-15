@@ -54,20 +54,27 @@ capture: ## Start speedctl capture, then run the Node app through it
 client: ## Send sample traffic through KrakenD
 	@echo "==> Health check"
 	@curl -sf http://localhost:8080/health | python3 -m json.tool
+	@echo "\n==> Login (aurora)"
+	@token=$$(curl -sf -X POST http://localhost:8080/login -H 'Authorization: Basic '$$(printf '%s:%s' aurora sunrise-key | base64) | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])"); \
+	if [ -z "$$token" ]; then echo "Login failed"; exit 1; fi; \
+	echo "Token acquired"
 	@echo "\n==> List products"
-	@curl -sf http://localhost:8080/products | python3 -m json.tool
+	@token=$$(curl -sf -X POST http://localhost:8080/login -H 'Authorization: Basic '$$(printf '%s:%s' aurora sunrise-key | base64) | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])"); \
+	curl -sf http://localhost:8080/products -H "Authorization: Bearer $$token" | python3 -m json.tool
 	@echo "\n==> Create product"
-	@created=$$(curl -sf -X POST http://localhost:8080/products \
+	@token=$$(curl -sf -X POST http://localhost:8080/login -H 'Authorization: Basic '$$(printf '%s:%s' aurora sunrise-key | base64) | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])"); \
+	created=$$(curl -sf -X POST http://localhost:8080/products \
 	  -H 'Content-Type: application/json' \
+	  -H "Authorization: Bearer $$token" \
 	  -d '{"name":"Test Item","price":4.99,"quantity":10}'); \
 	printf "%s" "$$created" | python3 -m json.tool; \
 	id=$$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['id'])" "$$created"); \
 	echo "\n==> Get product $$id"; \
-	curl -sf http://localhost:8080/products/$$id | python3 -m json.tool; \
+	curl -sf http://localhost:8080/products/$$id -H "Authorization: Bearer $$token" | python3 -m json.tool; \
 	echo "\n==> Update product $$id"; \
-	curl -sf -X PUT http://localhost:8080/products/$$id -H 'Content-Type: application/json' -d '{"price":7.99}' | python3 -m json.tool; \
+	curl -sf -X PUT http://localhost:8080/products/$$id -H 'Content-Type: application/json' -H "Authorization: Bearer $$token" -d '{"price":7.99}' | python3 -m json.tool; \
 	echo "\n==> Delete product $$id"; \
-	curl -sf -X DELETE http://localhost:8080/products/$$id | python3 -m json.tool
+	curl -sf -X DELETE http://localhost:8080/products/$$id -H "Authorization: Bearer $$token" | python3 -m json.tool
 	@echo "\nDone."
 
 .PHONY: client-capture
@@ -75,16 +82,23 @@ client-capture: ## Send sample traffic through speedctl capture proxy (:4143)
 	@echo "==> Sending traffic to speedctl inbound proxy on :4143"
 	@echo "==> Health check"
 	@curl -sf http://localhost:4143/health | python3 -m json.tool
+	@echo "\n==> Login (aurora)"
+	@token=$$(curl -sf -X POST http://localhost:4143/login -H 'Authorization: Basic '$$(printf '%s:%s' aurora sunrise-key | base64) | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])"); \
+	if [ -z "$$token" ]; then echo "Login failed"; exit 1; fi; \
+	echo "Token acquired"
 	@echo "\n==> List products"
-	@curl -sf http://localhost:4143/products | python3 -m json.tool
+	@token=$$(curl -sf -X POST http://localhost:4143/login -H 'Authorization: Basic '$$(printf '%s:%s' aurora sunrise-key | base64) | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])"); \
+	curl -sf http://localhost:4143/products -H "Authorization: Bearer $$token" | python3 -m json.tool
 	@echo "\n==> Create product"
-	@created=$$(curl -sf -X POST http://localhost:4143/products \
+	@token=$$(curl -sf -X POST http://localhost:4143/login -H 'Authorization: Basic '$$(printf '%s:%s' aurora sunrise-key | base64) | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])"); \
+	created=$$(curl -sf -X POST http://localhost:4143/products \
 	  -H 'Content-Type: application/json' \
+	  -H "Authorization: Bearer $$token" \
 	  -d '{"name":"Captured Item","price":12.99,"quantity":3}'); \
 	printf "%s" "$$created" | python3 -m json.tool; \
 	id=$$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['id'])" "$$created"); \
 	echo "\n==> Get product $$id"; \
-	curl -sf http://localhost:4143/products/$$id | python3 -m json.tool
+	curl -sf http://localhost:4143/products/$$id -H "Authorization: Bearer $$token" | python3 -m json.tool
 	@echo "\nDone. Check Speedscale traffic viewer for captured data."
 
 .PHONY: test-all
@@ -127,7 +141,7 @@ demo-multi-user: build certs ## Run auth + multi-user proxymock demo flow
 	}; \
 	trap cleanup EXIT INT TERM; \
 	sleep 3; \
-	./generate-users-traffic.sh 4143; \
+	LOGIN_AUTH_MODE=basic ./generate-users-traffic.sh 4143; \
 	kill $$PROXYMOCK_PID 2>/dev/null || true; \
 	wait $$PROXYMOCK_PID 2>/dev/null || true; \
 	PROXYMOCK_PID=""; \
@@ -144,6 +158,31 @@ demo-multi-user: build certs ## Run auth + multi-user proxymock demo flow
 	echo "PASS: multi-user flow complete"; \
 	echo "Recording dir: $${OUT_DIR}"; \
 	echo "Inspect with: proxymock inspect --in $${OUT_DIR}"
+
+.PHONY: demo-credentials-swap
+demo-credentials-swap: ## Generate/apply Basic auth credentials swap automation
+	@set -e; \
+	IN_DIR=$$(ls -dt proxymock/multi-user-* proxymock/recorded-* 2>/dev/null | head -1); \
+	if [ -z "$$IN_DIR" ]; then \
+		echo "No recording found. Run 'make demo-multi-user' or 'make test-record' first."; \
+		exit 1; \
+	fi; \
+	if [ -z "$$REPLAY_TARGET" ]; then \
+		echo "Set REPLAY_TARGET (example: REPLAY_TARGET=http://localhost:3001)"; \
+		exit 1; \
+	fi; \
+	USER_ARGS=""; \
+	if [ -n "$$SWAP_RECORDED_USER" ] && [ -n "$$SWAP_REPLAY_USER" ]; then \
+		USER_ARGS="$$USER_ARGS --replay-user $$SWAP_RECORDED_USER=$$SWAP_REPLAY_USER"; \
+	fi; \
+	if [ -n "$$SWAP_RECORDED_USER" ] && [ -n "$$SWAP_REPLAY_PASS" ]; then \
+		USER_ARGS="$$USER_ARGS --replay-pass $$SWAP_RECORDED_USER=$$SWAP_REPLAY_PASS"; \
+	fi; \
+	echo "Generating credentials swap dataframe for $$IN_DIR"; \
+	sh -c "proxymock automation credentials-basic --in '$$IN_DIR' $$USER_ARGS --output json > /tmp/proxymock-credentials-swap.json"; \
+	echo "Automation output saved: /tmp/proxymock-credentials-swap.json"; \
+	echo "Replaying against $$REPLAY_TARGET"; \
+	proxymock replay --in "$$IN_DIR" --test-against "$$REPLAY_TARGET" --fail-if "requests.failed != 0"
 
 .PHONY: inspect
 inspect: ## Open proxymock TUI to inspect recorded traffic

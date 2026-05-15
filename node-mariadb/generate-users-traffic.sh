@@ -3,13 +3,35 @@ set -euo pipefail
 
 PORT="${1:-4143}"
 CSV_FILE="users.csv"
+LOGIN_AUTH_MODE="${LOGIN_AUTH_MODE:-basic}"
 
 if [ ! -f "${CSV_FILE}" ]; then
   echo "users.csv not found"
   exit 1
 fi
 
-echo "Generating authenticated traffic for users via :${PORT}"
+if [ "${LOGIN_AUTH_MODE}" != "basic" ] && [ "${LOGIN_AUTH_MODE}" != "json" ]; then
+  echo "LOGIN_AUTH_MODE must be 'basic' or 'json'"
+  exit 1
+fi
+
+echo "Generating authenticated traffic for users via :${PORT} (login mode: ${LOGIN_AUTH_MODE})"
+
+login_request() {
+  local username="$1"
+  local password="$2"
+
+  if [ "${LOGIN_AUTH_MODE}" = "basic" ]; then
+    local basic
+    basic=$(printf '%s:%s' "${username}" "${password}" | base64)
+    curl -sf -X POST "http://localhost:${PORT}/login" \
+      -H "Authorization: Basic ${basic}"
+  else
+    curl -sf -X POST "http://localhost:${PORT}/login" \
+      -H 'Content-Type: application/json' \
+      -d "{\"username\":\"${username}\",\"password\":\"${password}\"}"
+  fi
+}
 
 while IFS=, read -r username password user_id shift; do
   if [ "${username}" = "username" ]; then
@@ -17,9 +39,7 @@ while IFS=, read -r username password user_id shift; do
   fi
 
   echo "- ${username} (${shift}): login"
-  login_resp=$(curl -sf -X POST "http://localhost:${PORT}/login" \
-    -H 'Content-Type: application/json' \
-    -d "{\"username\":\"${username}\",\"password\":\"${password}\"}")
+  login_resp=$(login_request "${username}" "${password}")
   token=$(printf "%s" "${login_resp}" | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])" 2>/dev/null || true)
   if [ -z "${token}" ]; then
     echo "  FAIL: login failed for ${username}"

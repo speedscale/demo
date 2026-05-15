@@ -140,6 +140,33 @@ function requireAuth(req, res, next) {
   }
 }
 
+function getLoginCredentials(req) {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Basic ')) {
+    try {
+      const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
+      const separator = decoded.indexOf(':');
+      if (separator <= 0) {
+        return { error: 'Malformed Basic authorization credentials' };
+      }
+      const username = decoded.slice(0, separator);
+      const password = decoded.slice(separator + 1);
+      if (!username || !password) {
+        return { error: 'Malformed Basic authorization credentials' };
+      }
+      return { username, password, source: 'basic' };
+    } catch (_err) {
+      return { error: 'Malformed Basic authorization credentials' };
+    }
+  }
+
+  const { username, password } = req.body || {};
+  if (!username || !password) {
+    return { error: 'username and password required' };
+  }
+  return { username, password, source: 'json' };
+}
+
 // Health check
 app.get('/health', async (_req, res) => {
   let conn;
@@ -155,10 +182,12 @@ app.get('/health', async (_req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ error: 'username and password required' });
+  const credentials = getLoginCredentials(req);
+  if (credentials.error) {
+    return res.status(400).json({ error: credentials.error });
   }
+
+  const { username, password } = credentials;
 
   let conn;
   try {
@@ -182,6 +211,7 @@ app.post('/login', async (req, res) => {
     return res.json({
       token,
       user: { id: user.id, username: user.username, user_id: user.user_id, shift: user.shift },
+      auth_source: credentials.source,
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });

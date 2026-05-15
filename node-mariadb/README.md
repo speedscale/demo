@@ -135,6 +135,10 @@ curl http://localhost:3001/health
 
 The `test-all.sh` script runs the complete record-replay-mock lifecycle in one command. No Speedscale cloud account required -- everything runs locally using [proxymock](https://docs.speedscale.com/proxymock/).
 
+For the customer-facing authenticated shift-worker walkthrough (interactive web UI, headless CLI, and headless agent/MCP), see:
+
+- `instructions-proxymock.md`
+
 ### Install proxymock
 
 ```bash

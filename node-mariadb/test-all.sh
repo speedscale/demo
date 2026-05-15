@@ -30,6 +30,7 @@ PROXY_IN_PORT=4143
 PROXY_OUT_PORT=4140
 DB_PROXY_PORT=13306
 DB_REAL_PORT=3306
+LOGIN_AUTH_MODE="${LOGIN_AUTH_MODE:-basic}"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 RECORD_DIR="proxymock/recorded-${TIMESTAMP}"
 REPLAY_DIR="proxymock/replayed-${TIMESTAMP}"
@@ -310,14 +311,32 @@ phase_mock() {
 generate_traffic() {
   local port=$1
 
+  if [ "$LOGIN_AUTH_MODE" != "basic" ] && [ "$LOGIN_AUTH_MODE" != "json" ]; then
+    fail "LOGIN_AUTH_MODE must be 'basic' or 'json'"
+  fi
+
+  login_request() {
+    local username=$1
+    local password=$2
+
+    if [ "$LOGIN_AUTH_MODE" = "basic" ]; then
+      local basic
+      basic=$(printf '%s:%s' "$username" "$password" | base64)
+      curl -sf -X POST "http://localhost:${port}/login" \
+        -H "Authorization: Basic ${basic}"
+    else
+      curl -sf -X POST "http://localhost:${port}/login" \
+        -H 'Content-Type: application/json' \
+        -d "{\"username\":\"${username}\",\"password\":\"${password}\"}"
+    fi
+  }
+
   run_user_flow() {
     local username=$1
     local password=$2
 
     echo "  Logging in as ${username}..."
-    login_response_json=$(curl -sf -X POST "http://localhost:${port}/login" \
-      -H 'Content-Type: application/json' \
-      -d "{\"username\":\"${username}\",\"password\":\"${password}\"}")
+    login_response_json=$(login_request "$username" "$password")
     auth_token=$(echo "$login_response_json" | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])" 2>/dev/null || echo "")
     if [ -z "$auth_token" ]; then
       fail "Login failed for ${username}: $login_response_json"

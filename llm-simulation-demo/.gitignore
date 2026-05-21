@@ -27,3 +27,6 @@ backend/.env
 
 # k8s secret with real keys
 k8s/api-keys.secret.yaml
+
+# TS incremental build cache
+frontend/tsconfig.tsbuildinfo

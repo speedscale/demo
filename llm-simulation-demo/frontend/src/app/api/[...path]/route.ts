@@ -23,11 +23,24 @@ async function handler(
   }
 
   const upstream = await fetch(target, init);
-  const body = await upstream.text();
+  const upstreamContentType = upstream.headers.get("content-type") ?? "application/json";
 
+  // Stream SSE responses directly without buffering.
+  if (upstreamContentType.includes("text/event-stream")) {
+    return new NextResponse(upstream.body, {
+      status: upstream.status,
+      headers: {
+        "content-type": upstreamContentType,
+        "cache-control": "no-cache",
+        "x-accel-buffering": "no",
+      },
+    });
+  }
+
+  const body = await upstream.text();
   return new NextResponse(body, {
     status: upstream.status,
-    headers: { "content-type": upstream.headers.get("content-type") ?? "application/json" },
+    headers: { "content-type": upstreamContentType },
   });
 }
 

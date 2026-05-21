@@ -57,7 +57,7 @@ export default function RunsPage() {
             </div>
             <div className="flex items-center gap-4 flex-shrink-0">
               <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {run.provider}
+                {run.provider} / {run.model}
               </span>
               <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                 {run.timing.total_ms}ms

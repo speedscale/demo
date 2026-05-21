@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import time
-from typing import Tuple
+from typing import AsyncGenerator, Tuple
 
 import httpx
+import os
 
 from app.models.request import RunRequest
 from app.models.result import LLMStep, OutputEnvelope
 from app.providers.base import (
     AdapterResult,
     ProviderError,
+    StepEvent,
     _safe_json,
     calculate_cost,
+    is_mocked_response,
     SYSTEM_PROMPT_TRIAGE,
     SYSTEM_PROMPT_ANALYSIS,
     SYSTEM_PROMPT_RESPONSE,
@@ -19,80 +22,77 @@ from app.providers.base import (
     build_analysis_message,
     build_response_message,
 )
-import os
 
 _OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 
 
 class OpenAIAdapter:
     name = "openai"
-    default_model = "gpt-5.4-mini"
+    default_model = "gpt-5.5"
+    _api_key_env = "OPENAI_API_KEY"
+    _api_base_url = _OPENAI_API_URL
 
-    async def run(self, request: RunRequest, context: str = "") -> AdapterResult:
-        api_key = os.getenv("OPENAI_API_KEY", "")
+    async def stream(self, request: RunRequest, context: str = "") -> AsyncGenerator[StepEvent, None]:
+        api_key = os.getenv(self._api_key_env, "")
         if not api_key:
-            raise ProviderError("OPENAI_API_KEY not configured", status_code=503)
+            raise ProviderError(f"{self._api_key_env} not configured", status_code=503)
 
         model = request.model or self.default_model
-        steps: list[LLMStep] = []
 
-        triage_raw, p1, c1, d1 = await self._call(
-            api_key,
-            model,
+        triage_raw, p1, c1, d1, m1 = await self._call(
+            api_key, model,
             system=SYSTEM_PROMPT_TRIAGE,
             user=build_triage_message(request),
+            base_url=self._api_base_url,
         )
         triage = _safe_json(triage_raw, {})
-        steps.append(
-            LLMStep(
-                name="triage",
-                prompt_tokens=p1,
-                completion_tokens=c1,
-                cost_usd=calculate_cost(model, p1, c1),
-                duration_ms=d1,
-            )
-        )
+        yield StepEvent(name="triage", data=triage, prompt_tokens=p1, completion_tokens=c1,
+                        cost_usd=calculate_cost(model, p1, c1), duration_ms=d1, mocked=m1)
 
-        analysis_raw, p2, c2, d2 = await self._call(
-            api_key,
-            model,
+        analysis_raw, p2, c2, d2, m2 = await self._call(
+            api_key, model,
             system=SYSTEM_PROMPT_ANALYSIS,
             user=build_analysis_message(request, triage, context),
+            base_url=self._api_base_url,
         )
         analysis = _safe_json(analysis_raw, {})
-        steps.append(
-            LLMStep(
-                name="analysis",
-                prompt_tokens=p2,
-                completion_tokens=c2,
-                cost_usd=calculate_cost(model, p2, c2),
-                duration_ms=d2,
-            )
-        )
+        yield StepEvent(name="analysis", data=analysis, prompt_tokens=p2, completion_tokens=c2,
+                        cost_usd=calculate_cost(model, p2, c2), duration_ms=d2, mocked=m2)
 
-        response_raw, p3, c3, d3 = await self._call(
-            api_key,
-            model,
+        response_raw, p3, c3, d3, m3 = await self._call(
+            api_key, model,
             system=SYSTEM_PROMPT_RESPONSE,
             user=build_response_message(request, triage, analysis),
+            base_url=self._api_base_url,
         )
         response = _safe_json(response_raw, {})
-        steps.append(
-            LLMStep(
-                name="response",
-                prompt_tokens=p3,
-                completion_tokens=c3,
-                cost_usd=calculate_cost(model, p3, c3),
-                duration_ms=d3,
-            )
-        )
+        yield StepEvent(name="response", data=response, prompt_tokens=p3, completion_tokens=c3,
+                        cost_usd=calculate_cost(model, p3, c3), duration_ms=d3, mocked=m3)
+
+    async def run(self, request: RunRequest, context: str = "") -> AdapterResult:
+        steps: list[LLMStep] = []
+        step_data: dict[str, dict] = {}
+        mocked_any = False
+        async for event in self.stream(request, context):
+            steps.append(LLMStep(
+                name=event.name,
+                prompt_tokens=event.prompt_tokens,
+                completion_tokens=event.completion_tokens,
+                cost_usd=event.cost_usd,
+                duration_ms=event.duration_ms,
+            ))
+            step_data[event.name] = event.data
+            if event.mocked:
+                mocked_any = True
+
+        triage = step_data.get("triage", {})
+        analysis = step_data.get("analysis", {})
+        response = step_data.get("response", {})
 
         output = OutputEnvelope(
             severity=triage.get("severity", "medium"),
             summary=analysis.get("summary", "Unable to analyze ticket."),
-            recommended_action=response.get(
-                "recommended_action", "Escalate to L2 engineering."
-            ),
+            recommended_action=response.get("recommended_action", "Escalate to L2 engineering."),
             root_cause=analysis.get("root_cause"),
             response_draft=response.get("response_body"),
         )
@@ -102,6 +102,7 @@ class OpenAIAdapter:
             steps=steps,
             total_tokens=total_tokens,
             cost_usd=round(sum(s.cost_usd for s in steps), 6),
+            mocked=mocked_any,
         )
 
     async def _call(
@@ -112,9 +113,15 @@ class OpenAIAdapter:
         user: str,
         base_url: str = _OPENAI_API_URL,
         auth_header: str | None = None,
-    ) -> Tuple[str, int, int, int]:
-        """Returns (content, prompt_tokens, completion_tokens, duration_ms)."""
-        headers = {"Authorization": f"Bearer {auth_header or api_key}"}
+    ) -> Tuple[str, int, int, int, bool]:
+        """Returns (content, prompt_tokens, completion_tokens, duration_ms, mocked)."""
+        headers = {
+            "Authorization": f"Bearer {auth_header or api_key}",
+            # Avoid brotli so proxymock can faithfully replay the response.
+            # See linear S-10993 — the responder serves a decoded body but keeps
+            # Content-Encoding: br, which makes httpx (with brotli installed) fail.
+            "Accept-Encoding": "gzip",
+        }
         payload = {
             "model": model,
             "messages": [
@@ -122,7 +129,6 @@ class OpenAIAdapter:
                 {"role": "user", "content": user},
             ],
             "response_format": {"type": "json_object"},
-            "temperature": 0.2,
             "max_completion_tokens": 2048,
         }
         t0 = time.monotonic()
@@ -145,4 +151,5 @@ class OpenAIAdapter:
             usage.get("prompt_tokens", 0),
             usage.get("completion_tokens", 0),
             duration_ms,
+            is_mocked_response(resp.headers),
         )

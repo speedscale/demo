@@ -11,6 +11,7 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 load_dotenv()
 
@@ -44,10 +45,10 @@ _ADAPTERS: Dict[str, Any] = {
 }
 
 _PROVIDER_MODELS: Dict[str, List[str]] = {
-    "openai":    ["gpt-5.4-mini", "gpt-5.4", "gpt-5.4-nano"],
-    "anthropic": ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5"],
-    "gemini":    ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
-    "xai":       ["grok-4-1-fast-non-reasoning", "grok-4-1-fast-reasoning", "grok-4.20-0309-non-reasoning"],
+    "openai":    ["gpt-5.5", "gpt-5.4-mini", "gpt-5.4-nano"],
+    "anthropic": ["claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"],
+    "gemini":    ["gemini-pro-latest", "gemini-flash-latest", "gemini-flash-lite-latest"],
+    "xai":       ["grok-4.20-0309-non-reasoning", "grok-4-1-fast-reasoning", "grok-4-1-fast-non-reasoning"],
 }
 
 _run_store: Dict[str, RunResult] = {}
@@ -149,6 +150,7 @@ async def run_task(request: RunRequest) -> RunResult:
 
     result = RunResult(
         request_id=request_id,
+        ticket_id=request.input.ticket_id,
         provider=request.provider,
         model=model_used,
         output=adapter_result.output,
@@ -157,6 +159,7 @@ async def run_task(request: RunRequest) -> RunResult:
         timing=TimingInfo(provider_ms=provider_ms, total_ms=total_ms),
         total_tokens=adapter_result.total_tokens,
         cost_usd=adapter_result.cost_usd,
+        mocked=adapter_result.mocked,
         error=provider_error,
     )
 
@@ -170,6 +173,94 @@ async def get_run(run_id: str):
     if not result:
         raise HTTPException(status_code=404, detail=f"Run '{run_id}' not found")
     return result
+
+
+@app.post("/api/run/stream")
+async def run_task_stream(request: RunRequest) -> StreamingResponse:
+    adapter = _ADAPTERS.get(request.provider)
+    if not adapter:
+        async def _err():
+            yield f"data: {json.dumps({'type': 'error', 'message': f'Unknown provider: {request.provider}'})}\n\n"
+        return StreamingResponse(_err(), media_type="text/event-stream")
+
+    total_start = time.monotonic()
+    request_id = f"req_{uuid.uuid4().hex}"
+    model_used = request.model or adapter.default_model
+
+    async def generate():
+        order_tool, policy_tool = await asyncio.gather(
+            _call_tool("lookup_order", f"/tools/order/{request.input.ticket_id}"),
+            _call_tool("lookup_policy", "/tools/policy/return-policy-v2"),
+        )
+        tool_calls = [order_tool, policy_tool]
+        yield f"data: {json.dumps({'type': 'tools', 'tool_calls': [tc.model_dump() for tc in tool_calls]})}\n\n"
+
+        context_parts: list[str] = []
+        if order_tool.status == "ok" and order_tool.result:
+            context_parts.append(f"Order Data: {json.dumps(order_tool.result)}")
+        if policy_tool.status == "ok" and policy_tool.result:
+            context_parts.append(f"Return Policy: {json.dumps(policy_tool.result)}")
+        context = "\n".join(context_parts)
+
+        steps: list[LLMStep] = []
+        step_data: dict[str, dict] = {}
+        mocked_any = False
+
+        try:
+            async for event in adapter.stream(request, context=context):
+                step = LLMStep(
+                    name=event.name,
+                    prompt_tokens=event.prompt_tokens,
+                    completion_tokens=event.completion_tokens,
+                    cost_usd=event.cost_usd,
+                    duration_ms=event.duration_ms,
+                )
+                steps.append(step)
+                step_data[event.name] = event.data
+                if event.mocked:
+                    mocked_any = True
+                yield f"data: {json.dumps({'type': 'step', 'name': event.name, 'data': event.data, 'prompt_tokens': event.prompt_tokens, 'completion_tokens': event.completion_tokens, 'cost_usd': event.cost_usd, 'duration_ms': event.duration_ms, 'mocked': event.mocked})}\n\n"
+        except ProviderError as exc:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+            return
+
+        triage = step_data.get("triage", {})
+        analysis = step_data.get("analysis", {})
+        response = step_data.get("response", {})
+
+        output = OutputEnvelope(
+            severity=triage.get("severity", "medium"),
+            summary=analysis.get("summary", "Unable to analyze ticket."),
+            recommended_action=response.get("recommended_action", "Escalate to L2 engineering."),
+            root_cause=analysis.get("root_cause"),
+            response_draft=response.get("response_body"),
+        )
+        total_tokens = sum(s.prompt_tokens + s.completion_tokens for s in steps)
+        cost_usd = round(sum(s.cost_usd for s in steps), 6)
+        total_ms = int((time.monotonic() - total_start) * 1000)
+
+        result = RunResult(
+            request_id=request_id,
+            ticket_id=request.input.ticket_id,
+            provider=request.provider,
+            model=model_used,
+            output=output,
+            steps=steps,
+            tool_calls=tool_calls,
+            timing=TimingInfo(provider_ms=total_ms, total_ms=total_ms),
+            total_tokens=total_tokens,
+            cost_usd=cost_usd,
+            mocked=mocked_any,
+        )
+        _run_store[request_id] = result
+
+        yield f"data: {json.dumps({'type': 'complete', 'request_id': request_id, 'total_tokens': total_tokens, 'cost_usd': cost_usd, 'mocked': mocked_any})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/api/runs")

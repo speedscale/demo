@@ -9,14 +9,17 @@ function fmt$(n: number): string {
 }
 
 export function NavBar() {
-  const [sessionCost, setSessionCost] = useState(0);
-  const [sessionTokens, setSessionTokens] = useState(0);
+  const [liveCost, setLiveCost] = useState(0);
+  const [savedCost, setSavedCost] = useState(0);
 
   useEffect(() => {
     function onRunComplete(e: Event) {
-      const { cost, tokens } = (e as CustomEvent<{ cost: number; tokens: number }>).detail;
-      setSessionCost((prev) => prev + (cost ?? 0));
-      setSessionTokens((prev) => prev + (tokens ?? 0));
+      const { cost, mocked } = (e as CustomEvent<{ cost: number; tokens: number; mocked?: boolean }>).detail;
+      if (mocked) {
+        setSavedCost((prev) => prev + (cost ?? 0));
+      } else {
+        setLiveCost((prev) => prev + (cost ?? 0));
+      }
     }
     window.addEventListener("run-complete", onRunComplete);
     return () => window.removeEventListener("run-complete", onRunComplete);
@@ -33,36 +36,41 @@ export function NavBar() {
             <a href="/" className="hover:text-white transition-colors">Analyze</a>
             <a href="/runs" className="hover:text-white transition-colors">History</a>
             <a href="/compare" className="hover:text-white transition-colors">Compare</a>
+            <a href="/costs" className="hover:text-white transition-colors">Costs</a>
           </div>
         </div>
 
-        {/* Live session cost meter */}
-        <div className="flex items-center gap-2">
-          {sessionCost > 0 ? (
-            <>
-              <div
-                className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg"
-                style={{ background: "#ef444411", border: "1px solid #ef444433" }}
-              >
-                <span style={{ color: "var(--text-muted)" }}>Session cost</span>
-                <span className="font-mono font-bold" style={{ color: "#ef4444" }}>{fmt$(sessionCost)}</span>
-                <span style={{ color: "var(--text-muted)" }}>·</span>
-                <span className="font-mono" style={{ color: "var(--text-muted)" }}>{sessionTokens.toLocaleString()} tok</span>
-              </div>
-              <div
-                className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg"
-                style={{ background: "#10b98111", border: "1px solid #10b98133" }}
-              >
-                <span style={{ color: "var(--text-muted)" }}>with simulation</span>
-                <span className="font-mono font-bold" style={{ color: "#10b981" }}>$0.00</span>
-              </div>
-            </>
-          ) : (
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Session cost: <span className="font-mono">$0.00</span>
+        {/* Compact session badges — live spend (red) vs simulated savings (green) */}
+        <a
+          href="/costs"
+          className="flex items-center gap-2 transition-opacity hover:opacity-80"
+          title="Click for full cost breakdown"
+        >
+          <span
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg"
+            style={{
+              background: liveCost > 0 ? "#ef444411" : "var(--surface2)",
+              border: `1px solid ${liveCost > 0 ? "#ef444433" : "var(--border)"}`,
+            }}
+          >
+            <span style={{ color: "var(--text-muted)" }}>Live</span>
+            <span className="font-mono font-bold" style={{ color: liveCost > 0 ? "#ef4444" : "var(--text-muted)" }}>
+              {fmt$(liveCost)}
             </span>
-          )}
-        </div>
+          </span>
+          <span
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg"
+            style={{
+              background: savedCost > 0 ? "#10b98111" : "var(--surface2)",
+              border: `1px solid ${savedCost > 0 ? "#10b98133" : "var(--border)"}`,
+            }}
+          >
+            <span style={{ color: "var(--text-muted)" }}>Saved</span>
+            <span className="font-mono font-bold" style={{ color: savedCost > 0 ? "#10b981" : "var(--text-muted)" }}>
+              {fmt$(savedCost)}
+            </span>
+          </span>
+        </a>
       </div>
     </nav>
   );

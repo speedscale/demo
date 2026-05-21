@@ -193,8 +193,10 @@ class TestOpenAIAdapterRun:
 # ---------------------------------------------------------------------------
 
 def _anthropic_response(content: str, input_tokens: int = 100, output_tokens: int = 50) -> httpx.Response:
+    # Adapter now forces tool_use for structured output, so the response
+    # body must carry the tool result under `content[].input`, not `content[].text`.
     return httpx.Response(200, json={
-        "content": [{"text": content}],
+        "content": [{"type": "tool_use", "input": json.loads(content)}],
         "usage": {"input_tokens": input_tokens, "output_tokens": output_tokens},
     })
 

@@ -1,9 +1,5 @@
-import type { ProviderInfo, RunRequest, RunResult } from "./types";
+import type { ProviderInfo, RunRequest, RunResult, StreamEvent } from "./types";
 
-// Browser: use "" so requests go to /api/... on the same origin (proxied by the
-// Next.js route handler at src/app/api/[...path]/route.ts).
-// Server-side: call the backend directly using BACKEND_URL (a plain env var read
-// at runtime, not baked at build time like NEXT_PUBLIC_* vars).
 const API_BASE =
   typeof window !== "undefined"
     ? ""
@@ -26,6 +22,40 @@ export async function runTask(req: RunRequest): Promise<RunResult> {
     method: "POST",
     body: JSON.stringify(req),
   });
+}
+
+export async function* streamTask(req: RunRequest): AsyncGenerator<StreamEvent> {
+  const res = await fetch(`${API_BASE}/api/run/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`API /api/run/stream → ${res.status}: ${text}`);
+  }
+
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop() ?? "";
+    for (const block of blocks) {
+      const dataLine = block.split("\n").find((l) => l.startsWith("data: "));
+      if (!dataLine) continue;
+      try {
+        yield JSON.parse(dataLine.slice(6)) as StreamEvent;
+      } catch {
+        // skip malformed event
+      }
+    }
+  }
 }
 
 export async function getProviders(): Promise<{ providers: ProviderInfo[]; default_provider: string }> {

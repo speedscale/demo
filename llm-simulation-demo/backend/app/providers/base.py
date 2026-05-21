@@ -20,6 +20,7 @@ class AdapterResult:
     steps: List[LLMStep] = field(default_factory=list)
     total_tokens: int = 0
     cost_usd: float = 0.0
+    mocked: bool = False
 
 
 @runtime_checkable
@@ -34,16 +35,16 @@ class ProviderAdapter(Protocol):
 # Per-model pricing in USD per 1M tokens (input_price, output_price)
 MODEL_PRICING: Dict[str, Tuple[float, float]] = {
     # OpenAI (see https://platform.openai.com/docs/models )
+    "gpt-5.5":                  (5.00,  30.00),
     "gpt-5.4-mini":             (0.75,   4.50),
-    "gpt-5.4":                  (2.50,  15.00),
     "gpt-5.4-nano":             (0.20,   1.25),
     "gpt-4.1-mini":             (0.40,   1.60),
     "gpt-4.1":                  (2.00,   8.00),
     "gpt-4o-mini":              (0.15,   0.60),
     # Anthropic
-    "claude-haiku-4-5":         (0.80,   4.00),
-    "claude-sonnet-4-5":        (3.00,  15.00),
-    "claude-opus-4-5":          (15.00, 75.00),
+    "claude-haiku-4-5-20251001": (0.80,   4.00),
+    "claude-sonnet-4-6":         (3.00,  15.00),
+    "claude-opus-4-7":           (15.00, 75.00),
     # Gemini
     "gemini-flash-latest":      (0.10,   0.40),
     "gemini-flash-lite-latest": (0.075,  0.30),
@@ -268,3 +269,22 @@ def _safe_json(raw: str, default: dict) -> dict:
         return json.loads(raw)
     except Exception:
         return default
+
+
+@dataclass
+class StepEvent:
+    name: str
+    data: dict
+    prompt_tokens: int
+    completion_tokens: int
+    cost_usd: float
+    duration_ms: int
+    mocked: bool = False
+
+
+def is_mocked_response(headers) -> bool:
+    """True if proxymock served the response (it stamps X-Speedscale-* headers)."""
+    for k in headers.keys():
+        if k.lower().startswith("x-speedscale"):
+            return True
+    return False

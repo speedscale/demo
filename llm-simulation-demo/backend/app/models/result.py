@@ -29,6 +29,7 @@ class TimingInfo(BaseModel):
 
 class RunResult(BaseModel):
     request_id: str
+    ticket_id: Optional[str] = None
     provider: str
     model: str
     output: OutputEnvelope
@@ -37,4 +38,5 @@ class RunResult(BaseModel):
     timing: TimingInfo
     total_tokens: int = 0
     cost_usd: float = 0.0
+    mocked: bool = False
     error: Optional[str] = None

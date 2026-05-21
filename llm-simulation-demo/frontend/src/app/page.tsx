@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { runTask, getProviders } from "@/lib/api";
-import type { ProviderInfo, RunResult } from "@/lib/types";
+import { streamTask, runTask, getProviders, listRuns } from "@/lib/api";
+import type { LLMStep, ProviderInfo, RunResult, TicketRunState, ToolCallRecord } from "@/lib/types";
 import { SeverityBadge } from "@/components/SeverityBadge";
 
 // ── 20 sample tickets ───────────────────────────────────────────────────────
@@ -136,7 +136,6 @@ const SEVERITY_COLORS: Record<string, string> = {
   critical: "#ef4444",
 };
 
-// ── Pricing note shown in the savings estimator ─────────────────────────────
 const PROVIDER_DISPLAY: Record<string, string> = {
   openai: "OpenAI",
   anthropic: "Anthropic",
@@ -148,6 +147,19 @@ function fmt$(n: number): string {
   if (n === 0) return "$0.00";
   if (n < 0.01) return `$${n.toFixed(4)}`;
   return `$${n.toFixed(2)}`;
+}
+
+// Shorten verbose model IDs so they fit on ticket buttons.
+function shortModel(m: string): string {
+  if (!m) return "";
+  if (m.startsWith("claude-")) {
+    if (m.includes("opus")) return "opus-4.7";
+    if (m.includes("sonnet")) return "sonnet-4.6";
+    if (m.includes("haiku")) return "haiku-4.5";
+  }
+  if (m.startsWith("gemini-")) return m.replace("gemini-", "").replace("-latest", "");
+  if (m.startsWith("grok-")) return m.replace("grok-", "").replace("-non-reasoning", "-nr").replace("-reasoning", "-rsn");
+  return m;
 }
 
 // ── Small UI primitives ─────────────────────────────────────────────────────
@@ -200,54 +212,102 @@ function ToolCard({ title, data }: { title: string; data: Record<string, unknown
   );
 }
 
-// ── Single-run result panel ─────────────────────────────────────────────────
+// ── Streaming single-ticket result panel ────────────────────────────────────
 
-function ResultPanel({ result }: { result: RunResult }) {
-  const order = result.tool_calls.find((t) => t.name === "lookup_order");
-  const policy = result.tool_calls.find((t) => t.name === "lookup_policy");
+function StreamingResultPanel({ state }: { state: TicketRunState }) {
   const [expanded, setExpanded] = useState(false);
+  const color = state.severity ? SEVERITY_COLORS[state.severity] : undefined;
+  const severityBg = color ? `${color}11` : "var(--surface)";
 
-  const severityBg: Record<string, string> = {
-    low: "#10b98111",
-    medium: "#f59e0b11",
-    high: "#f9731611",
-    critical: "#ef444411",
-  };
+  const stepLabel: Record<string, string> = { triage: "Classifying…", analysis: "Analyzing root cause…", response: "Drafting response…" };
 
   return (
     <div className="space-y-4">
-      {/* Header row: severity + cost */}
+      {/* Prominent model header */}
       <div
-        className="rounded-xl p-5 space-y-4"
-        style={{ background: severityBg[result.output.severity] ?? "var(--surface)", border: "1px solid var(--border)" }}
+        className="rounded-xl px-5 py-3 flex items-center justify-between flex-wrap gap-3"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
       >
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <SeverityBadge severity={result.output.severity} />
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-mono px-2 py-1 rounded-md font-bold" style={{ background: "#10b98122", color: "#10b981", border: "1px solid #10b98133" }}>
-              {fmt$(result.cost_usd)} · {result.total_tokens.toLocaleString()} tokens
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <span className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Model</span>
+          <span className="text-lg font-bold font-mono" style={{ color: "var(--accent)" }}>{state.model || "—"}</span>
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>via {PROVIDER_DISPLAY[state.provider] ?? state.provider}</span>
+          {state.mocked ? (
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: "#10b98122", color: "#10b981", border: "1px solid #10b98144" }}>
+              Simulated · proxymock
             </span>
-            <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{result.request_id}</span>
+          ) : state.request_id ? (
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: "#ef444422", color: "#ef4444", border: "1px solid #ef444444" }}>
+              Live · billed
+            </span>
+          ) : null}
+        </div>
+        {state.cost_usd > 0 && (
+          state.mocked ? (
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[10px] uppercase tracking-wider" style={{ color: "#10b981" }}>Saved by simulation</span>
+              <span className="text-sm font-mono font-bold px-3 py-1 rounded-md" style={{ background: "#10b98111", color: "#10b981", border: "1px solid #10b98133" }}>
+                {fmt$(state.cost_usd)} · {state.total_tokens.toLocaleString()} tok
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-[10px] uppercase tracking-wider" style={{ color: "#ef4444" }}>Live spend</span>
+              <span className="text-sm font-mono font-bold px-3 py-1 rounded-md" style={{ background: "#ef444411", color: "#ef4444", border: "1px solid #ef444433" }}>
+                {fmt$(state.cost_usd)} · {state.total_tokens.toLocaleString()} tok
+              </span>
+            </div>
+          )
+        )}
+      </div>
+
+      {/* Header: severity */}
+      <div className="rounded-xl p-5 space-y-4" style={{ background: severityBg, border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          {state.severity ? (
+            <SeverityBadge severity={state.severity as "low" | "medium" | "high" | "critical"} />
+          ) : (
+            <span className="text-xs animate-pulse" style={{ color: "var(--text-muted)" }}>
+              {state.currentStep ? stepLabel[state.currentStep] : "Starting…"}
+            </span>
+          )}
+        </div>
+
+        {state.summary ? (
+          <div>
+            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Summary</p>
+            <p className="text-sm leading-relaxed">{state.summary}</p>
           </div>
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Summary</p>
-          <p className="text-sm leading-relaxed">{result.output.summary}</p>
-        </div>
-        {result.output.root_cause && (
+        ) : state.severity && (
+          <div>
+            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Summary</p>
+            <div className="h-4 rounded animate-pulse" style={{ background: "var(--surface2)", width: "80%" }} />
+          </div>
+        )}
+
+        {state.root_cause && (
           <div>
             <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Root Cause</p>
-            <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{result.output.root_cause}</p>
+            <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{state.root_cause}</p>
           </div>
         )}
       </div>
 
-      <div className="rounded-xl p-5" style={{ background: "#10b98108", border: "1px solid #10b98133" }}>
-        <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#10b981" }}>Recommended Action</p>
-        <p className="text-sm leading-relaxed">{result.output.recommended_action}</p>
-      </div>
+      {/* Recommended action */}
+      {state.recommended_action ? (
+        <div className="rounded-xl p-5" style={{ background: "#10b98108", border: "1px solid #10b98133" }}>
+          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#10b981" }}>Recommended Action</p>
+          <p className="text-sm leading-relaxed">{state.recommended_action}</p>
+        </div>
+      ) : state.summary && (
+        <div className="rounded-xl p-5 animate-pulse" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>Drafting Response…</p>
+          <div className="h-4 rounded" style={{ background: "var(--surface2)", width: "60%" }} />
+        </div>
+      )}
 
-      {result.output.response_draft && (
+      {/* Response draft */}
+      {state.response_draft && (
         <div className="rounded-xl p-5 space-y-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-center justify-between">
             <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Draft Customer Response</p>
@@ -255,20 +315,21 @@ function ResultPanel({ result }: { result: RunResult }) {
               {expanded ? "collapse" : "expand"}
             </button>
           </div>
-          {expanded && (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{result.output.response_draft}</p>
-          )}
-          {!expanded && (
-            <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>{result.output.response_draft}</p>
+          {expanded ? (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{state.response_draft}</p>
+          ) : (
+            <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>{state.response_draft}</p>
           )}
         </div>
       )}
 
-      {/* LLM pipeline steps */}
-      {result.steps.length > 0 && (
+      {/* Pipeline steps */}
+      {(state.steps.length > 0 || state.status === "running") && (
         <div className="rounded-xl p-4 space-y-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Pipeline Steps ({result.steps.length} LLM calls)</p>
-          {result.steps.map((step) => (
+          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+            Pipeline Steps ({state.steps.length}/3 LLM calls)
+          </p>
+          {state.steps.map((step) => (
             <div key={step.name} className="flex items-center justify-between text-xs py-1.5 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
               <span className="font-mono capitalize">{step.name}</span>
               <div className="flex gap-4" style={{ color: "var(--text-muted)" }}>
@@ -278,30 +339,47 @@ function ResultPanel({ result }: { result: RunResult }) {
               </div>
             </div>
           ))}
+          {state.status === "running" && state.currentStep && (
+            <div className="flex items-center justify-between text-xs py-1.5 animate-pulse">
+              <span className="font-mono capitalize" style={{ color: "var(--text-muted)" }}>{state.currentStep}</span>
+              <span style={{ color: "var(--text-muted)" }}>running…</span>
+            </div>
+          )}
         </div>
       )}
 
+      {/* Error */}
+      {state.error && (
+        <div className="rounded-xl p-4 text-sm" style={{ background: "#ef444411", border: "1px solid #ef444433", color: "#ef4444" }}>
+          {state.error}
+        </div>
+      )}
+
+      {/* Tool data */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {order?.result ? (
-          <ToolCard title="Order Details" data={order.result as Record<string, unknown>} />
-        ) : order?.error ? (
-          <div className="rounded-lg p-4" style={{ background: "#ef444411", border: "1px solid #ef444433" }}>
-            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#ef4444" }}>Order Lookup Failed</p>
-            <p className="text-xs">{order.error}</p>
-          </div>
-        ) : null}
-        {policy?.result ? (
-          <ToolCard title="Return Policy" data={policy.result as Record<string, unknown>} />
-        ) : null}
+        {state.tool_calls.map((tc) =>
+          tc.result ? (
+            <ToolCard
+              key={tc.name}
+              title={tc.name === "lookup_order" ? "Order Details" : "Return Policy"}
+              data={tc.result as Record<string, unknown>}
+            />
+          ) : tc.error ? (
+            <div key={tc.name} className="rounded-lg p-4" style={{ background: "#ef444411", border: "1px solid #ef444433" }}>
+              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "#ef4444" }}>{tc.name} Failed</p>
+              <p className="text-xs">{tc.error}</p>
+            </div>
+          ) : null
+        )}
       </div>
 
-      <div className="flex items-center justify-between text-xs pt-1" style={{ color: "var(--text-muted)" }}>
-        <span>{result.provider} · {result.model} · {result.timing.total_ms}ms</span>
-        <div className="flex gap-4">
-          <a href={`/runs/${result.request_id}`} className="hover:opacity-80 underline">Full trace</a>
-          <a href={`/compare?a=${result.request_id}`} className="hover:opacity-80 underline">Compare</a>
+      {/* Footer */}
+      {state.request_id && (
+        <div className="flex items-center justify-end gap-4 text-xs pt-1" style={{ color: "var(--text-muted)" }}>
+          <a href={`/runs/${state.request_id}`} className="hover:opacity-80 underline">Full trace</a>
+          <a href={`/compare?a=${state.request_id}`} className="hover:opacity-80 underline">Compare</a>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -360,7 +438,6 @@ function SavingsEstimator({ items, runsPerDay }: { items: BatchItem[]; runsPerDa
         </span>
       </div>
 
-      {/* Hero: annual real vs simulation */}
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl p-4 text-center space-y-1" style={{ background: "#ef444411", border: "1px solid #ef444433" }}>
           <p className="text-xs uppercase tracking-wider" style={{ color: "#ef4444" }}>Annual LLM spend</p>
@@ -374,7 +451,6 @@ function SavingsEstimator({ items, runsPerDay }: { items: BatchItem[]; runsPerDa
         </div>
       </div>
 
-      {/* Per-provider annual breakdown */}
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Annual spend by provider</p>
         {Object.entries(byProvider)
@@ -430,12 +506,10 @@ function BatchResultsPanel({
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   const totalCost = completed.reduce((sum, i) => sum + (i.result?.cost_usd ?? 0), 0);
   const totalTokens = completed.reduce((sum, i) => sum + (i.result?.total_tokens ?? 0), 0);
-
   const uniqueTicketIds = [...new Set(items.map((i) => i.ticket.id))];
 
   return (
     <div className="space-y-4">
-      {/* Progress header */}
       <div className="rounded-xl p-4 space-y-3" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <div className="flex items-center justify-between text-sm flex-wrap gap-2">
           <span className="font-semibold">
@@ -460,10 +534,8 @@ function BatchResultsPanel({
         </div>
       </div>
 
-      {/* Savings estimator */}
       {done > 0 && <SavingsEstimator items={items} runsPerDay={runsPerDay} />}
 
-      {/* Results grid — one row per ticket, columns per provider */}
       {done > 0 && (
         <div className="space-y-2">
           {uniqueTicketIds.map((ticketId) => {
@@ -580,20 +652,24 @@ export default function HomePage() {
   const [model, setModel] = useState("");
   const [ticketIdx, setTicketIdx] = useState(0);
   const [transcript, setTranscript] = useState(SAMPLE_TICKETS[0].transcript);
-  const [result, setResult] = useState<RunResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [runsPerDay, setRunsPerDay] = useState(10000);
+
+  // Per-ticket streaming state
+  const [ticketStates, setTicketStates] = useState<Record<string, TicketRunState>>({});
 
   // Batch state
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [batchDone, setBatchDone] = useState(0);
   const [batchTotal, setBatchTotal] = useState(0);
   const [batchRunning, setBatchRunning] = useState(false);
+  const [batchError, setBatchError] = useState<string | null>(null);
+  const [quickRunning, setQuickRunning] = useState(false);
 
-  const isBusy = loading || batchRunning;
-  const showBatch = batchTotal > 0;
   const currentTicket = SAMPLE_TICKETS[ticketIdx];
+  const currentTicketState = ticketStates[currentTicket.id];
+  const currentTicketRunning = currentTicketState?.status === "running";
+  const isBusy = currentTicketRunning || batchRunning || quickRunning;
+  const showBatch = batchTotal > 0;
 
   useEffect(() => {
     getProviders()
@@ -602,48 +678,263 @@ export default function HomePage() {
         setProvider(d.default_provider);
       })
       .catch(() => {});
+
+    // Seed per-ticket state from backend run history on load.
+    // Iterates oldest-to-newest so the most recent run per ticket wins.
+    listRuns(50)
+      .then(({ runs }) => {
+        const seed: Record<string, TicketRunState> = {};
+        for (const run of runs) {
+          if (!run.ticket_id) continue;
+          seed[run.ticket_id] = {
+            status: run.error ? "error" : "done",
+            provider: run.provider,
+            model: run.model,
+            severity: run.output.severity,
+            summary: run.output.summary,
+            root_cause: run.output.root_cause,
+            recommended_action: run.output.recommended_action,
+            response_draft: run.output.response_draft,
+            steps: run.steps,
+            tool_calls: run.tool_calls,
+            request_id: run.request_id,
+            total_tokens: run.total_tokens,
+            cost_usd: run.cost_usd,
+            mocked: run.mocked ?? false,
+            error: run.error,
+          };
+        }
+        if (Object.keys(seed).length > 0) setTicketStates(seed);
+      })
+      .catch(() => {});
   }, []);
 
   const selectedProvider = providers.find((p) => p.id === provider);
   const models = selectedProvider?.models ?? [];
 
-  function dispatchCostEvent(cost: number, tokens: number) {
-    window.dispatchEvent(new CustomEvent("run-complete", { detail: { cost, tokens } }));
+  function dispatchCostEvent(cost: number, tokens: number, mocked: boolean) {
+    window.dispatchEvent(new CustomEvent("run-complete", { detail: { cost, tokens, mocked } }));
   }
 
   async function handleRun() {
     setBatchTotal(0);
     setBatchItems([]);
-    setLoading(true);
-    setError(null);
+    setBatchError(null);
+
+    const ticketId = currentTicket.id;
+    const modelForRun = model || selectedProvider?.default_model || "";
+
+    setTicketStates((prev) => ({
+      ...prev,
+      [ticketId]: {
+        status: "running",
+        provider,
+        model: modelForRun,
+        steps: [],
+        tool_calls: [],
+        total_tokens: 0,
+        cost_usd: 0,
+        currentStep: "triage",
+      },
+    }));
+
     try {
-      const res = await runTask({
+      for await (const event of streamTask({
         provider,
         model: model || undefined,
-        input: {
-          ticket_id: currentTicket.id,
-          customer_tier: currentTicket.tier,
-          transcript,
-        },
-      });
-      setResult(res);
-      dispatchCostEvent(res.cost_usd, res.total_tokens);
+        input: { ticket_id: currentTicket.id, customer_tier: currentTicket.tier, transcript },
+      })) {
+        if (event.type === "tools") {
+          setTicketStates((prev) => ({
+            ...prev,
+            [ticketId]: { ...prev[ticketId], tool_calls: event.tool_calls },
+          }));
+        } else if (event.type === "step") {
+          const step: LLMStep = {
+            name: event.name,
+            prompt_tokens: event.prompt_tokens,
+            completion_tokens: event.completion_tokens,
+            cost_usd: event.cost_usd,
+            duration_ms: event.duration_ms,
+          };
+          setTicketStates((prev) => {
+            const curr = prev[ticketId];
+            const updates: Partial<TicketRunState> = {
+              steps: [...curr.steps, step],
+              currentStep: event.name === "triage" ? "analysis" : event.name === "analysis" ? "response" : undefined,
+            };
+            if (event.name === "triage") updates.severity = event.data.severity as string;
+            if (event.name === "analysis") {
+              updates.summary = event.data.summary as string;
+              updates.root_cause = event.data.root_cause as string;
+            }
+            if (event.name === "response") {
+              updates.recommended_action = event.data.recommended_action as string;
+              updates.response_draft = event.data.response_body as string;
+            }
+            return { ...prev, [ticketId]: { ...curr, ...updates } };
+          });
+        } else if (event.type === "complete") {
+          setTicketStates((prev) => ({
+            ...prev,
+            [ticketId]: {
+              ...prev[ticketId],
+              status: "done",
+              request_id: event.request_id,
+              total_tokens: event.total_tokens,
+              cost_usd: event.cost_usd,
+              mocked: event.mocked ?? false,
+              currentStep: undefined,
+            },
+          }));
+          dispatchCostEvent(event.cost_usd, event.total_tokens, event.mocked ?? false);
+        } else if (event.type === "error") {
+          setTicketStates((prev) => ({
+            ...prev,
+            [ticketId]: { ...prev[ticketId], status: "error", error: event.message, currentStep: undefined },
+          }));
+        }
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
+      setTicketStates((prev) => ({
+        ...prev,
+        [ticketId]: {
+          ...prev[ticketId],
+          status: "error",
+          error: e instanceof Error ? e.message : String(e),
+          currentStep: undefined,
+        },
+      }));
     }
+  }
+
+  async function handleTestAllModels() {
+    const configured = providers.filter((p) => p.configured);
+    if (configured.length === 0) {
+      setBatchError("No providers have API keys configured.");
+      return;
+    }
+
+    const combos: { provider: string; model: string; ticket: (typeof SAMPLE_TICKETS)[number] }[] = [];
+    let tIdx = 0;
+    for (const p of configured) {
+      for (const m of p.models) {
+        combos.push({
+          provider: p.id,
+          model: m,
+          ticket: SAMPLE_TICKETS[tIdx % SAMPLE_TICKETS.length],
+        });
+        tIdx++;
+      }
+    }
+
+    setBatchTotal(0);
+    setBatchItems([]);
+    setBatchError(null);
+    setQuickRunning(true);
+
+    // Seed state for every assigned ticket so buttons show the model immediately
+    setTicketStates((prev) => {
+      const next = { ...prev };
+      for (const combo of combos) {
+        next[combo.ticket.id] = {
+          status: "running",
+          provider: combo.provider,
+          model: combo.model,
+          steps: [],
+          tool_calls: [],
+          total_tokens: 0,
+          cost_usd: 0,
+          currentStep: "triage",
+        };
+      }
+      return next;
+    });
+
+    await Promise.all(
+      combos.map(async (combo) => {
+        const tid = combo.ticket.id;
+        try {
+          for await (const event of streamTask({
+            provider: combo.provider,
+            model: combo.model,
+            input: { ticket_id: combo.ticket.id, customer_tier: combo.ticket.tier, transcript: combo.ticket.transcript },
+          })) {
+            if (event.type === "tools") {
+              setTicketStates((prev) => ({ ...prev, [tid]: { ...prev[tid], tool_calls: event.tool_calls } }));
+            } else if (event.type === "step") {
+              const step: LLMStep = {
+                name: event.name,
+                prompt_tokens: event.prompt_tokens,
+                completion_tokens: event.completion_tokens,
+                cost_usd: event.cost_usd,
+                duration_ms: event.duration_ms,
+              };
+              setTicketStates((prev) => {
+                const curr = prev[tid];
+                if (!curr) return prev;
+                const updates: Partial<TicketRunState> = {
+                  steps: [...curr.steps, step],
+                  currentStep: event.name === "triage" ? "analysis" : event.name === "analysis" ? "response" : undefined,
+                };
+                if (event.name === "triage") updates.severity = event.data.severity as string;
+                if (event.name === "analysis") {
+                  updates.summary = event.data.summary as string;
+                  updates.root_cause = event.data.root_cause as string;
+                }
+                if (event.name === "response") {
+                  updates.recommended_action = event.data.recommended_action as string;
+                  updates.response_draft = event.data.response_body as string;
+                }
+                return { ...prev, [tid]: { ...curr, ...updates } };
+              });
+            } else if (event.type === "complete") {
+              setTicketStates((prev) => ({
+                ...prev,
+                [tid]: {
+                  ...prev[tid],
+                  status: "done",
+                  request_id: event.request_id,
+                  total_tokens: event.total_tokens,
+                  cost_usd: event.cost_usd,
+                  mocked: event.mocked ?? false,
+                  currentStep: undefined,
+                },
+              }));
+              dispatchCostEvent(event.cost_usd, event.total_tokens, event.mocked ?? false);
+            } else if (event.type === "error") {
+              setTicketStates((prev) => ({
+                ...prev,
+                [tid]: { ...prev[tid], status: "error", error: event.message, currentStep: undefined },
+              }));
+            }
+          }
+        } catch (e) {
+          setTicketStates((prev) => ({
+            ...prev,
+            [tid]: {
+              ...prev[tid],
+              status: "error",
+              error: e instanceof Error ? e.message : String(e),
+              currentStep: undefined,
+            },
+          }));
+        }
+      })
+    );
+
+    setQuickRunning(false);
   }
 
   async function handleAnalyzeAll() {
     const configured = providers.filter((p) => p.configured);
     if (configured.length === 0) {
-      setError("No providers have API keys configured.");
+      setBatchError("No providers have API keys configured.");
       return;
     }
 
-    setResult(null);
-    setError(null);
+    setTicketStates({});
+    setBatchError(null);
 
     const pairs: BatchItem[] = SAMPLE_TICKETS.flatMap((ticket) =>
       configured.map((p) => ({
@@ -676,7 +967,7 @@ export default function HomePage() {
           setBatchItems((prev) =>
             prev.map((it, i) => (i === idx ? { ...it, status: "done", result: res } : it))
           );
-          dispatchCostEvent(res.cost_usd, res.total_tokens);
+          dispatchCostEvent(res.cost_usd, res.total_tokens, res.mocked ?? false);
         } catch (e) {
           setBatchItems((prev) =>
             prev.map((it, i) =>
@@ -695,7 +986,7 @@ export default function HomePage() {
   }
 
   const configuredCount = providers.filter((p) => p.configured).length;
-  const totalCalls = SAMPLE_TICKETS.length * configuredCount * 3; // 3 LLM steps per ticket
+  const totalCalls = SAMPLE_TICKETS.length * configuredCount * 3;
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[440px_1fr] gap-8">
@@ -709,10 +1000,7 @@ export default function HomePage() {
         </div>
 
         {/* Provider */}
-        <div
-          className="rounded-xl p-5 space-y-4"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-        >
+        <div className="rounded-xl p-5 space-y-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <p className="text-sm font-semibold">Provider</p>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -748,10 +1036,7 @@ export default function HomePage() {
         </div>
 
         {/* Ticket */}
-        <div
-          className="rounded-xl p-5 space-y-4"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-        >
+        <div className="rounded-xl p-5 space-y-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <p className="text-sm font-semibold">Support Ticket</p>
 
           <div className="grid grid-cols-2 gap-4">
@@ -767,24 +1052,45 @@ export default function HomePage() {
 
           <div>
             <Label>Sample Ticket</Label>
-            <div className="flex gap-1 mb-2 flex-wrap">
-              {SAMPLE_TICKETS.map((t, i) => (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    setTicketIdx(i);
-                    setTranscript(t.transcript);
-                  }}
-                  className="text-xs px-2 py-0.5 rounded transition-colors"
-                  style={{
-                    background: ticketIdx === i ? "var(--accent)" : "var(--surface2)",
-                    color: ticketIdx === i ? "white" : "var(--text-muted)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  {t.id.replace("INC-", "")}
-                </button>
-              ))}
+            <div className="grid grid-cols-4 gap-1 mb-2">
+              {SAMPLE_TICKETS.map((t, i) => {
+                const ts = ticketStates[t.id];
+                const hasResult = ts && ts.status !== "running";
+                const isRunning = ts?.status === "running";
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      setTicketIdx(i);
+                      setTranscript(t.transcript);
+                    }}
+                    title={ts?.model ?? ""}
+                    className="text-xs px-2 py-1 rounded transition-colors relative flex flex-col items-center leading-tight"
+                    style={{
+                      background: ticketIdx === i ? "var(--accent)" : "var(--surface2)",
+                      color: ticketIdx === i ? "white" : hasResult ? "var(--text)" : "var(--text-muted)",
+                      border: isRunning
+                        ? "1px solid var(--accent)"
+                        : hasResult
+                        ? `1px solid ${SEVERITY_COLORS[ts!.severity ?? "medium"] ?? "var(--border)"}44`
+                        : "1px solid var(--border)",
+                    }}
+                  >
+                    <span className="font-mono">
+                      {t.id.replace("INC-", "")}
+                      {isRunning && <span className="ml-1 animate-pulse">·</span>}
+                    </span>
+                    {ts?.model && (
+                      <span
+                        className="text-[9px] font-mono mt-0.5 truncate w-full text-center"
+                        style={{ color: ticketIdx === i ? "rgba(255,255,255,0.8)" : "var(--text-muted)" }}
+                      >
+                        {shortModel(ts.model)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <textarea
               value={transcript}
@@ -797,25 +1103,43 @@ export default function HomePage() {
         </div>
 
         {/* Action buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={handleRun}
-            disabled={isBusy}
-            className="py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ background: "var(--accent)", color: "white" }}
-          >
-            {loading ? "Analyzing…" : "Analyze Ticket"}
-          </button>
-          <button
-            onClick={handleAnalyzeAll}
-            disabled={isBusy}
-            className="py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
-            title={`Run all ${SAMPLE_TICKETS.length} tickets × ${configuredCount} providers × 3 LLM calls = ${totalCalls} total`}
-          >
-            {batchRunning ? `${batchDone} / ${batchTotal}…` : "Analyze All"}
-          </button>
-        </div>
+        {(() => {
+          const allModelCount = providers.filter((p) => p.configured).reduce((n, p) => n + p.models.length, 0);
+          return (
+            <div className="space-y-2">
+              <button
+                onClick={handleTestAllModels}
+                disabled={isBusy}
+                className="w-full py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
+                style={{ background: "var(--accent)", color: "white" }}
+                title={`Runs one ticket through each configured model — ${allModelCount} models × 3 LLM calls = ${allModelCount * 3} calls`}
+              >
+                {quickRunning
+                  ? "Testing all models…"
+                  : `Test All Models · ${allModelCount} model${allModelCount === 1 ? "" : "s"}`}
+              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={handleRun}
+                  disabled={isBusy}
+                  className="py-2.5 rounded-xl font-medium text-sm transition-all hover:opacity-90 disabled:opacity-50"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
+                >
+                  {currentTicketRunning ? "Analyzing…" : "Analyze Ticket"}
+                </button>
+                <button
+                  onClick={handleAnalyzeAll}
+                  disabled={isBusy}
+                  className="py-2.5 rounded-xl font-medium text-sm transition-all hover:opacity-90 disabled:opacity-50"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
+                  title={`Run all ${SAMPLE_TICKETS.length} tickets × ${configuredCount} providers × 3 LLM calls = ${totalCalls} total`}
+                >
+                  {batchRunning ? `${batchDone} / ${batchTotal}…` : "Analyze All (heavy)"}
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {providers.length > 0 && (
           <div className="space-y-2">
@@ -823,7 +1147,6 @@ export default function HomePage() {
               Runs all {SAMPLE_TICKETS.length} tickets against each configured provider —{" "}
               <strong>{totalCalls} LLM calls total</strong>
             </p>
-            {/* Runs/day slider for savings estimator */}
             <div className="rounded-lg p-3 space-y-1.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
               <div className="flex items-center justify-between text-xs">
                 <label style={{ color: "var(--text-muted)" }}>Support tickets / day</label>
@@ -851,15 +1174,12 @@ export default function HomePage() {
       {/* ── Right panel: result ── */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">
-          {showBatch ? "Batch Results" : "Result"}
+          {showBatch ? "Batch Results" : `Result — ${currentTicket.id}`}
         </h2>
 
-        {error && (
-          <div
-            className="rounded-xl p-4 text-sm"
-            style={{ background: "#ef444411", border: "1px solid #ef444433", color: "#ef4444" }}
-          >
-            {error}
+        {batchError && (
+          <div className="rounded-xl p-4 text-sm" style={{ background: "#ef444411", border: "1px solid #ef444433", color: "#ef4444" }}>
+            {batchError}
           </div>
         )}
 
@@ -867,26 +1187,17 @@ export default function HomePage() {
           <BatchResultsPanel items={batchItems} done={batchDone} total={batchTotal} runsPerDay={runsPerDay} />
         ) : (
           <>
-            {loading && (
-              <div
-                className="rounded-xl p-8 text-center text-sm animate-pulse"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
-              >
-                Running 3-step pipeline (triage → analysis → response)…
-              </div>
-            )}
-
-            {!loading && !result && !error && (
+            {!currentTicketState && (
               <div
                 className="rounded-xl p-8 text-center space-y-2"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
               >
                 <p className="text-sm">Select a ticket and click <strong>Analyze Ticket</strong>.</p>
                 <p className="text-xs">Each ticket triggers <strong>3 sequential LLM calls</strong>: severity triage, root-cause analysis, and a draft customer response.</p>
+                <p className="text-xs">Results are saved per-ticket — click between tickets to compare.</p>
               </div>
             )}
-
-            {!loading && result && <ResultPanel result={result} />}
+            {currentTicketState && <StreamingResultPanel state={currentTicketState} />}
           </>
         )}
       </div>

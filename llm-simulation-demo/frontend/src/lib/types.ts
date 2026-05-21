@@ -41,6 +41,7 @@ export interface TimingInfo {
 
 export interface RunResult {
   request_id: string;
+  ticket_id?: string;
   provider: string;
   model: string;
   output: OutputEnvelope;
@@ -49,6 +50,7 @@ export interface RunResult {
   timing: TimingInfo;
   total_tokens: number;
   cost_usd: number;
+  mocked?: boolean;
   error?: string;
 }
 
@@ -57,4 +59,31 @@ export interface ProviderInfo {
   models: string[];
   default_model: string;
   configured: boolean;
+}
+
+// SSE event types from /api/run/stream
+export type StreamEvent =
+  | { type: "tools"; tool_calls: ToolCallRecord[] }
+  | { type: "step"; name: string; data: Record<string, unknown>; prompt_tokens: number; completion_tokens: number; cost_usd: number; duration_ms: number; mocked?: boolean }
+  | { type: "complete"; request_id: string; total_tokens: number; cost_usd: number; mocked?: boolean }
+  | { type: "error"; message: string };
+
+// Per-ticket streaming state accumulated on the frontend
+export interface TicketRunState {
+  status: "running" | "done" | "error";
+  provider: string;
+  model: string;
+  severity?: string;
+  summary?: string;
+  root_cause?: string;
+  recommended_action?: string;
+  response_draft?: string;
+  steps: LLMStep[];
+  tool_calls: ToolCallRecord[];
+  request_id?: string;
+  total_tokens: number;
+  cost_usd: number;
+  mocked?: boolean;
+  error?: string;
+  currentStep?: "triage" | "analysis" | "response";
 }

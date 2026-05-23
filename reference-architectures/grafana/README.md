@@ -49,7 +49,14 @@ kubectl -n observability get pods
 - Visualization: Grafana Explore and dashboards.
 
 ```bash
-kubectl -n observability port-forward svc/grafana 3000:3000
+kubectl -n observability port-forward svc/grafana 38030:3000
 ```
 
-Open `http://localhost:3000` (admin/admin), then in Explore query `{source="speedscale"}`.
+Open `http://localhost:38030` (admin/admin), then in Explore query `{source="speedscale"}`.
+
+Two dashboards are auto-provisioned under the **Speedscale BYOC** folder:
+
+- **Speedscale BYOC** — infra view (forwarder metrics, queue depths, raw log stream)
+- **Speedscale Traffic** — RRPair traffic explorer (filter by service / method / status / endpoint regex; one-line-per-request format; expand any row for the full JSON with req/res bodies)
+
+The host port `38030` is chosen to dodge the common 3000-3999 dev-server range. If you change it, change it consistently across `port-forward` and any docs that reference the URL.

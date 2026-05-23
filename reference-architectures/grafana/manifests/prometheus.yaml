@@ -1,0 +1,86 @@
+# Minimal Prometheus, in the observability namespace, configured purely as a
+# metrics store for OTel Collector to remote-write into. No scrape configs of
+# its own — that lives in the OTel Collector's `prometheus` receiver, which
+# already handles service discovery for /metrics endpoints in the cluster.
+#
+# `--web.enable-remote-write-receiver` opens the `/api/v1/write` endpoint that
+# OTel's `prometheusremotewrite` exporter targets. No auth in-cluster; lock
+# down with NetworkPolicy if you expose externally.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: observability
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 30s
+      evaluation_interval: 30s
+
+    # Intentionally empty — Prometheus here is a pure storage sink. All
+    # ingestion happens via remote-write from the OTel Collector.
+    scrape_configs: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.54.1
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--storage.tsdb.retention.time=24h"
+            - "--web.enable-remote-write-receiver"
+            - "--web.listen-address=0.0.0.0:9090"
+          ports:
+            - containerPort: 9090
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: data
+              mountPath: /prometheus
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            initialDelaySeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+        - name: data
+          emptyDir: {}   # demo only; switch to PVC for non-throwaway use
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - name: http
+      protocol: TCP
+      port: 9090
+      targetPort: 9090

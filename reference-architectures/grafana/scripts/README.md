@@ -77,9 +77,22 @@ Then route your app's outbound traffic through `localhost:4140` (the default pro
 - **Loki cardinality cap (500 series).** The script's LogQL always pipes through `| keep <small-field-list>` after `| json`. A naïve `| json` extracts ~60 nested fields per record and blows past the cap on any aggregate query.
 - **Port conflicts.** If your gathered set includes a Postgres or MySQL recording, `proxymock mock` will try to bind ports 5432 / 3306. Conflicts with anything local listening there. Filter to HTTP only (`--logql '{...} | json | body_l7protocol="http"'`) if needed.
 
+### Want markdown files instead of JSON?
+
+This script writes `.json` only — proxymock owns format conversion. Replay the snapshot through `proxymock` and ask it to write markdown:
+
+```bash
+# Gather as .json (this script)
+python3 loki-gather.py --out-dir /tmp/snap …
+
+# Re-emit as .md via proxymock
+proxymock mock --in /tmp/snap --out /tmp/snap-md --out-format markdown
+```
+
+We deliberately don't reimplement the markdown encoder in Python — the canonical implementation lives in `lib/rrfile/markdown/codec.go`, and keeping two encoders in sync as the format evolves is a maintenance trap.
+
 ### What's deliberately not here (yet)
 
-- Markdown output (`--md`). `.json` is what proxymock expands cloud snapshots into, so the format is proven and easier. Markdown is more readable but requires base64-decoding bodies, recomposing the request line, joining header arrays — not worth doing twice if we end up promoting this to a real tool.
 - Pagination / auto-windowing for large time ranges. Today, big windows can exhaust Loki's per-query limit; either narrow the window or use multiple invocations.
 - Auth (`--bearer-token`, `--basic-auth`). The BYOC reference Loki has no auth. Add when needed.
 

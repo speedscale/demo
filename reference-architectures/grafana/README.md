@@ -4,57 +4,32 @@ This reference architecture captures real traffic from your apps, ships it throu
 
 ## Architecture
 
-The full loop, from production capture to replay against an app under test:
-
 ```mermaid
 flowchart LR
-  subgraph cluster["BYOC Kubernetes cluster"]
-    direction TB
-    apps["Your apps<br/>(real traffic)"]
-    cap["Speedscale nettap<br/>eBPF capture"]
-    fwd["Speedscale Forwarder<br/>DLP + filter rules<br/>byoc_otel exporter"]
-    otel["OTel Collector<br/>:4317 gRPC&nbsp;·&nbsp;:4318 HTTP"]
-    loki[("Loki<br/>RRPair logs<br/>indexed by<br/>cluster · service · namespace")]
-    grafana["Grafana<br/><i>Speedscale Traffic</i><br/>dashboard"]
-
-    apps -.-> cap
-    cap --> fwd
-    fwd ==>|OTLP| otel
-    otel --> loki
-    loki --> grafana
-  end
-
-  subgraph local["Local dev / CI"]
-    direction TB
-    gather["<b>loki-gather.py</b><br/>filter by service,<br/>endpoint, status, time"]
-    snapshot[("Snapshot directory<br/>per-host .json<br/>RRPair files")]
-    pm["proxymock<br/>mock / replay"]
-    app["App under test"]
-
-    gather --> snapshot
-    snapshot --> pm
-    pm <-->|"proxy :4140"| app
-  end
-
-  loki ==>|"LogQL query<br/>(any subset)"| gather
-  grafana -.->|"explore,<br/>pick a filter"| gather
-
-  classDef cluster fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-  classDef local fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-  classDef storage fill:#f3e5f5,stroke:#7b1fa2
-
-  class loki,snapshot storage
+    apps([Your apps]) --> fwd[Speedscale Forwarder]
+    fwd -- OTLP --> col[OTel Collector]
+    col --> loki[(Loki)]
+    loki --> grafana[Grafana]
+    loki --> gather[loki-gather.py]
+    gather --> snap[(Snapshot dir)]
+    snap --> pm[proxymock]
+    pm <--> test([App under test])
 ```
 
-**Two halves.** The left half is the *capture* loop — Speedscale's operator + forwarder ship RRPairs into Loki, where you can index and visualize them like any other observability data. The right half is the *replay* loop — `loki-gather.py` pulls any subset out of Loki into a directory `proxymock` can read, so the same real traffic you captured drives your test environment.
+**Capture half** (apps → forwarder → OTel → Loki, with Grafana on top). The Forwarder's `byoc_otel` exporter ships RRPairs as OTLP logs into your own Loki — no Speedscale Cloud round-trip.
 
-The two halves run independently. You don't need a Speedscale Cloud round-trip; everything stays in your own infra.
+**Replay half** (Loki → gather → snapshot → proxymock → app). `loki-gather.py` queries any subset back out and writes a proxymock-readable directory. Same real traffic you captured drives your tests.
 
-## Install (Minikube)
+## Prerequisites
+
+- A Kubernetes cluster (any flavor — `kind`, `minikube`, EKS, GKE, AKS, k3s)
+- `kubectl` configured against it
+- `helm` v3
+- A Speedscale API key (`SPEEDSCALE_API_KEY`) and your app URL
+
+## Install
 
 ```bash
-minikube start
-
 kubectl apply -f manifests/namespaces.yaml
 
 helm repo add speedscale https://speedscale.github.io/operator-helm/

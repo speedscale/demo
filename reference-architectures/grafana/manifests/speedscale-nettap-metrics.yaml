@@ -1,0 +1,26 @@
+# Sidecar Service exposing the nettap-ingest (goproxy) Prometheus /metrics
+# endpoint on port 4145.
+#
+# The speedscale-nettap pod is a DaemonSet with TWO containers:
+#   - speedscale-nettap-capture (gcr.io/speedscale/nettap)   — no /metrics
+#   - speedscale-nettap-ingest  (gcr.io/speedscale/goproxy)  — /metrics on 4145
+#
+# The standalone github.com/speedscale/nettap binary does NOT expose
+# Prometheus, but the deployed pod includes a goproxy sidecar that does.
+# Selector matches the DaemonSet pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: speedscale-nettap-metrics
+  namespace: speedscale
+  labels:
+    app: speedscale-nettap
+    purpose: metrics
+spec:
+  selector:
+    app: speedscale-nettap
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 4145
+      targetPort: 4145

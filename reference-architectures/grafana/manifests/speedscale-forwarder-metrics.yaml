@@ -1,0 +1,23 @@
+# Side-car service exposing the forwarder's Prometheus /metrics endpoint
+# on port 4145. The operator-managed speedscale-forwarder Service only
+# exposes the gRPC port (8888), so we add a separate Service for scrape.
+#
+# Selector matches the operator's forwarder labels. If the operator
+# changes labels, update here.
+apiVersion: v1
+kind: Service
+metadata:
+  name: speedscale-forwarder-metrics
+  namespace: speedscale
+  labels:
+    app: speedscale-forwarder
+    purpose: metrics
+spec:
+  selector:
+    app: speedscale-forwarder
+    controlplane.speedscale.com/component: forwarder
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 4145
+      targetPort: 4145

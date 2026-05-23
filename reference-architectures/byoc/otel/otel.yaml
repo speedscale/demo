@@ -1,0 +1,31 @@
+# Optional: drop an OTEL Collector between the Speedscale Forwarder and Fluent Bit.
+# Use this when you need batching, filtering, or fan-out to multiple backends.
+#
+# To deploy:
+#   kubectl create configmap otel-collector-config -n observability \
+#     --from-file=otel.yaml=otel/otel.yaml --dry-run=client -o yaml | kubectl apply -f -
+#
+# Then point values/values.yaml forwarder.exporters.byoc_otel.otel_endpoint at the
+# otel-collector service instead of fluent-bit directly.
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch: {}
+
+exporters:
+  otlphttp/fluentbit:
+    endpoint: http://fluent-bit.observability.svc.cluster.local:4318
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/fluentbit, debug]

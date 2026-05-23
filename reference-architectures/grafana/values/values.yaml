@@ -1,0 +1,60 @@
+# Speedscale Operator values for BYOC on Minikube.
+# For air-gapped installs, override image.registry and image.tag.
+
+clusterName: "minikube-byoc-grafana"
+deployDemo: ""
+
+image:
+  registry: "gcr.io/speedscale"
+  tag: "v2.3.709"
+  pullPolicy: "IfNotPresent"
+
+createJKS: false
+apiKeySecret: "speedscale-airgapped-apikey"
+dashboardAccess: false
+
+namespaceSelector:
+  - "default"
+
+filterRule: "standard"
+dlp:
+  enabled: true
+  config: "standard"
+
+secretAccessList:
+  []
+
+ebpf:
+  enabled: false
+  configuration:
+    capture:
+      targets:
+        - name: "payment-poc-target"
+          namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: "default"
+          podSelector:
+            matchLabels: {}
+
+operator:
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+forwarder:
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "250Mi"
+    limits:
+      cpu: "1500m"
+      memory: "2Gi"
+  exporters:
+    byoc_otel:
+      otel_endpoint: "http://otel-collector.observability.svc.cluster.local:4318"
+      filter_rule: "standard"
+      dlp_config_id: "standard"

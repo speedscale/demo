@@ -250,7 +250,7 @@ data:
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
-              "expr": "sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
+              "expr": "sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
               "refId": "A",
               "instant": true
             }
@@ -264,7 +264,7 @@ data:
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
-              "expr": "100 * sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | body_status=~\"[45]..\" [$__range])) / sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
+              "expr": "100 * sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | body_status=~\"[45]..\" [$__range])) / sum(count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
               "refId": "A",
               "instant": true
             }
@@ -285,7 +285,7 @@ data:
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
-              "expr": "quantile_over_time(0.95, {service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location, body_duration | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | unwrap body_duration [$__range])",
+              "expr": "quantile_over_time(0.95, {service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location, body_duration | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | unwrap body_duration [$__range])",
               "refId": "A",
               "instant": true
             }
@@ -300,7 +300,7 @@ data:
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
-              "expr": "count(count by (body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range])))",
+              "expr": "count(count by (body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range])))",
               "refId": "A",
               "instant": true
             }
@@ -314,8 +314,8 @@ data:
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
-              "expr": "sum by (body_location) (rate({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [1m]))",
-              "legendFormat": "{{body_location}}",
+              "expr": "sum by (cluster, service, body_location) (rate({service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [1m]))",
+              "legendFormat": "{{cluster}}/{{service}} {{body_location}}",
               "refId": "A"
             }
           ],
@@ -328,17 +328,17 @@ data:
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
-              "expr": "quantile_over_time(0.50, {service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location, body_duration | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | unwrap body_duration [1m])",
+              "expr": "quantile_over_time(0.50, {service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location, body_duration | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | unwrap body_duration [1m])",
               "legendFormat": "p50",
               "refId": "A"
             },
             {
-              "expr": "quantile_over_time(0.95, {service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location, body_duration | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | unwrap body_duration [1m])",
+              "expr": "quantile_over_time(0.95, {service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location, body_duration | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | unwrap body_duration [1m])",
               "legendFormat": "p95",
               "refId": "B"
             },
             {
-              "expr": "quantile_over_time(0.99, {service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location, body_duration | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | unwrap body_duration [1m])",
+              "expr": "quantile_over_time(0.99, {service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location, body_duration | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | unwrap body_duration [1m])",
               "legendFormat": "p99",
               "refId": "C"
             }
@@ -352,7 +352,7 @@ data:
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
-              "expr": "sum by (body_status) (count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
+              "expr": "sum by (body_status) (count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
               "legendFormat": "{{body_status}}",
               "refId": "A",
               "instant": true
@@ -367,7 +367,7 @@ data:
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
-              "expr": "sum by (body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
+              "expr": "sum by (cluster, service, body_location) (count_over_time({service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_location | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" [$__range]))",
               "refId": "A",
               "instant": true,
               "format": "table"
@@ -378,7 +378,8 @@ data:
               "id": "organize",
               "options": {
                 "excludeByName": { "Time": true },
-                "renameByName": { "body_location": "endpoint", "Value": "requests" }
+                "indexByName": { "cluster": 0, "service": 1, "body_location": 2, "Value": 3 },
+                "renameByName": { "cluster": "cluster", "service": "app", "body_location": "endpoint", "Value": "requests" }
               }
             },
             { "id": "sortBy", "options": { "fields": {}, "sort": [{ "field": "requests", "desc": true }] } }
@@ -387,12 +388,12 @@ data:
         {
           "type": "logs",
           "title": "Recent traffic (filtered)",
-          "description": "One line per request. Method, status, latency (ms), endpoint, then a [dlp] hint when DLP modified the record. Click a row to expand the full RRPair JSON including request/response bodies (base64).",
+          "description": "One line per request: cluster/app, method, status, latency (ms), endpoint, then a [dlp] hint when DLP modified the record. Click a row to expand the full RRPair JSON including request/response bodies (base64).",
           "gridPos": { "h": 14, "w": 24, "x": 0, "y": 21 },
           "datasource": { "type": "loki", "uid": "loki" },
           "targets": [
             {
-              "expr": "{service=~\"$service\", cluster=~\"$cluster\"} | json | keep body_command, body_status, body_duration, body_location, body_dlpModified | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | line_format \"{{.body_command}} {{.body_status}} {{ printf \\\"%4s\\\" .body_duration }}ms  {{.body_location}}  {{ if eq .body_dlpModified \\\"true\\\" }}[dlp]{{end}}\"",
+              "expr": "{service=~\"$service\", cluster=~\"$cluster\"} | json | keep cluster, service, body_command, body_status, body_duration, body_location, body_dlpModified | body_command=~\"$method\" | body_status=~\"$status\" | body_location=~\"$endpoint\" | line_format \"{{.cluster}}/{{.service}}  {{.body_command}} {{.body_status}} {{ printf \\\"%4s\\\" .body_duration }}ms  {{.body_location}}  {{ if eq .body_dlpModified \\\"true\\\" }}[dlp]{{end}}\"",
               "refId": "A"
             }
           ],
@@ -424,7 +425,7 @@ data:
           },
           {
             "name": "service",
-            "label": "Service",
+            "label": "App / Service",
             "type": "query",
             "datasource": { "type": "loki", "uid": "loki" },
             "query": { "label": "service", "stream": "{cluster=~\"$cluster\"}", "type": 1 },

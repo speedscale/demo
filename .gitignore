@@ -1,5 +1,7 @@
 .DS_Store
 .vscode
+__pycache__/
+*.pyc
 
 # Planning documents — working notes only, not for committing
 docs/**/*-plan.md

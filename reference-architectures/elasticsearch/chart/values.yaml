@@ -1,0 +1,31 @@
+# BYOC Elasticsearch reference architecture — chart values.
+#
+# This chart installs ONLY the backend (Elasticsearch, Kibana, OTel
+# Collector). The Speedscale Operator + Forwarder are installed separately
+# via the upstream `speedscale/speedscale-operator` chart, configured to
+# ship RRPairs to this chart's OTel Collector via:
+#   byoc_otel.otel_endpoint: http://otel-collector.<namespace>.svc.cluster.local:4317
+
+# NodePorts pinned so external clients (Kibana UI, es-gather.py) have a
+# stable target across reinstalls. NodePort range is 30000-32767.
+# 30030/30031 are claimed by the grafana scenario; 30032/30033 here.
+nodePort:
+  elasticsearch: 30032
+  kibana: 30033
+
+# Image pins. Bump as needed.
+image:
+  elasticsearch: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+  kibana: docker.elastic.co/kibana/kibana:8.14.3
+  otelCollector: otel/opentelemetry-collector-contrib:0.108.0
+
+# ES single-node settings. xpack.security off because this is a demo —
+# enabling it requires bootstrapping the kibana_system user, configuring
+# Kibana with the keystore, and wiring an ES API key for the OTel exporter.
+# Worth it for production; overkill for a one-laptop demo.
+elasticsearch:
+  javaOpts: "-Xms512m -Xmx512m"
+
+# Index name for RRPair logs. ILM/rollover deliberately not configured —
+# demo data ages out via a `delete_by_query` cron or manual cleanup.
+logsIndex: speedscale-rrpair

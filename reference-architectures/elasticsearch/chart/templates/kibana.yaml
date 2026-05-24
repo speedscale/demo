@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: {{ .Values.image.kibana }}
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: http://elasticsearch.{{ .Release.Namespace }}.svc.cluster.local:9200
+            - name: XPACK_SECURITY_ENABLED
+              value: "false"
+          ports:
+            - containerPort: 5601
+              name: http
+          # /api/status returns 200 once Kibana has finished its (slow)
+          # plugin load + ES handshake.
+          readinessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 90
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 150m
+              memory: 512Mi
+            limits:
+              cpu: 750m
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: NodePort
+  selector:
+    app: kibana
+  ports:
+    - name: http
+      port: 5601
+      targetPort: 5601
+      nodePort: {{ .Values.nodePort.kibana }}

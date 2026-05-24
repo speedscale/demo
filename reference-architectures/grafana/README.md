@@ -5,7 +5,7 @@ This reference architecture captures real traffic from your apps, ships it throu
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
     apps([Your apps]) --> fwd[Speedscale Forwarder]
     fwd -- OTLP --> col[OTel Collector]
     col --> loki[(Loki)]

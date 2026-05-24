@@ -1,0 +1,44 @@
+# BYOC Grafana reference architecture — chart values.
+#
+# This chart installs ONLY the backend (Loki, Grafana, OTel Collector,
+# Prometheus). The Speedscale Operator + Forwarder are installed separately
+# via the upstream `speedscale/speedscale-operator` chart, configured to
+# ship RRPairs to this chart's OTel Collector via:
+#   byoc_otel.otel_endpoint: http://otel-collector.<namespace>.svc.cluster.local:4317
+
+# Namespace this chart installs into. Default mirrors the scenario directory
+# name so all four BYOC reference architectures can coexist in one cluster.
+# Override via `--namespace` on the helm command — the namespace template
+# reads .Release.Namespace, not this value.
+
+# NodePorts pinned so external clients (Grafana UI, loki-gather.py) have a
+# stable target across reinstalls. NodePort range is 30000-32767.
+nodePort:
+  grafana: 30030
+  loki: 30031
+
+# Pod-level storage. Demo cluster — sized to survive a load test, not a
+# week of production traffic.
+storage:
+  loki: 5Gi
+  grafana: 2Gi
+
+# Retention. Loki + Prometheus both age data out aggressively so a forgotten
+# load test doesn't fill the PVC.
+retention:
+  loki: 24h
+  prometheus: 24h
+
+# Grafana admin credentials. Default `admin/admin` matches the upstream
+# Grafana convention. Override for any environment that's not a one-laptop
+# demo.
+grafana:
+  adminUser: admin
+  adminPassword: admin
+
+# Image pins. Bump as needed; tested combinations are checked into the README.
+image:
+  loki: grafana/loki:2.9.8
+  grafana: grafana/grafana:11.1.4
+  prometheus: prom/prometheus:v2.54.1
+  otelCollector: otel/opentelemetry-collector-contrib:0.108.0

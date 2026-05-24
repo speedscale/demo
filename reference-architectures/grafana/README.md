@@ -33,9 +33,9 @@ flowchart LR
 
 ## Install
 
-```bash
-kubectl apply -f manifests/namespaces.yaml
+Two helm releases: the upstream Speedscale Operator chart (which installs the Forwarder + Nettap into the `speedscale` namespace) and the in-repo `chart/` (which installs the BYOC backend — Loki, Grafana, OTel Collector, Prometheus — into `byoc-grafana`).
 
+```bash
 helm repo add speedscale https://speedscale.github.io/operator-helm/
 helm repo update
 
@@ -43,16 +43,29 @@ kubectl -n speedscale create secret generic speedscale-airgapped-apikey \
   --from-literal=SPEEDSCALE_API_KEY="<YOUR_API_KEY>" \
   --from-literal=SPEEDSCALE_APP_URL="app.speedscale.com"
 
+# 1. Speedscale Operator + Forwarder (sends RRPair logs via OTLP)
 helm upgrade --install speedscale-operator speedscale/speedscale-operator \
-  -n speedscale \
+  -n speedscale --create-namespace \
   -f values/values.yaml
 
-kubectl apply -f manifests/grafana-loki.yaml
-kubectl apply -f manifests/otel-collector.yaml
+# 2. BYOC backend (receives + indexes + visualizes the RRPair logs)
+helm upgrade --install byoc-grafana ./chart \
+  -n byoc-grafana --create-namespace
 
 kubectl -n speedscale get pods
 kubectl -n byoc-grafana get pods
 ```
+
+The `chart/values.yaml` file documents every overridable knob (NodePorts, PVC sizes, retention, image versions, Grafana admin credentials). To customize, copy the chart and edit, or override individual values:
+
+```bash
+helm upgrade --install byoc-grafana ./chart -n byoc-grafana --create-namespace \
+  --set grafana.adminPassword=hunter2 \
+  --set storage.loki=20Gi \
+  --set retention.loki=72h
+```
+
+To inspect the rendered manifests before installing, `helm template byoc-grafana ./chart -n byoc-grafana`.
 
 ## Index + Visualize
 

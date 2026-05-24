@@ -11,7 +11,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
-  namespace: byoc-grafana
+  namespace: {{ .Release.Namespace }}
 data:
   prometheus.yml: |
     global:
@@ -26,7 +26,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
-  namespace: byoc-grafana
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
         - name: prometheus
-          image: prom/prometheus:v2.54.1
+          image: {{ .Values.image.prometheus }}
           args:
             - "--config.file=/etc/prometheus/prometheus.yml"
             - "--storage.tsdb.path=/prometheus"
@@ -75,7 +75,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: prometheus
-  namespace: byoc-grafana
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     app: prometheus

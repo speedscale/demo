@@ -4,21 +4,25 @@ This reference architecture captures real traffic from your apps, ships it throu
 
 ## Architecture
 
+**Capture.** The Forwarder's `byoc_otel` exporter ships RRPairs as OTLP logs into your own Loki — no Speedscale Cloud round-trip. Grafana sits on top for indexing, dashboards, and ad-hoc queries.
+
 ```mermaid
-flowchart TB
+flowchart LR
     apps([Your apps]) --> fwd[Speedscale Forwarder]
-    fwd -- OTLP --> col[OTel Collector]
+    fwd --> col[OTel Collector]
     col --> loki[(Loki)]
     loki --> grafana[Grafana]
-    loki --> gather[loki-gather.py]
+```
+
+**Replay.** `loki-gather.py` queries any subset of Loki back out and writes a `proxymock`-readable directory. Same real traffic you captured drives your tests.
+
+```mermaid
+flowchart LR
+    loki[(Loki)] --> gather[loki-gather.py]
     gather --> snap[(Snapshot dir)]
     snap --> pm[proxymock]
     pm <--> test([App under test])
 ```
-
-**Capture half** (apps → forwarder → OTel → Loki, with Grafana on top). The Forwarder's `byoc_otel` exporter ships RRPairs as OTLP logs into your own Loki — no Speedscale Cloud round-trip.
-
-**Replay half** (Loki → gather → snapshot → proxymock → app). `loki-gather.py` queries any subset back out and writes a proxymock-readable directory. Same real traffic you captured drives your tests.
 
 ## Prerequisites
 

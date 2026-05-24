@@ -1,0 +1,68 @@
+# Example Argo CD Application manifest for the BYOC Grafana reference
+# architecture. Point Argo at this chart's path in the demos repo and let
+# it reconcile.
+#
+# Apply with:
+#   kubectl apply -f argocd-application.yaml
+#
+# Two things worth knowing:
+#
+# 1. The chart does NOT ship a Namespace template (helm-CLI users pass
+#    --create-namespace). For Argo, set syncOptions: [CreateNamespace=true]
+#    as shown below and Argo will create the destination namespace if it
+#    doesn't exist.
+#
+# 2. The chart creates two ancillary Services in the `speedscale` namespace
+#    (speedscale-forwarder-metrics, speedscale-nettap-metrics) so Prometheus
+#    can scrape forwarder + nettap /metrics. This is intentional — the
+#    Application's destination.namespace governs where MOST resources land,
+#    but Helm honors `namespace:` fields in the templates themselves for
+#    those two Services. Argo handles this correctly.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: byoc-grafana
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    # Point at wherever you fork or vendor this chart.
+    repoURL: https://github.com/speedscale/demo.git
+    targetRevision: master
+    path: reference-architectures/grafana/chart
+    helm:
+      # Override individual values here, or use valueFiles for environment
+      # overlays (e.g. valueFiles: [values-prod.yaml]).
+      values: |
+        storage:
+          loki: 20Gi
+          grafana: 5Gi
+        retention:
+          loki: 168h        # 7 days for non-demo
+        grafana:
+          adminPassword: change-me-via-sealed-secret-instead
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: byoc-grafana
+
+  syncPolicy:
+    automated:
+      prune: true       # delete resources removed from git
+      selfHeal: true    # revert drift back to git
+    syncOptions:
+      - CreateNamespace=true       # chart doesn't ship a Namespace template
+      - ServerSideApply=true       # better conflict handling than client-side
+      - ApplyOutOfSyncOnly=true    # don't reapply Healthy resources every sync
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        maxDuration: 5m
+        factor: 2
+
+  # Helm renders deterministic resource ordering (Namespace > ConfigMap >
+  # Service > Deployment), so explicit sync waves are not required. Add
+  # them only if you bolt on hook-style resources (e.g., a Job that
+  # pre-loads dashboards via the Grafana API instead of the file provider).

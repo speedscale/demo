@@ -1,0 +1,75 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Speedscale scrape targets up",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (job) (up{job=~\"speedscale-.*\"})", "legendFormat": "{{job}}", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" }, "colorMode": "value", "graphMode": "none" },
+      "fieldConfig": { "defaults": { "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }] }, "overrides": [] }
+    },
+    {
+      "type": "stat",
+      "title": "Forwarder messages queued",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(messages_queued)", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" }
+    },
+    {
+      "type": "stat",
+      "title": "Nettap active connections",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(conn_active{job=\"speedscale-nettap\"})", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area" }
+    },
+    {
+      "type": "timeseries",
+      "title": "Forwarder throughput (per-second rates)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(rate(messages_filtered_total[1m]))", "legendFormat": "messages filtered/sec", "refId": "A" },
+        { "expr": "sum(rate(err_queueFull_total[5m]))", "legendFormat": "queue-full errors/sec", "refId": "B" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Nettap connection activity",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "conn_active{job=\"speedscale-nettap\"}", "legendFormat": "{{instance}}", "refId": "A" }]
+    },
+    {
+      "type": "logs",
+      "title": "Recent RRPairs (Loki stream labels)",
+      "description": "One line per RRPair, with cluster/service pulled from Loki stream labels (which are correct). The body.cluster field on each record will read \"undefined\" until forwarder bug S-11091 lands — that's why we format from stream labels instead of dumping raw JSON.",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 12 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{
+        "expr": "{cluster=~\".+\"} | json | keep cluster, service, body_command, body_status, body_duration, body_location, body_direction | line_format \"{{.cluster}}/{{.service}}  {{.body_direction}}  {{.body_command}} {{.body_status}} {{ printf \\\"%4s\\\" .body_duration }}ms  {{.body_location}}\"",
+        "refId": "A"
+      }]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["speedscale", "byoc"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Speedscale BYOC",
+  "uid": "speedscale-byoc",
+  "version": 2,
+  "weekStart": ""
+}

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: otel-collector-config
-  namespace: observability
+  namespace: {{ .Release.Namespace }}
 data:
   otel.yaml: |
     receivers:
@@ -82,7 +82,7 @@ data:
 
     exporters:
       loki:
-        endpoint: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push
+        endpoint: http://loki.{{ .Release.Namespace }}.svc.cluster.local:3100/loki/api/v1/push
         default_labels_enabled:
           exporter: true
           job: true
@@ -90,13 +90,22 @@ data:
       # its remote-write receiver (prometheus.yaml enables
       # --web.enable-remote-write-receiver).
       prometheusremotewrite:
-        endpoint: http://prometheus.observability.svc.cluster.local:9090/api/v1/write
+        endpoint: http://prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090/api/v1/write
         tls:
           insecure: true
       debug:
         verbosity: basic
 
+    extensions:
+      # health_check extension exposes /health on :13133 — used by k8s
+      # readiness/liveness probes below. Argo CD treats a Deployment as
+      # Healthy only when all its pods have Ready=true, which in turn
+      # waits for this probe.
+      health_check:
+        endpoint: 0.0.0.0:13133
+
     service:
+      extensions: [health_check]
       pipelines:
         logs:
           receivers: [otlp]
@@ -111,7 +120,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: otel-collector
-  namespace: observability
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -124,7 +133,7 @@ spec:
     spec:
       containers:
         - name: otel-collector
-          image: otel/opentelemetry-collector-contrib:0.108.0
+          image: {{ .Values.image.otelCollector }}
           args:
             - "--config=/conf/otel.yaml"
           ports:
@@ -132,6 +141,20 @@ spec:
               name: otlp-grpc
             - containerPort: 4318
               name: otlp-http
+            - containerPort: 13133
+              name: health
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 30
+            periodSeconds: 30
           volumeMounts:
             - name: config
               mountPath: /conf
@@ -144,7 +167,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: otel-collector
-  namespace: observability
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     app: otel-collector

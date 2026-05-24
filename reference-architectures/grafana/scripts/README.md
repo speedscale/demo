@@ -11,14 +11,14 @@ Pull a subset of RRPair traffic from Loki and write a `proxymock`-replayable dir
 ### Requirements
 
 - Python 3.9+ (stdlib only — no `pip install`)
-- A reachable Loki HTTP endpoint (typically `kubectl port-forward svc/loki 3101:3100` against the BYOC reference architecture)
+- A reachable Loki HTTP endpoint. With the BYOC reference architecture Loki is `Service: NodePort` on `30031`, so `http://$(minikube ip):30031` (or `http://<node-ip>:30031` on a real cluster) works without a `kubectl port-forward`. On `minikube --driver=docker` on macOS, route it via Docker Desktop host networking, a non-docker driver, or the `loki-bridge` socat container that `speedstack/infra/minikube/speedscale-operator/install.sh` brings up at `localhost:3101`.
 - `proxymock` if you want to replay the result
 
 ### Usage
 
 ```bash
 python3 loki-gather.py \
-  --loki-url http://localhost:3101 \
+  --loki-url http://$(minikube ip):30031 \
   --start    -15m \
   --service  java-server \
   --status   2.. \

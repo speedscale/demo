@@ -1,28 +1,39 @@
 # Speedscale BYOC: Grafana + Loki
 
-This reference architecture exports Speedscale RRPair logs through OTEL into Loki, then visualizes in Grafana.
+This reference architecture captures real traffic from your apps, ships it through the Speedscale Forwarder to your own Loki, and lets you slice it through Grafana — then pull any subset back out as a `proxymock`-replayable directory for tests.
 
 ## Architecture
 
+**Capture.** The Forwarder's `byoc_otel` exporter ships RRPairs as OTLP logs into your own Loki — no Speedscale Cloud round-trip. Grafana sits on top for indexing, dashboards, and ad-hoc queries.
+
 ```mermaid
 flowchart LR
-  subgraph K8s[BYOC Kubernetes Cluster]
-    Apps[Payment Apps]
-    Cap[eBPF nettap or sidecar capture]
-    Fwd[Speedscale Forwarder\nDLP + filter rules]
-    OTel[OTEL Collector]
-    Loki[Loki]
-    Grafana[Grafana]
-  end
-
-  Apps --> Cap --> Fwd --> OTel --> Loki --> Grafana
+    apps([Your apps]) --> fwd[Speedscale Forwarder]
+    fwd --> col[OTel Collector]
+    col --> loki[(Loki)]
+    loki --> grafana[Grafana]
 ```
 
-## Install (Minikube)
+**Replay.** `loki-gather.py` queries any subset of Loki back out and writes a `proxymock`-readable directory. Same real traffic you captured drives your tests.
+
+```mermaid
+flowchart LR
+    loki[(Loki)] --> gather[loki-gather.py]
+    gather --> snap[(Snapshot dir)]
+    snap --> pm[proxymock]
+    pm <--> test([App under test])
+```
+
+## Prerequisites
+
+- A Kubernetes cluster (any flavor — `kind`, `minikube`, EKS, GKE, AKS, k3s)
+- `kubectl` configured against it
+- `helm` v3
+- A Speedscale API key (`SPEEDSCALE_API_KEY`) and your app URL
+
+## Install
 
 ```bash
-minikube start
-
 kubectl apply -f manifests/namespaces.yaml
 
 helm repo add speedscale https://speedscale.github.io/operator-helm/
@@ -60,3 +71,23 @@ Two dashboards are auto-provisioned under the **Speedscale BYOC** folder:
 - **Speedscale Traffic** — RRPair traffic explorer (filter by service / method / status / endpoint regex; one-line-per-request format; expand any row for the full JSON with req/res bodies)
 
 The host port `38030` is chosen to dodge the common 3000-3999 dev-server range. If you change it, change it consistently across `port-forward` and any docs that reference the URL.
+
+## Replay (gather a subset of traffic into proxymock)
+
+Once Loki has some real traffic, you can pull any slice of it out as a directory `proxymock` reads:
+
+```bash
+kubectl -n observability port-forward svc/loki 3101:3100 &
+
+python3 scripts/loki-gather.py \
+  --loki-url http://localhost:3101 \
+  --service  java-server \
+  --status   2.. \
+  --endpoint '^/spacex/.+' \
+  --start    -15m \
+  --out-dir  /tmp/spacex-snapshot
+
+proxymock mock --in /tmp/spacex-snapshot
+```
+
+The gathered directory is the same shape `speedctl proxymock cloud pull snapshot` produces after expanding a cloud snapshot — so anything in the proxymock ecosystem that reads a recording works without changes. See `scripts/README.md` for filter flags, workflow notes (`mock` vs `replay`, IN vs OUT direction), and known gotchas.

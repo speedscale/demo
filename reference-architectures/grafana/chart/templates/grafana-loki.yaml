@@ -88,6 +88,22 @@ spec:
           ports:
             - containerPort: 3100
               name: http
+          # Probes so Argo CD / kubectl rollout / helm --wait can tell when
+          # Loki is actually ready to accept writes. /ready returns 503 during
+          # boot-up; this stops downstream OTel Collector retries before the
+          # pod is fully initialized.
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3100
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 3100
+            initialDelaySeconds: 30
+            periodSeconds: 30
           volumeMounts:
             - name: loki-config
               mountPath: /etc/loki
@@ -217,6 +233,18 @@ spec:
           ports:
             - containerPort: 3000
               name: http
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 30
           volumeMounts:
             - name: data
               mountPath: /var/lib/grafana

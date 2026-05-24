@@ -96,7 +96,16 @@ data:
       debug:
         verbosity: basic
 
+    extensions:
+      # health_check extension exposes /health on :13133 — used by k8s
+      # readiness/liveness probes below. Argo CD treats a Deployment as
+      # Healthy only when all its pods have Ready=true, which in turn
+      # waits for this probe.
+      health_check:
+        endpoint: 0.0.0.0:13133
+
     service:
+      extensions: [health_check]
       pipelines:
         logs:
           receivers: [otlp]
@@ -132,6 +141,20 @@ spec:
               name: otlp-grpc
             - containerPort: 4318
               name: otlp-http
+            - containerPort: 13133
+              name: health
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 30
+            periodSeconds: 30
           volumeMounts:
             - name: config
               mountPath: /conf

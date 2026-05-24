@@ -1,0 +1,67 @@
+{{/*
+  Kibana dashboard auto-loader
+  ─────────────────────────────
+  A ConfigMap holds the Speedscale Traffic dashboard NDJSON (data view + 8
+  Lens panels + dashboard object).  A post-install / post-upgrade Job imports
+  it via the Kibana saved-objects API the moment Kibana is ready.
+
+  Mirrors the Grafana pattern where the traffic dashboard is mounted as a
+  ConfigMap and provisioned automatically on install.
+*/}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-dashboard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  kibana-dashboard.ndjson: |
+{{ .Files.Get "files/kibana-dashboard.ndjson" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kibana-dashboard-import-{{ .Release.Revision }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    # Re-run on every helm upgrade so the dashboard stays current.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: import
+          image: curlimages/curl:8.7.1
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              KB="http://kibana:5601"
+              echo "Waiting for Kibana to be ready..."
+              until curl -sf "${KB}/api/status" | grep -q '"level":"available"'; do
+                sleep 5
+              done
+              echo "Kibana ready. Importing dashboard..."
+              curl -sf -X POST "${KB}/api/saved_objects/_import?overwrite=true" \
+                -H "kbn-xsrf: true" \
+                --form file=@/etc/kibana/kibana-dashboard.ndjson
+              echo ""
+              echo "Dashboard imported: ${KB}/app/dashboards#/view/spd-byoc-traffic-dashboard"
+          volumeMounts:
+            - name: dashboard
+              mountPath: /etc/kibana
+      volumes:
+        - name: dashboard
+          configMap:
+            name: kibana-dashboard

@@ -51,7 +51,7 @@ kubectl apply -f manifests/grafana-loki.yaml
 kubectl apply -f manifests/otel-collector.yaml
 
 kubectl -n speedscale get pods
-kubectl -n observability get pods
+kubectl -n byoc-grafana get pods
 ```
 
 ## Index + Visualize
@@ -68,7 +68,7 @@ open "http://${NODE_IP}:30030"   # Grafana (admin/admin)
 curl "http://${NODE_IP}:30031/ready"   # Loki
 ```
 
-In Grafana Explore, query `{source="speedscale"}`. Two dashboards are auto-provisioned under the **Speedscale BYOC** folder:
+In Grafana Explore, query `{cluster=~".+"}` (or scope to a specific service: `{cluster=~".+", service="java-server"}`). Two dashboards are auto-provisioned under the **Speedscale BYOC** folder:
 
 - **Speedscale BYOC** — infra view (forwarder metrics, queue depths, structured RRPair log stream)
 - **Speedscale Traffic** — RRPair traffic explorer (filter by service / method / status / endpoint regex; one-line-per-request format; expand any row for the full JSON with req/res bodies)

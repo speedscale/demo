@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: otel-collector-config
-  namespace: observability
+  namespace: byoc-grafana
 data:
   otel.yaml: |
     receivers:
@@ -82,7 +82,7 @@ data:
 
     exporters:
       loki:
-        endpoint: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push
+        endpoint: http://loki.byoc-grafana.svc.cluster.local:3100/loki/api/v1/push
         default_labels_enabled:
           exporter: true
           job: true
@@ -90,7 +90,7 @@ data:
       # its remote-write receiver (prometheus.yaml enables
       # --web.enable-remote-write-receiver).
       prometheusremotewrite:
-        endpoint: http://prometheus.observability.svc.cluster.local:9090/api/v1/write
+        endpoint: http://prometheus.byoc-grafana.svc.cluster.local:9090/api/v1/write
         tls:
           insecure: true
       debug:
@@ -111,7 +111,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: otel-collector
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   replicas: 1
   selector:
@@ -144,7 +144,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: otel-collector
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   selector:
     app: otel-collector

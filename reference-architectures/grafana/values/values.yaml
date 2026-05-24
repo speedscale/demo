@@ -55,6 +55,6 @@ forwarder:
       memory: "2Gi"
   exporters:
     byoc_otel:
-      otel_endpoint: "http://otel-collector.observability.svc.cluster.local:4318"
+      otel_endpoint: "http://otel-collector.byoc-grafana.svc.cluster.local:4318"
       filter_rule: "standard"
       dlp_config_id: "standard"

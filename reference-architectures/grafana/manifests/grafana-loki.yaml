@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: loki-config
-  namespace: observability
+  namespace: byoc-grafana
 data:
   loki.yaml: |
     auth_enabled: false
@@ -52,7 +52,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: loki-data
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   accessModes: [ReadWriteOnce]
   resources:
@@ -63,7 +63,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: loki
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   replicas: 1
   strategy:
@@ -105,7 +105,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: loki
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   # NodePort so loki-gather.py can reach Loki without a kubectl port-forward.
   # 30031 is reserved for this in speedstack/docs/port-registry.md.
@@ -122,7 +122,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-datasources
-  namespace: observability
+  namespace: byoc-grafana
 data:
   datasources.yaml: |
     apiVersion: 1
@@ -131,20 +131,20 @@ data:
         uid: loki
         type: loki
         access: proxy
-        url: http://loki.observability.svc.cluster.local:3100
+        url: http://loki.byoc-grafana.svc.cluster.local:3100
         isDefault: true
       - name: Prometheus
         uid: prometheus
         type: prometheus
         access: proxy
-        url: http://prometheus.observability.svc.cluster.local:9090
+        url: http://prometheus.byoc-grafana.svc.cluster.local:9090
         isDefault: false
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-providers
-  namespace: observability
+  namespace: byoc-grafana
 data:
   providers.yaml: |
     apiVersion: 1
@@ -162,7 +162,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboards
-  namespace: observability
+  namespace: byoc-grafana
 data:
   speedscale-byoc.json: |
     {
@@ -484,7 +484,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: grafana-data
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   accessModes: [ReadWriteOnce]
   resources:
@@ -495,7 +495,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   replicas: 1
   strategy:
@@ -558,7 +558,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   # NodePort so access doesn't depend on a kubectl port-forward staying alive.
   # 30030 is reserved for this in speedstack/docs/port-registry.md.

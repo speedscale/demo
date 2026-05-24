@@ -1,4 +1,4 @@
-# Minimal Prometheus, in the observability namespace, configured purely as a
+# Minimal Prometheus, in the byoc-grafana namespace, configured purely as a
 # metrics store for OTel Collector to remote-write into. No scrape configs of
 # its own — that lives in the OTel Collector's `prometheus` receiver, which
 # already handles service discovery for /metrics endpoints in the cluster.
@@ -11,7 +11,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
-  namespace: observability
+  namespace: byoc-grafana
 data:
   prometheus.yml: |
     global:
@@ -26,7 +26,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   replicas: 1
   selector:
@@ -75,7 +75,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: prometheus
-  namespace: observability
+  namespace: byoc-grafana
 spec:
   selector:
     app: prometheus

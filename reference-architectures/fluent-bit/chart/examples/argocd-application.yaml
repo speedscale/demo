@@ -1,0 +1,57 @@
+# Example Argo CD Application manifest for the BYOC Fluent Bit → GCS
+# reference architecture.
+#
+# Prerequisite: the K8s Secret `byoc-fluentbit-gcs` (HMAC creds) must
+# already exist in the destination namespace. Create it out-of-band, NOT
+# from Argo, so credentials never live in git or Argo's manifest cache:
+#   kubectl create namespace byoc-fluentbit
+#   kubectl -n byoc-fluentbit create secret generic byoc-fluentbit-gcs \
+#     --from-literal=accessKeyId=GOOG1... \
+#     --from-literal=secretAccessKey=...
+#
+# Apply this Application with:
+#   kubectl apply -f argocd-application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: byoc-fluentbit
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/speedscale/demo.git
+    targetRevision: master
+    path: reference-architectures/fluent-bit/chart
+    helm:
+      # Required overrides — your bucket + region. Everything else has
+      # sensible defaults in values.yaml.
+      values: |
+        gcs:
+          bucket: my-rrpair-archive
+          region: us-central1
+          # Optional: tune flush thresholds for prod workloads.
+          # Larger objects = fewer GCS PUTs = lower per-request cost.
+          # totalFileSize: 50M
+          # uploadTimeout: 5m
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: byoc-fluentbit
+
+  syncPolicy:
+    automated:
+      prune: true       # delete resources removed from git
+      selfHeal: true    # revert drift back to git
+    syncOptions:
+      # Argo creates the namespace, but you must still create the
+      # byoc-fluentbit-gcs Secret out-of-band before sync succeeds.
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        maxDuration: 5m
+        factor: 2

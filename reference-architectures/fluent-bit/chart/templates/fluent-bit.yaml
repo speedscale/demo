@@ -1,0 +1,162 @@
+{{/*
+  Fluent Bit — OTLP → GCS shipper.
+
+  Pipeline:
+    OTel Collector  --OTLP/HTTP:4318-->  Fluent Bit  --PutObject (XML API)-->  gs://<bucket>
+
+  GCS auth model:
+    Fluent Bit has no native `gcs` output plugin in the upstream image. We use
+    the mature `s3` output pointed at the GCS XML (Interoperability) endpoint,
+    authenticated with HMAC credentials (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+    env vars) tied to a GCP service account that has Storage Object Admin on the
+    bucket. This is the documented "FB → GCS" pattern.
+
+  Object layout:
+    Default key template partitions by year/month/day/hour (see values.yaml).
+    Each object is a gzipped NDJSON file — one OTLP LogRecord per line, with
+    @timestamp / Attributes.* / Body.* preserved by Fluent Bit 4.x's
+    opentelemetry input.  DO NOT use Fluent Bit 3.1.x — it collapses an entire
+    ResourceLogs batch into one record and discards individual LogRecords.
+
+  The Secret named in .Values.gcs.credentialsSecret is NOT managed by this
+  chart; create it out-of-band so credentials never live in helm history:
+    kubectl -n <ns> create secret generic byoc-fluentbit-gcs \
+      --from-literal=accessKeyId=GOOG1... \
+      --from-literal=secretAccessKey=...
+*/}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: {{ .Release.Namespace }}
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         1
+        Daemon        Off
+        Log_Level     info
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+
+    [INPUT]
+        # OTLP/HTTP input. Tag directive is IGNORED for OTLP log records in
+        # FB 4.x — FB tags them internally — so the OUTPUT below uses Match *.
+        Name          opentelemetry
+        Listen        0.0.0.0
+        Port          4318
+        Tag           speedscale.otel
+
+    [OUTPUT]
+        Name                       s3
+        Match                      *
+        bucket                     {{ .Values.gcs.bucket }}
+        region                     {{ .Values.gcs.region }}
+        endpoint                   {{ .Values.gcs.endpoint }}
+        # GCS does not implement S3 multipart upload — use single PUT per chunk.
+        use_put_object             On
+        # Key template: $UUID and $INDEX expanded by FB. strftime tokens
+        # (%Y/%m/%d/%H) come from the chunk's create time.
+        s3_key_format              {{ .Values.gcs.keyFormat }}
+        json_date_key              @timestamp
+        json_date_format           iso8601
+        total_file_size            {{ .Values.gcs.totalFileSize }}
+        upload_timeout             {{ .Values.gcs.uploadTimeout }}
+        {{- if eq .Values.gcs.compression "gzip" }}
+        compression                gzip
+        {{- end }}
+        # Local on-disk buffer in case GCS is briefly unavailable.
+        store_dir                  /var/fluent-bit/buffer
+        preserve_data_ordering     On
+        retry_limit                5
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluent-bit
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fluent-bit
+  template:
+    metadata:
+      labels:
+        app: fluent-bit
+    spec:
+      containers:
+        - name: fluent-bit
+          image: {{ .Values.image.fluentBit }}
+          args:
+            - -c
+            - /fluent-bit/etc/fluent-bit.conf
+          ports:
+            - containerPort: 4318
+              name: otlp-http
+            - containerPort: 2020
+              name: metrics
+          env:
+            # Fluent Bit's s3 output reads AWS-style env vars; GCS HMAC keys
+            # work transparently when paired with endpoint=storage.googleapis.com.
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.gcs.credentialsSecret }}
+                  key: accessKeyId
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.gcs.credentialsSecret }}
+                  key: secretAccessKey
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 2020
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 2020
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          volumeMounts:
+            - name: config
+              mountPath: /fluent-bit/etc/fluent-bit.conf
+              subPath: fluent-bit.conf
+            - name: buffer
+              mountPath: /var/fluent-bit/buffer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: config
+          configMap:
+            name: fluent-bit-config
+        - name: buffer
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fluent-bit
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: fluent-bit
+  ports:
+    - name: otlp-http
+      protocol: TCP
+      port: 4318
+      targetPort: 4318
+    - name: metrics
+      protocol: TCP
+      port: 2020
+      targetPort: 2020

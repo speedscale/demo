@@ -1,0 +1,51 @@
+# BYOC Fluent Bit reference architecture — chart values.
+#
+# This chart installs ONLY the in-cluster shipping pipeline (OTel Collector +
+# Fluent Bit). RRPair logs land as NDJSON objects in a GCS bucket; there is
+# no in-cluster query UI (use gsutil, bq external tables, or a downstream
+# consumer of your choice).
+#
+# Pipeline: Forwarder --OTLP gRPC--> OTel Collector --OTLP HTTP--> Fluent Bit --PutObject--> GCS
+#
+# The Speedscale Operator + Forwarder are installed separately via the
+# upstream `speedscale/speedscale-operator` chart, configured to ship RRPairs
+# to this chart's OTel Collector via:
+#   byoc_otel.otel_endpoint: http://otel-collector.<namespace>.svc.cluster.local:4317
+
+# GCS target. Fluent Bit's `s3` output writes via GCS's S3-compatible XML API
+# (a.k.a. Interoperability), which requires HMAC credentials tied to a
+# service account that has Storage Object Admin on the bucket.
+#
+# Provision before installing:
+#   gcloud storage buckets create gs://<bucket> --location=<region> --uniform-bucket-level-access
+#   gcloud iam service-accounts create byoc-fluentbit-demo
+#   gcloud storage buckets add-iam-policy-binding gs://<bucket> \
+#     --member=serviceAccount:byoc-fluentbit-demo@<project>.iam.gserviceaccount.com \
+#     --role=roles/storage.objectAdmin
+#   gcloud storage hmac create byoc-fluentbit-demo@<project>.iam.gserviceaccount.com
+#
+# Then create the Secret out-of-band (chart references but does NOT manage it):
+#   kubectl -n <release-namespace> create secret generic byoc-fluentbit-gcs \
+#     --from-literal=accessKeyId=GOOG1...    \
+#     --from-literal=secretAccessKey=...
+gcs:
+  bucket: speedscale-rrpair-demo
+  region: us-central1
+  # GCS XML/Interop endpoint. Override if using a different GCP region's
+  # locational endpoint (https://cloud.google.com/storage/docs/request-endpoints).
+  endpoint: https://storage.googleapis.com
+  # Name of the K8s Secret holding HMAC creds. Keys: accessKeyId, secretAccessKey.
+  credentialsSecret: byoc-fluentbit-gcs
+  # Object key layout. $TAG / $UUID are Fluent Bit s3 template vars.
+  # Default partitions by date for cheap downstream filtering.
+  keyFormat: /year=%Y/month=%m/day=%d/hour=%H/$UUID-$INDEX.json.gz
+  # Flush thresholds. Lower = more, smaller objects (better demo responsiveness);
+  # raise for production to minimize object count.
+  totalFileSize: 5M
+  uploadTimeout: 30s
+  compression: gzip
+
+# Image pins. Bump as needed.
+image:
+  otelCollector: otel/opentelemetry-collector-contrib:0.108.0
+  fluentBit: cr.fluentbit.io/fluent/fluent-bit:4.0.3

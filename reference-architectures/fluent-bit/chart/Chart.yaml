@@ -1,0 +1,23 @@
+apiVersion: v2
+name: byoc-fluentbit
+description: |
+  Speedscale BYOC reference architecture — OTel Collector → Fluent Bit → Google Cloud Storage.
+  Fluent Bit acts as the gateway / buffer / shipper, batching RRPair logs into NDJSON objects
+  written to a GCS bucket via the GCS XML (S3-compatible) API. Pairs with the Speedscale
+  Operator chart (installed separately into the `speedscale` namespace); this chart installs
+  only the in-cluster pipeline that receives RRPairs from the Forwarder's byoc_otel exporter
+  and ships them to long-term object storage.
+type: application
+version: 0.2.0
+appVersion: "0.2.0"
+keywords:
+  - speedscale
+  - byoc
+  - gcs
+  - google-cloud-storage
+  - opentelemetry
+  - fluentbit
+  - archive
+  - data-lake
+sources:
+  - https://github.com/speedscale/demo/tree/master/reference-architectures/fluent-bit

@@ -1,0 +1,19 @@
+apiVersion: v2
+name: byoc-elasticsearch
+description: |
+  Speedscale BYOC reference architecture — OTel Collector → Elasticsearch → Kibana.
+  Single-node demo stack sized for minikube. Pairs with the Speedscale Operator
+  chart (installed separately into the `speedscale` namespace); this chart
+  installs only the backend that receives RRPair logs from the Forwarder's
+  byoc_otel exporter.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - speedscale
+  - byoc
+  - elasticsearch
+  - kibana
+  - opentelemetry
+sources:
+  - https://github.com/speedscale/demo/tree/master/reference-architectures/elasticsearch

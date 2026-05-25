@@ -1,0 +1,56 @@
+# Example Argo CD Application manifest for the BYOC Elasticsearch reference
+# architecture. Point Argo at this chart's path in the demos repo and let
+# it reconcile.
+#
+# Apply with:
+#   kubectl apply -f argocd-application.yaml
+#
+# Two things worth knowing:
+#
+# 1. The chart does NOT ship a Namespace template (helm-CLI users pass
+#    --create-namespace). For Argo, set syncOptions: [CreateNamespace=true]
+#    as shown below and Argo will create the destination namespace if it
+#    doesn't exist.
+#
+# 2. Unlike the grafana scenario, this chart's resources all live in the
+#    Application's destination namespace — no ancillary Services land
+#    elsewhere. Simpler.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: byoc-elasticsearch
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    # Point at wherever you fork or vendor this chart.
+    repoURL: https://github.com/speedscale/demo.git
+    targetRevision: master
+    path: reference-architectures/elasticsearch/chart
+    helm:
+      # Override individual values here, or use valueFiles for environment
+      # overlays (e.g. valueFiles: [values-prod.yaml]).
+      values: |
+        elasticsearch:
+          javaOpts: "-Xms1g -Xmx1g"   # bump heap for non-demo workloads
+        logsIndex: speedscale-rrpair  # change if running multiple BYOC tenants
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: byoc-elasticsearch
+
+  syncPolicy:
+    automated:
+      prune: true       # delete resources removed from git
+      selfHeal: true    # revert drift back to git
+    syncOptions:
+      - CreateNamespace=true       # chart doesn't ship a Namespace template
+      - ServerSideApply=true       # better conflict handling than client-side
+      - ApplyOutOfSyncOnly=true    # don't reapply Healthy resources every sync
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        maxDuration: 5m
+        factor: 2

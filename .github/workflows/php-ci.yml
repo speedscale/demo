@@ -3,6 +3,15 @@ name: PHP CI
 on:
   pull_request:
     branches: [ master ]
+    # Only run when something that actually affects the PHP build changes.
+    # Without this, every PR to master (terraform, k8s charts, ruby/java
+    # demos, docs) shows red checks from this workflow even though no PHP
+    # code was touched.
+    paths:
+      - 'php/**'
+      - '.github/workflows/php-ci.yml'
+      - 'Makefile'
+      - 'VERSION'
 
 jobs:
   test-php:
@@ -30,7 +39,10 @@ jobs:
 
       - name: Composer audit (security)
         working-directory: php
-        run: composer audit
+        # --abandoned=report: only fail on real security advisories. Don't
+        # fail the build just because a transitive phpunit dep is marked
+        # abandoned (e.g. sebastian/code-unit) — that's not a vulnerability.
+        run: composer audit --abandoned=report
 
       - name: Run tests
         working-directory: php
@@ -54,7 +66,10 @@ jobs:
 
       - name: Composer audit (security)
         working-directory: php
-        run: composer audit
+        # --abandoned=report: only fail on real security advisories. Don't
+        # fail the build just because a transitive phpunit dep is marked
+        # abandoned (e.g. sebastian/code-unit) — that's not a vulnerability.
+        run: composer audit --abandoned=report
 
       - name: Build project via Makefile
         run: make build-php

@@ -124,22 +124,109 @@ in the right-hand fields pane.
 > public Data Studio template report, a deep-link clone URL becomes
 > possible.
 
-### Suggested charts
+### Starter dashboard — click-by-click
 
-A useful starter dashboard for traffic exploration (5 minutes of drag-and-
-drop in the UI):
+You should be in an empty report editor with `rrpair_view` connected as
+the data source. The right pane lists every column under "Available
+fields." The center is your canvas. Build the six widgets below; each
+takes 20-40 seconds.
 
-| Chart | Type | Dimension(s) | Metric |
-|---|---|---|---|
-| **Requests over time** | Time-series | `request_time` (by hour) | Record Count |
-| **Status code breakdown** | Pie / donut | `status_code` | Record Count |
-| **Top endpoints** | Table | `host`, `path`, `method` | Record Count, AVG(`duration_ms`) |
-| **Latency p50/p95/p99** | Scorecard ×3 | — | Percentile(`duration_ms`) at 50/95/99 |
-| **By service** | Stacked bar | `app_label`, `status_code` | Record Count |
-| **Capture mode mix** | Pie | `capture_mode` (eBPF vs sidecar) | Record Count |
+**1. Date-range control** *(always add this first — every chart honors it)*
 
-Add a **date range control** on `request_time` and a **drop-down filter**
-on `app_label` so viewers can scope the dashboard to one service.
+- Top toolbar: **Add a control** → **Date range control**.
+- Drag it to the top of the canvas.
+- In the right pane: **Date range dimension** = `request_time`.
+- Set "Default date range" to **Last 7 days** (or whatever fits).
+
+**2. Service filter (drop-down)**
+
+- Toolbar: **Add a control** → **Drop-down list**.
+- Place it next to the date-range control.
+- Control field: `app_label`.
+- Lets viewers scope the whole dashboard to one service.
+
+**3. Requests over time** *(time-series line chart)*
+
+- Toolbar: **Add a chart** → under "Time series" pick the plain line chart.
+- Drag a rectangle on the canvas (≈ full width, ¼ height).
+- Right pane:
+  - **Date range dimension**: `request_time`
+  - **Dimension**: `request_time` (it will auto-bucket by hour; change to
+    "Date Hour" if you want explicit control)
+  - **Metric**: drag in `Record Count` (auto-generated)
+- Optional: **Breakdown dimension** = `status_code` to color-split lines.
+
+**4. Status code breakdown** *(donut)*
+
+- **Add a chart** → "Pie chart" → pick the donut variant.
+- Place top-right, square.
+- **Dimension**: `status_code`
+- **Metric**: `Record Count`
+- In the **Style** tab: turn on "Show labels" → "Percentage".
+
+**5. Top endpoints** *(table)*
+
+- **Add a chart** → "Table".
+- Place under the time-series chart, ~⅔ width.
+- **Dimensions** (in order): `host`, `path`, `method`
+- **Metrics**:
+  - `Record Count` — rename to "Requests" in the Style tab
+  - `duration_ms` with **aggregation = Average** — rename to "Avg ms"
+- Sort: by Requests, **Descending**. Rows per page: 25.
+
+**6. Latency percentiles** *(three scorecards side-by-side)*
+
+For each scorecard:
+- **Add a chart** → "Scorecard".
+- Place three small cards in a row beside the donut.
+- **Metric**: `duration_ms`. Click the metric → **Aggregation: Custom →
+  APPROX_QUANTILES** is not available in the UI, so use this trick:
+  - Click the metric pencil icon → switch to a **Calculated field**:
+    - p50: `APPROX_QUANTILES(duration_ms, 100)[OFFSET(50)]`
+    - p95: `APPROX_QUANTILES(duration_ms, 100)[OFFSET(95)]`
+    - p99: `APPROX_QUANTILES(duration_ms, 100)[OFFSET(99)]`
+  - Name each one accordingly; they appear back in the field list and
+    can be reused across charts.
+- Label each card "p50 ms", "p95 ms", "p99 ms" in the **Style** tab.
+
+**7. By service** *(stacked horizontal bar)*
+
+- **Add a chart** → "Bar chart" → horizontal stacked.
+- Place beside the table.
+- **Dimension**: `app_label`
+- **Breakdown dimension**: `status_code`
+- **Metric**: `Record Count`
+- Sort: by Record Count desc.
+
+**8. Capture mode mix** *(pie, small)*
+
+- **Add a chart** → "Pie chart".
+- Place in a corner.
+- **Dimension**: `capture_mode`
+- **Metric**: `Record Count`
+- Useful sanity check that the eBPF nettap is doing the work (you should
+  see ~100% `eBPF`).
+
+**Polish**
+
+- Rename the report (top-left "Untitled Report") to something like
+  "Speedscale RRPair Traffic".
+- File → Report settings → Default data source: `rrpair_view`.
+- **View** mode (top-right toggle) hides the editor chrome — that's
+  what viewers see.
+
+**Troubleshooting**
+
+- **"There was a problem"** on a chart usually means the query is
+  missing the partition filter. Right pane → "Filter" → add
+  `year Equal to 2026` (or whatever range you want). The Date-range
+  control set up in step 1 normally handles this through
+  `request_time`, but if you build charts before the control is wired
+  up, charts may fail until the control is added.
+- Empty scorecards: the `APPROX_QUANTILES` calculated field needs
+  `duration_ms` to be a Number; check that the column shows as `#` (not
+  `Abc`) in the fields pane. If it's text, click the column → Type →
+  Number.
 
 ### Sharing
 

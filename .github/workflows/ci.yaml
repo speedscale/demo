@@ -69,7 +69,10 @@ jobs:
       working-directory: php
       run: |
         composer install --no-interaction --no-progress --prefer-dist
-        composer audit
+        # --abandoned=report: only fail on real security advisories. Don't
+        # fail the build just because a transitive phpunit dep is marked
+        # abandoned — matches semantics of bundle-audit / npm audit above.
+        composer audit --abandoned=report
 
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1

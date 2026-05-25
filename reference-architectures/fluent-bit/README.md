@@ -20,10 +20,10 @@ flowchart LR
     FB[Fluent Bit<br/>opentelemetry input :4318]
   end
   GCS[(GCS bucket<br/>NDJSON.gz objects)]
-  subgraph BQ[BigQuery + Looker Studio]
+  subgraph BQ[BigQuery + Data Studio]
     Ext[rrpair_ext<br/>external table]
     View[rrpair_view<br/>flattened]
-    Looker[Looker Studio<br/>dashboards]
+    DS[Data Studio<br/>dashboards]
   end
 
   Apps --> Cap --> Fwd
@@ -31,14 +31,14 @@ flowchart LR
   OTel -->|OTLP HTTP| FB
   FB -->|PutObject<br/>XML API| GCS
   GCS -.->|read-on-query<br/>no copy| Ext
-  Ext --> View --> Looker
+  Ext --> View --> DS
 ```
 
 `byoc-grafana` and `byoc-elasticsearch` (sibling scenarios) are live-query
 backends — you see traffic in a dashboard. This scenario is the **archive**
 path: data lands as partitioned NDJSON objects in GCS, ready for cheap
 long-term retention and batch consumption. The optional BigQuery layer
-(`bq/` — external tables, no data copy) bolts SQL + Looker Studio onto the
+(`bq/` — external tables, no data copy) bolts SQL + Data Studio onto the
 same bucket without paying for BQ storage.
 
 ## Why pick this over `byoc-grafana/` or `byoc-elasticsearch/`?
@@ -211,7 +211,7 @@ What the script does:
 Pass `--dry-run` to see which partitions and objects the window touches
 before downloading anything.
 
-## Query + visualize (BigQuery + Looker Studio)
+## Query + visualize (BigQuery + Data Studio)
 
 The `bq/` directory wires the GCS bucket into BigQuery as an **external
 table** — no data is copied into BigQuery storage, queries read GCS
@@ -249,11 +249,11 @@ GROUP BY host, path, method
 ORDER BY reqs DESC;
 ```
 
-To visualize, open Looker Studio (free) with the data source pre-wired
+To visualize, open Data Studio (free) with the data source pre-wired
 to the view:
 
 ```
-https://lookerstudio.google.com/reporting/create?c.reportId=&ds.ds0.connector=bigQuery&ds.ds0.projectId=<PROJECT_ID>&ds.ds0.type=TABLE&ds.ds0.datasetId=speedscale_rrpair&ds.ds0.tableId=rrpair_view
+https://datastudio.google.com/reporting/create?c.reportId=&ds.ds0.connector=bigQuery&ds.ds0.projectId=<PROJECT_ID>&ds.ds0.type=TABLE&ds.ds0.datasetId=speedscale_rrpair&ds.ds0.tableId=rrpair_view
 ```
 
 `bq/setup.sh` prints this URL with your project filled in. See `bq/README.md`

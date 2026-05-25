@@ -1,9 +1,9 @@
-# BigQuery + Looker Studio layer for the Fluent Bit data lake
+# BigQuery + Data Studio layer for the Fluent Bit data lake
 
 Fluent Bit ships RRPair logs to GCS as Hive-partitioned NDJSON. This
 directory wires that bucket into BigQuery as an **external table** (no data
 duplication, no BigQuery storage cost) and a **flattened view** that's
-ready to drop into Looker Studio.
+ready to drop into Data Studio.
 
 ```
 GCS bucket  ──(external table, no copy)──>  BigQuery
@@ -13,7 +13,7 @@ GCS bucket  ──(external table, no copy)──>  BigQuery
                                                 └──▶  rrpair_view  (flat columns for BI)
                                                                 │
                                                                 ▼
-                                                         Looker Studio
+                                                         Data Studio
 ```
 
 ## Cost
@@ -53,7 +53,7 @@ The script runs the three SQL files in order:
    `ignore_unknown_values = TRUE`.
 3. **`003-flattened-view.sql`** — creates `rrpair_view` that pre-extracts
    the commonly-queried fields (host, path, status_code, app_label, etc.)
-   into flat typed columns. This is what Looker Studio talks to.
+   into flat typed columns. This is what Data Studio talks to.
 
 Re-running the script is safe — every statement is `CREATE OR REPLACE` /
 `CREATE SCHEMA IF NOT EXISTS`.
@@ -102,20 +102,20 @@ GROUP BY host, path
 ORDER BY reqs DESC;
 ```
 
-## Visualize in Looker Studio
+## Visualize in Data Studio
 
-Looker Studio is free; the connector to BigQuery is built in. Two ways
+Data Studio is free; the connector to BigQuery is built in. Two ways
 to start:
 
 1. **Pre-wired link** (data source already pointed at `rrpair_view`):
 
    ```
-   https://lookerstudio.google.com/reporting/create?c.reportId=&ds.ds0.connector=bigQuery&ds.ds0.projectId=<PROJECT_ID>&ds.ds0.type=TABLE&ds.ds0.datasetId=speedscale_rrpair&ds.ds0.tableId=rrpair_view
+   https://datastudio.google.com/reporting/create?c.reportId=&ds.ds0.connector=bigQuery&ds.ds0.projectId=<PROJECT_ID>&ds.ds0.type=TABLE&ds.ds0.datasetId=speedscale_rrpair&ds.ds0.tableId=rrpair_view
    ```
 
    `setup.sh` prints this URL with your project filled in.
 
-2. **From scratch** — go to https://lookerstudio.google.com → Blank
+2. **From scratch** — go to https://datastudio.google.com → Blank
    Report → Add data → BigQuery → pick `rrpair_view`.
 
 ### Suggested charts
@@ -137,7 +137,7 @@ on `app_label` so viewers can scope the dashboard to one service.
 
 ### Sharing
 
-Once the report exists in Looker Studio, share it like any Google doc:
+Once the report exists in Data Studio, share it like any Google doc:
 **File → Share → "Get link"** → set to your org or specific viewers. The
 underlying BigQuery permissions still apply — viewers need at least
 `roles/bigquery.dataViewer` on the dataset to render the charts.

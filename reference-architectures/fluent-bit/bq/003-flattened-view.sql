@@ -1,9 +1,9 @@
--- 003 — Flattened view for BI tooling (Looker Studio, Sheets, etc.).
+-- 003 — Flattened view for BI tooling (Data Studio, Sheets, etc.).
 --
 -- The raw `rrpair_ext` external table keeps nested objects as JSON columns
 -- (http, tags, netinfo, signature) — efficient for storage but awkward in
 -- drag-and-drop dashboards that don't speak JSON_VALUE. This view extracts
--- the common fields into flat typed columns so Looker Studio sees them as
+-- the common fields into flat typed columns so Data Studio sees them as
 -- ordinary dimensions/metrics.
 --
 -- Notes:

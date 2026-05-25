@@ -104,7 +104,17 @@ ORDER BY reqs DESC;
 
 ## Visualize in Data Studio
 
-Data Studio is free; the BigQuery connector is built in. Setup:
+**Reference dashboard** (built against the canonical demo bucket
+`gs://speedscale-rrpair-demo`):
+
+> https://datastudio.google.com/reporting/74795188-ddc0-41ac-ad5a-d53df0d1b022
+
+Viewers need either `roles/bigquery.dataViewer` on the
+`speedscale-demos.speedscale_rrpair` dataset, OR the dashboard owner
+sets the data source to use "Owner's credentials" so any link viewer
+can see the data.
+
+To build your own (against your own bucket):
 
 1. Go to https://datastudio.google.com and sign in.
 2. Click **Create** → **Report** (or "Blank Report").

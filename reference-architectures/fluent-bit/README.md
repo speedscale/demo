@@ -258,8 +258,15 @@ your data source:
    (authorize it if prompted on first use).
 4. Browse to your project → `speedscale_rrpair` → `rrpair_view` → **Add**.
 
-See `bq/README.md` for suggested chart layout (requests-over-time, status
-mix, top endpoints, p50/p95/p99 latency scorecards).
+A pre-built reference dashboard against the canonical demo bucket
+(`gs://speedscale-rrpair-demo`) lives at:
+
+> https://datastudio.google.com/reporting/74795188-ddc0-41ac-ad5a-d53df0d1b022
+
+It includes requests-over-time, status mix, top endpoints, p50/p95/p99
+latency scorecards, by-service breakdown, and capture-mode mix. See
+`bq/README.md` for the click-by-click build instructions if you want to
+recreate it against your own bucket.
 
 > Note: Data Studio's Linking API can only deep-link into pre-existing
 > *template* reports (cloning + overriding a data source by alias). It

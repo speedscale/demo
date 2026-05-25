@@ -104,19 +104,25 @@ ORDER BY reqs DESC;
 
 ## Visualize in Data Studio
 
-Data Studio is free; the connector to BigQuery is built in. Two ways
-to start:
+Data Studio is free; the BigQuery connector is built in. Setup:
 
-1. **Pre-wired link** (data source already pointed at `rrpair_view`):
+1. Go to https://datastudio.google.com and sign in.
+2. Click **Create** → **Report** (or "Blank Report").
+3. In the "Add data to report" panel, search/pick the **BigQuery**
+   connector. Authorize it on first use.
+4. Browse to your project → `speedscale_rrpair` → `rrpair_view` → **Add**.
 
-   ```
-   https://datastudio.google.com/reporting/create?c.reportId=&ds.ds0.connector=bigQuery&ds.ds0.projectId=<PROJECT_ID>&ds.ds0.type=TABLE&ds.ds0.datasetId=speedscale_rrpair&ds.ds0.tableId=rrpair_view
-   ```
+You're now in the report editor with `rrpair_view`'s columns available
+in the right-hand fields pane.
 
-   `setup.sh` prints this URL with your project filled in.
-
-2. **From scratch** — go to https://datastudio.google.com → Blank
-   Report → Add data → BigQuery → pick `rrpair_view`.
+> **Why no deep-link?** Data Studio's Linking API can only deep-link
+> into pre-existing *template* reports (cloning a template + overriding
+> its data sources by alias — `ds.ds0.*` refers to a `ds0` alias the
+> template already has). There's no documented form for "create a
+> brand-new blank report with this data source pre-attached," so we
+> use the manual add-data flow above. If/when Speedscale publishes a
+> public Data Studio template report, a deep-link clone URL becomes
+> possible.
 
 ### Suggested charts
 

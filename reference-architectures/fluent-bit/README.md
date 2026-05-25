@@ -249,16 +249,22 @@ GROUP BY host, path, method
 ORDER BY reqs DESC;
 ```
 
-To visualize, open Data Studio (free) with the data source pre-wired
-to the view:
+To visualize, open Data Studio (free) and connect the BigQuery view as
+your data source:
 
-```
-https://datastudio.google.com/reporting/create?c.reportId=&ds.ds0.connector=bigQuery&ds.ds0.projectId=<PROJECT_ID>&ds.ds0.type=TABLE&ds.ds0.datasetId=speedscale_rrpair&ds.ds0.tableId=rrpair_view
-```
+1. Go to https://datastudio.google.com and sign in.
+2. Click **Create** → **Report** (or "Blank Report").
+3. In the "Add data to report" panel, pick the **BigQuery** connector
+   (authorize it if prompted on first use).
+4. Browse to your project → `speedscale_rrpair` → `rrpair_view` → **Add**.
 
-`bq/setup.sh` prints this URL with your project filled in. See `bq/README.md`
-for suggested chart layout (requests-over-time, status mix, top endpoints,
-p50/p95/p99 latency scorecards).
+See `bq/README.md` for suggested chart layout (requests-over-time, status
+mix, top endpoints, p50/p95/p99 latency scorecards).
+
+> Note: Data Studio's Linking API can only deep-link into pre-existing
+> *template* reports (cloning + overriding a data source by alias). It
+> does not support the "create a brand-new blank report with this data
+> source" pattern, so the docs here use the manual add-data flow.
 
 ## Version pins
 

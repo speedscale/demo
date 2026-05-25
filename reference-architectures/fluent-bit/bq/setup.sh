@@ -51,5 +51,6 @@ echo
 echo "BigQuery console:"
 echo "  https://console.cloud.google.com/bigquery?project=${PROJECT_ID}&ws=!1m4!1m3!3m2!1s${PROJECT_ID}!2sspeedscale_rrpair"
 echo
-echo "Open in Data Studio (creates a new report wired to rrpair_view):"
-echo "  https://datastudio.google.com/reporting/create?c.reportId=&ds.ds0.connector=bigQuery&ds.ds0.projectId=${PROJECT_ID}&ds.ds0.type=TABLE&ds.ds0.datasetId=speedscale_rrpair&ds.ds0.tableId=rrpair_view"
+echo "Visualize with Data Studio (https://datastudio.google.com):"
+echo "  Create > Report > Blank > Add data > BigQuery >"
+echo "    ${PROJECT_ID} > speedscale_rrpair > rrpair_view"

@@ -20,17 +20,26 @@ flowchart LR
     FB[Fluent Bit<br/>opentelemetry input :4318]
   end
   GCS[(GCS bucket<br/>NDJSON.gz objects)]
+  subgraph BQ[BigQuery + Looker Studio]
+    Ext[rrpair_ext<br/>external table]
+    View[rrpair_view<br/>flattened]
+    Looker[Looker Studio<br/>dashboards]
+  end
 
   Apps --> Cap --> Fwd
   Fwd -->|OTLP gRPC| OTel
   OTel -->|OTLP HTTP| FB
   FB -->|PutObject<br/>XML API| GCS
+  GCS -.->|read-on-query<br/>no copy| Ext
+  Ext --> View --> Looker
 ```
 
 `byoc-grafana` and `byoc-elasticsearch` (sibling scenarios) are live-query
 backends — you see traffic in a dashboard. This scenario is the **archive**
 path: data lands as partitioned NDJSON objects in GCS, ready for cheap
-long-term retention and batch consumption.
+long-term retention and batch consumption. The optional BigQuery layer
+(`bq/` — external tables, no data copy) bolts SQL + Looker Studio onto the
+same bucket without paying for BQ storage.
 
 ## Why pick this over `byoc-grafana/` or `byoc-elasticsearch/`?
 
@@ -201,6 +210,55 @@ What the script does:
 
 Pass `--dry-run` to see which partitions and objects the window touches
 before downloading anything.
+
+## Query + visualize (BigQuery + Looker Studio)
+
+The `bq/` directory wires the GCS bucket into BigQuery as an **external
+table** — no data is copied into BigQuery storage, queries read GCS
+directly. The first 1 TB/month of bytes scanned is free; at demo
+volumes every query rounds to $0.
+
+```bash
+./bq/setup.sh <project-id> <bucket-name>
+# Example:
+./bq/setup.sh speedscale-demos speedscale-rrpair-demo
+```
+
+That creates:
+
+- **Dataset** `speedscale_rrpair` (us-central1, colocated with the bucket).
+- **External table** `rrpair_ext` over the Hive-partitioned bucket.
+  `require_hive_partition_filter = TRUE` forces every query to include
+  `WHERE year=… AND month=…` — without it, queries fail rather than
+  full-scan the bucket. Nested fields (`http`, `tags`, etc.) keep their
+  structure as `JSON` columns.
+- **Flattened view** `rrpair_view` that pre-extracts the commonly-queried
+  fields (`request_time`, `method`, `status_code`, `host`, `path`,
+  `duration_ms`, `app_label`, …) into flat typed columns ready for BI
+  tools.
+
+Sample query:
+
+```sql
+SELECT host, path, method,
+       COUNT(*)                                       AS reqs,
+       APPROX_QUANTILES(duration_ms, 100)[OFFSET(95)] AS p95_ms
+FROM `<project>.speedscale_rrpair.rrpair_view`
+WHERE year=2026 AND month=5 AND day=25
+GROUP BY host, path, method
+ORDER BY reqs DESC;
+```
+
+To visualize, open Looker Studio (free) with the data source pre-wired
+to the view:
+
+```
+https://lookerstudio.google.com/reporting/create?c.reportId=&ds.ds0.connector=bigQuery&ds.ds0.projectId=<PROJECT_ID>&ds.ds0.type=TABLE&ds.ds0.datasetId=speedscale_rrpair&ds.ds0.tableId=rrpair_view
+```
+
+`bq/setup.sh` prints this URL with your project filled in. See `bq/README.md`
+for suggested chart layout (requests-over-time, status mix, top endpoints,
+p50/p95/p99 latency scorecards).
 
 ## Version pins
 

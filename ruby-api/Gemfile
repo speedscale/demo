@@ -9,7 +9,7 @@ gem 'rackup', '~> 2.2'
 gem 'json', '2.17.1.2'
 gem 'rack', '~> 3.2', '>= 3.2.5'
 gem 'rack-session', '>= 2.1.2'
-gem 'jwt', '~> 2.7'
+gem 'jwt', '~> 2.10', '>= 2.10.3'
 
 group :test do
   gem 'rspec', '~> 3.12'

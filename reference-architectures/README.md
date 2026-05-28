@@ -4,10 +4,9 @@ Each scenario lives under `reference-architectures/` and is a self-contained Min
 
 | Scenario | Namespace | Stack | Best for |
 |---|---|---|---|
-| [`byoc`](byoc/) | `byoc-smoke` | Fluent Bit → stdout | Quickest start; verify BYOC is wired |
 | [`grafana`](grafana/) | `byoc-grafana` | OTel → Loki → Grafana | Log exploration + dashboards |
 | [`elasticsearch`](elasticsearch/) | `byoc-elasticsearch` | OTel → Elasticsearch → Kibana | Full-text search + Discover |
-| [`fluent-bit`](fluent-bit/) | `byoc-fluent-bit` | OTel → Fluent Bit → Elasticsearch → Kibana | Fluent Bit as gateway |
+| [`fluent-bit`](fluent-bit/) | `byoc-fluent-bit` | OTel → Fluent Bit → GCS | Durable object-storage archive, BigQuery, compliance retention |
 
 Each directory contains:
 

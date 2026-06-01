@@ -228,11 +228,11 @@
       }
     ]
   },
-  "time": { "from": "now-15m", "to": "now" },
+  "time": { "from": "now-1h", "to": "now" },
   "timepicker": { "refresh_intervals": ["5s", "10s", "30s", "1m"] },
   "timezone": "",
-  "title": "Speedscale Traffic",
+  "title": "Speedscale BYOC — Live API Traffic",
   "uid": "speedscale-traffic",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }

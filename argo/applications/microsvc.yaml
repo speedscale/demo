@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: outerspace-go
+  name: microsvc
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/speedscale/outerspace-go
+    repoURL: https://github.com/speedscale/microsvc
     targetRevision: HEAD
-    path: overlays/speedscale
+    path: kubernetes/overlays/speedscale
   destination:
     server: https://kubernetes.default.svc
-    namespace: outerspace
+    namespace: banking-app
   syncPolicy:
     automated:
       prune: true

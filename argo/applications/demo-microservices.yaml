@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: outerspace-go
+  name: demo-microservices
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com/speedscale/outerspace-go
+    repoURL: https://github.com/speedscale/demo
     targetRevision: HEAD
-    path: overlays/speedscale
+    path: scenarios/microservices/overlays/speedscale
   destination:
     server: https://kubernetes.default.svc
-    namespace: outerspace
+    namespace: demo-stack
   syncPolicy:
     automated:
       prune: true

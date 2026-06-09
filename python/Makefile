@@ -14,16 +14,17 @@ local:
 
 test:
 	curl -sf http://localhost:5001/healthz
-	curl -sf http://localhost:5001/spacex/launches >/dev/null
+	curl -sf http://localhost:5001/models >/dev/null
+	curl -sf http://localhost:5001/llm/models >/dev/null
 
 capture:
-	HTTP_PROXY=http://127.0.0.1:4140 HTTPS_PROXY=http://127.0.0.1:4140 proxymock record --app-port 5001 -- $(PY) app.py
+	proxymock record --out proxymock/demo -- $(PY) app.py
 
 mock:
-	proxymock mock --in-dir ./proxymock/recorded -- $(PY) app.py
+	proxymock mock --in proxymock/demo -- $(PY) app.py
 
 replay:
-	proxymock replay --in-dir ./proxymock/recorded --test-against http://localhost:5001 -- $(PY) app.py
+	proxymock replay --in proxymock/demo --test-against http://localhost:5001
 
 clean:
 	rm -rf $(VENV) proxymock

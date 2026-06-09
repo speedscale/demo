@@ -1,5 +1,4 @@
-import 'global-agent/bootstrap.js';
-import got from 'got';
+import axios from 'axios';
 import express from 'express';
 import morgan from 'morgan';
 import jwt from 'jsonwebtoken';
@@ -9,121 +8,66 @@ app.use(express.json())
 app.use(morgan('tiny'))
 const port = 3000
 
-function makeError(err) {
-  let errMsg = {
-    'msg':'there was some error',
-    'err': err,
-    'ts': new Date().toISOString()  
-  }
-  return errMsg
-}
-
-const errMsg = {
-  'err':'there was some error',
-  'ts': new Date().toISOString()
-}
-
 app.get('/', (req, res) => {
-  const body = {
-    'demo': 'node',
-    'ts': new Date().toISOString()
-  }
-  res.send(body);
+  res.send({ demo: 'node', ts: new Date().toISOString() })
 })
 
 app.get('/healthz', (req, res) => {
-  const body = {
-    health: 'y',
-    'ts': new Date().toISOString()
-  }
-  res.send(body);
+  res.send({ health: 'y', ts: new Date().toISOString() })
 })
 
 app.post('/login', (req, res) => {
-  var token = jwt.sign({ user: req.body.username }, 'shhhhh');
-  const body = {
-    'access_token': token,
-    'ts': new Date().toISOString()
+  const token = jwt.sign({ user: req.body.username }, 'shhhhh');
+  res.send({ access_token: token, ts: new Date().toISOString() })
+})
+
+app.get('/models', async (req, res) => {
+  try {
+    const { data } = await axios.get('https://huggingface.co/api/models?sort=downloads&direction=-1&limit=5')
+    res.send(data)
+  } catch (err) {
+    res.status(500).send({ error: err.message })
   }
-  res.send(body);
+})
+
+app.get('/models/:org/:model', async (req, res) => {
+  try {
+    const { data } = await axios.get(`https://huggingface.co/api/models/${req.params.org}/${req.params.model}`)
+    res.send(data)
+  } catch (err) {
+    res.status(500).send({ error: err.message })
+  }
+})
+
+app.get('/llm/models', async (req, res) => {
+  try {
+    const { data } = await axios.get('https://openrouter.ai/api/v1/models')
+    res.send(data)
+  } catch (err) {
+    res.status(500).send({ error: err.message })
+  }
 })
 
 app.get('/nasa', async (req, res) => {
   try {
-    const url = 'https://api.nasa.gov/planetary/apod'
-    const options = {
-      searchParams: {
-        'api_key': 'DEMO_KEY'
-      }
-    }
-    const data = await got(url, options).json()
+    const { data } = await axios.get('https://api.nasa.gov/planetary/apod', {
+      params: { api_key: 'DEMO_KEY' }
+    })
     res.send(data)
   } catch (err) {
-    const msg = makeError(err)
-    console.error(msg)
-    res.status(500)
-    res.send(msg)
-  }
-})
-
-app.get('/space', async (req, res) => {
-  try {
-    const url = 'https://api.spacexdata.com/v5/launches/latest';
-    const data = await got(url).json()
-    res.send(data)
-  } catch (err) {
-    const msg = makeError(err)
-    console.error(msg)
-    res.status(500)
-    res.send(msg)
-  }
-})
-
-app.get('/spacex/launches', async (req, res) => {
-  try {
-    const url = 'https://api.spacexdata.com/v5/launches/latest';
-    const data = await got(url).json()
-    res.send(data)
-  } catch (err) {
-    const msg = makeError(err)
-    console.error(msg)
-    res.status(500)
-    res.send(msg)
+    res.status(500).send({ error: err.message })
   }
 })
 
 app.get('/events', async (req, res) => {
   try {
-    const url = 'https://api.github.com/orgs/speedscale/events';
-    const data = await got(url).json()
+    const { data } = await axios.get('https://api.github.com/orgs/speedscale/events')
     res.send(data)
   } catch (err) {
-    const msg = makeError(err)
-    console.error(msg)
-    res.status(500)
-    res.send(msg)
+    res.status(500).send({ error: err.message })
   }
-})
-
-app.get('/bin', async (req, res) => {
-  try {
-    const data = await got.post('https://httpbin.org/anything', {
-      json: {
-        host: 'httpbin',
-        endpoint: 'anything'
-      }
-    }).json()
-    res.send(data)
-  } catch (err) {
-    const msg = makeError(err)
-    console.error(msg)
-    res.status(500)
-    res.send(msg)
-  }
-
 })
 
 app.listen(port, () => {
   console.log(`node-server listening on port ${port}`)
 })
-

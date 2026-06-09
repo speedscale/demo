@@ -1,31 +1,97 @@
-# Great App: node-server
+# node-server
 
-This app has a couple of different endpoints:
-* `/` returns a generic response
-* `/events` reads some GitHub events
-* `/space` will call the SpaceX launches API
-* `/nasa` will get the NASA picture of the day (as JSON)
-* `/bin` calls `httpbin`
+Express app that calls external APIs — useful for demonstrating proxymock record, mock, and replay.
 
-![node-server](img/node-server.png)
+## Endpoints
 
-After you get the application running on your machine, you're going to capture traffic with Speedscale like so:
+* `/` — generic response
+* `/models` — top downloaded models from [Hugging Face](https://huggingface.co)
+* `/models/:org/:model` — details for a specific model (e.g. `/models/deepseek-ai/DeepSeek-R1`)
+* `/llm/models` — LLM model catalog and pricing from [OpenRouter](https://openrouter.ai)
+* `/nasa` — NASA astronomy picture of the day
+* `/events` — recent GitHub events for the Speedscale org
 
-![node-server-capture](img/node-server-capture.png)
+## Architecture
 
-And once you're able to process the traffic properly, you are going to replay the tests and mocks like so which lets you run numerous different scenarios and isolate yourself from the backend dependencies.
+```mermaid
+graph LR
+    Client -->|:3000| node-server
+    node-server --> HuggingFace["huggingface.co"]
+    node-server --> OpenRouter["openrouter.ai"]
+    node-server --> NASA["api.nasa.gov"]
+    node-server --> GitHub["api.github.com"]
+```
 
-![node-server-replay](img/node-server-replay.png)
+## Quick start
 
-## Choose Your Adventure
+```bash
+npm install
+npm start
+# node-server listening on port 3000
 
-The next step is to get the application working in your environment. You can choose what kind of environment you want to work with and follow the specific instructions:
+curl localhost:3000/models | jq '.[0].id'
+curl localhost:3000/llm/models | jq '.data[0].id'
+curl localhost:3000/nasa | jq .title
+```
 
-* [Kubernetes](docs-k8s.md) - choose this if you have a `kubernetes` cluster and want to run everything inside k8s
-* [Local Environment](docs-local.md) - choose this if you have `nodejs` installed and want to run everything locally
-* [Docker Environment](docs-docker.md) - choose this if you have `docker` installed and want to run everything in containers
-* **Something Else??** - if you are want to see instructions for a different environment, open up an [issue](https://github.com/speedscale/node-server/issues) on this project and let us know
+## proxymock workflow
 
-## Other Questions??
+### Record
 
-If you have questions about how to work with this demo, come by the [Speedscale Community](https://slack.speedscale.com) and let us know, thanks!
+Capture all outbound API calls while using the app:
+
+```mermaid
+graph LR
+    Client -->|:4143| proxymock-in
+    proxymock-in --> node-server
+    node-server --> proxymock-out[":4140"]
+    proxymock-out --> HuggingFace
+    proxymock-out --> OpenRouter
+    proxymock-out --> NASA
+    proxymock-out --> GitHub
+    proxymock-out -.->|saved to disk| files["proxymock/demo/"]
+```
+
+```bash
+proxymock record --out proxymock/demo -- npm start
+# hit some endpoints
+curl localhost:4143/models
+curl localhost:4143/llm/models
+curl localhost:4143/nasa
+curl localhost:4143/events
+# ctrl-c to stop
+```
+
+### Mock
+
+Run the app with recorded responses instead of real APIs:
+
+```mermaid
+graph LR
+    Client -->|:3000| node-server
+    node-server -->|:4140| proxymock-mock
+    proxymock-mock -.->|reads from| files["proxymock/demo/"]
+```
+
+```bash
+proxymock mock --in proxymock/demo -- npm start
+
+curl localhost:3000/models    # served from recorded data
+curl localhost:3000/nasa      # no real API calls
+```
+
+### Replay
+
+Turn recorded traffic into a load test:
+
+```bash
+npm start &
+proxymock replay --in proxymock/demo --test-against http://localhost:3000
+
+# concurrent users
+proxymock replay --in proxymock/demo --test-against http://localhost:3000 --vus 10
+
+# CI gate
+proxymock replay --in proxymock/demo --test-against http://localhost:3000 \
+  --fail-if "requests.failed!=0"
+```

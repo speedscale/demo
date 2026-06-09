@@ -13,9 +13,7 @@ local:
 	$(PY) app.py
 
 test:
-	curl -sf http://localhost:5001/healthz
-	curl -sf http://localhost:5001/models >/dev/null
-	curl -sf http://localhost:5001/llm/models >/dev/null
+	@./test-all.sh
 
 capture:
 	proxymock record --out proxymock/demo -- $(PY) app.py

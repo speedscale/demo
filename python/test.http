@@ -1,4 +1,4 @@
-@host = localhost:5001
+@host = localhost:4143
 
 ### Health check
 GET http://{{host}}/healthz
@@ -11,9 +11,6 @@ GET http://{{host}}/models/deepseek-ai/DeepSeek-R1
 
 ### OpenRouter LLM catalog
 GET http://{{host}}/llm/models
-
-### NASA picture of the day
-GET http://{{host}}/nasa
 
 ### GitHub events
 GET http://{{host}}/events

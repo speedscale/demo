@@ -3,5 +3,17 @@
 ### Health check
 GET http://{{host}}/healthz
 
-### List available API calls
-GET http://{{host}}/spacex/launches
+### Top Hugging Face models
+GET http://{{host}}/models
+
+### Single model
+GET http://{{host}}/models/deepseek-ai/DeepSeek-R1
+
+### OpenRouter LLM catalog
+GET http://{{host}}/llm/models
+
+### NASA picture of the day
+GET http://{{host}}/nasa
+
+### GitHub events
+GET http://{{host}}/events

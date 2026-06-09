@@ -29,7 +29,7 @@ make install
 make local
 # Running on http://0.0.0.0:5001
 
-./test-all.sh
+make test
 ```
 
 ## proxymock workflow
@@ -53,7 +53,7 @@ graph LR
 ```bash
 make capture
 # hit endpoints in another terminal
-./test-all.sh localhost:4143
+make test                    # or use test.http in your editor
 # ctrl-c to stop
 ```
 
@@ -71,7 +71,7 @@ graph LR
 ```bash
 make mock
 
-./test-all.sh              # served from recorded data, no real API calls
+make test              # served from recorded data, no real API calls
 ```
 
 ### Replay

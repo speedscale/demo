@@ -1,28 +1,85 @@
 name: Dependency Security
 
+# Per-language dependency audits. Each language runs as an independent job so
+# a CVE in one ecosystem never blocks the scans (or fixes) for another.
+# On pull requests, only the languages whose manifests changed are scanned;
+# pushes to master, the weekly schedule, and manual dispatch scan everything.
+
 on:
   push:
     branches: [master, main]
   pull_request:
     branches: [master, main]
-    paths:
-      - '**/package.json'
-      - '**/package-lock.json'
-      - '**/requirements*.txt'
-      - 'php/composer.json'
-      - 'php/composer.lock'
-      - 'ruby-api/Gemfile'
-      - 'ruby-api/Gemfile.lock'
-      - 'ruby-api/client/Gemfile'
-      - 'ruby-api/client/Gemfile.lock'
-      - '**/go.mod'
-      - '**/go.sum'
-      - '**/*.csproj'
-      - '.github/workflows/dependency-security.yml'
+  schedule:
+    # Weekly sweep so CVEs published against unchanged manifests still surface
+    # in CI instead of only in Dependabot alerts.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  dependency-security:
+  # Decide which language jobs need to run for a pull request. On pushes,
+  # the weekly schedule, and manual dispatch this job is skipped and every
+  # language runs (the language jobs use !cancelled() so a skipped `changes`
+  # doesn't skip them).
+  changes:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      node: ${{ steps.filter.outputs.node }}
+      python: ${{ steps.filter.outputs.python }}
+      php: ${{ steps.filter.outputs.php }}
+      ruby: ${{ steps.filter.outputs.ruby }}
+      go: ${{ steps.filter.outputs.go }}
+      dotnet: ${{ steps.filter.outputs.dotnet }}
+      java: ${{ steps.filter.outputs.java }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Detect changed manifests
+      id: filter
+      uses: dorny/paths-filter@v3
+      with:
+        filters: |
+          workflow: &workflow
+            - '.github/workflows/dependency-security.yml'
+          node:
+            - *workflow
+            - '**/package.json'
+            - '**/package-lock.json'
+          python:
+            - *workflow
+            - '**/requirements*.txt'
+          php:
+            - *workflow
+            - 'php/composer.json'
+            - 'php/composer.lock'
+          ruby:
+            - *workflow
+            - '**/Gemfile'
+            - '**/Gemfile.lock'
+          go:
+            - *workflow
+            - '**/go.mod'
+            - '**/go.sum'
+          dotnet:
+            - *workflow
+            - '**/*.csproj'
+          java:
+            - *workflow
+            - '**/pom.xml'
+
+  node:
+    name: Node.js (npm audit)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.node == 'true') }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -32,35 +89,59 @@ jobs:
       with:
         node-version: '20'
 
-    - name: npm audit (Node demos)
+    - name: npm audit
       run: |
-        set -euo pipefail
+        set -uo pipefail
+        status=0
         for dir in node node-auth node-mariadb node-websocket dlp-demo smart-replace-demo llm-simulation-demo/frontend scenarios/microservices/gateway csharp/requestor; do
           echo "::group::npm ci + audit: ${dir}"
-          (cd "$dir" && npm ci && npm audit --audit-level=moderate)
+          if ! (cd "$dir" && npm ci && npm audit --audit-level=moderate); then
+            echo "::error title=npm audit::vulnerabilities or install failure in ${dir}"
+            status=1
+          fi
           echo "::endgroup::"
         done
+        exit $status
+
+  python:
+    name: Python (pip-audit)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.python == 'true') }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    - name: pip-audit (Python requirements)
+    # Audits every requirements*.txt in the repo, including requirements-dev.txt
+    # files — dev-only deps (e.g. pytest) get CVEs too.
+    - name: pip-audit
       run: |
-        set -euo pipefail
+        set -uo pipefail
         python -m pip install --upgrade pip pip-audit
-        FILES=(
-          python/requirements.txt
-          xml/requirements.txt
-          llm-simulation-demo/backend/requirements.txt
-          llm-simulation-demo/tools-service/requirements.txt
-        )
-        for f in "${FILES[@]}"; do
+        status=0
+        while IFS= read -r f; do
           echo "::group::pip-audit ${f}"
-          pip-audit -r "$f"
+          if ! pip-audit -r "$f"; then
+            echo "::error title=pip-audit::vulnerabilities in ${f}"
+            status=1
+          fi
           echo "::endgroup::"
-        done
+        done < <(find . -name 'requirements*.txt' -not -path '*/node_modules/*' -not -path '*/.git/*' | sort)
+        exit $status
+
+  php:
+    name: PHP (composer audit)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.php == 'true') }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
     - name: Set up PHP
       uses: shivammathur/setup-php@v2
@@ -68,32 +149,54 @@ jobs:
         php-version: '8.3'
         tools: composer
 
-    - name: Composer audit (PHP)
+    - name: Composer audit
       working-directory: php
       run: |
         composer install --no-interaction --no-progress --prefer-dist
         # --abandoned=report: only fail on real security advisories. Don't
         # fail the build just because a transitive phpunit dep is marked
-        # abandoned — matches semantics of bundle-audit / npm audit above.
+        # abandoned — matches semantics of bundle-audit / npm audit.
         composer audit --abandoned=report
+
+  ruby:
+    name: Ruby (bundle-audit)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.ruby == 'true') }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.2'
-        bundler-cache: true
-        working-directory: ruby-api
 
-    - name: bundle-audit (Ruby API + client)
+    # bundle-audit only reads Gemfile.lock, so no bundle install is needed.
+    - name: bundle-audit
       run: |
-        set -euo pipefail
+        set -uo pipefail
         gem install bundler-audit --no-document
-        echo "::group::ruby-api"
-        (cd ruby-api && bundle-audit check)
-        echo "::endgroup::"
-        echo "::group::ruby-api/client"
-        (cd ruby-api/client && bundle install --jobs 4 --retry 3 && bundle-audit check)
-        echo "::endgroup::"
+        bundle-audit update
+        status=0
+        for dir in ruby-api ruby-api/client; do
+          echo "::group::bundle-audit ${dir}"
+          if ! (cd "$dir" && bundle-audit check); then
+            echo "::error title=bundle-audit::vulnerabilities in ${dir}"
+            status=1
+          fi
+          echo "::endgroup::"
+        done
+        exit $status
+
+  go:
+    name: Go (govulncheck)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.go == 'true') }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
     # Pin Go to the toolchain used in go.mod (go1.26.4). setup-go@v5 + go-version-file may follow only
     # the `go` line (1.23.x), leaving a stale preinstalled Go (e.g. 1.24) on PATH — then `go install
@@ -103,28 +206,124 @@ jobs:
       with:
         go-version: '1.26.3'
 
-    - name: govulncheck (Go modules)
+    - name: govulncheck
       env:
         GOTOOLCHAIN: go1.26.4
       run: |
-        set -euo pipefail
+        set -uo pipefail
         go version
         go install golang.org/x/vuln/cmd/govulncheck@latest
-        export PATH="$(go env GOPATH)/bin:${PATH}"
+        GOPATH_BIN="$(go env GOPATH)/bin"
+        export PATH="${GOPATH_BIN}:${PATH}"
+        status=0
         for dir in go go-mongo go-postgres go-ses-demo aws/service/dynamodb/go go-rabbitmq/producer go-rabbitmq/consumer go-rabbitmq/generator; do
           echo "::group::govulncheck ${dir}"
-          (cd "$dir" && govulncheck ./...)
+          if ! (cd "$dir" && govulncheck ./...); then
+            echo "::error title=govulncheck::vulnerabilities in ${dir}"
+            status=1
+          fi
           echo "::endgroup::"
         done
+        exit $status
+
+  dotnet:
+    name: .NET (vulnerable packages)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.dotnet == 'true') }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
+    # `dotnet list package --vulnerable` always exits 0, so grep its output
+    # for findings (vulnerable packages are listed as "> PackageName ...").
     - name: dotnet list vulnerable packages
       run: |
+        set -uo pipefail
+        status=0
+        for proj in csharp/weatherService.csproj csharp/client/client.csproj csharp/tests/WeatherServiceTests.csproj; do
+          dir=$(dirname "$proj")
+          file=$(basename "$proj")
+          echo "::group::${proj}"
+          (cd "$dir" && dotnet restore "$file")
+          out=$(cd "$dir" && dotnet list "$file" package --vulnerable --include-transitive)
+          echo "$out"
+          if echo "$out" | grep -Eq '^\s*>'; then
+            echo "::error title=dotnet::vulnerable packages in ${proj}"
+            status=1
+          fi
+          echo "::endgroup::"
+        done
+        exit $status
+
+  java:
+    name: Java (trivy)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || needs.changes.outputs.java == 'true') }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    # trivy resolves pom.xml dependencies against the local ~/.m2 repository.
+    # Resolving with Maven first lets trivy run --offline-scan instead of
+    # hitting Maven Central itself, which gets rate-limited (HTTP 429).
+    - name: Populate Maven cache
+      run: |
         set -euo pipefail
-        (cd csharp && dotnet restore weatherService.csproj && dotnet list weatherService.csproj package --vulnerable --include-transitive)
-        (cd csharp/client && dotnet restore client.csproj && dotnet list client.csproj package --vulnerable --include-transitive)
-        (cd csharp/tests && dotnet restore WeatherServiceTests.csproj && dotnet list WeatherServiceTests.csproj package --vulnerable --include-transitive)
+        for dir in java/server java-auth/server java-auth/client java-auth/scripts; do
+          echo "::group::mvn dependency:resolve ${dir}"
+          (cd "$dir" && mvn -q -B dependency:resolve)
+          echo "::endgroup::"
+        done
+
+    - name: Install trivy
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/.local/bin"
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+    - name: trivy scan (Maven poms)
+      run: |
+        set -uo pipefail
+        status=0
+        for dir in java java-auth; do
+          echo "::group::trivy ${dir}"
+          if ! trivy fs --scanners vuln --pkg-types library --ignore-unfixed --offline-scan --exit-code 1 "$dir"; then
+            echo "::error title=trivy::vulnerabilities in ${dir}"
+            status=1
+          fi
+          echo "::endgroup::"
+        done
+        exit $status
+
+  # Single required status check for branch protection. Passes when every
+  # language job succeeded or was skipped (not relevant to this PR); fails if
+  # any ran and failed.
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [changes, node, python, php, ruby, go, dotnet, java]
+    if: always()
+    steps:
+    - name: Check results
+      env:
+        RESULTS: ${{ toJSON(needs) }}
+      run: |
+        echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+        if echo "$RESULTS" | jq -e 'any(.[]; .result == "failure" or .result == "cancelled")' > /dev/null; then
+          echo "::error title=security::one or more language audits failed"
+          exit 1
+        fi

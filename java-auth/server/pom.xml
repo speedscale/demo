@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.13</version>
+        <version>3.5.14</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
@@ -15,6 +15,12 @@
     <description>Authentication microservice for Spring Boot</description>
     <properties>
         <java.version>17</java.version>
+        <!-- Boot 3.5.x still manages a jackson-core affected by GHSA-72hv-8253-57qq -->
+        <jackson-bom.version>2.21.1</jackson-bom.version>
+        <!-- Boot 3.5.14 manages tomcat 10.1.54; CVE-2026-41293 et al. need 10.1.55 -->
+        <tomcat.version>10.1.55</tomcat.version>
+        <!-- transitive commons-lang3 3.17.0 has CVE-2025-48924 -->
+        <commons-lang3.version>3.18.0</commons-lang3.version>
     </properties>
     <dependencies>
         <!-- Spring Boot Starters -->

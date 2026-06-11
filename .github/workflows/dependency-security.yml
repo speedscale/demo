@@ -283,7 +283,7 @@ jobs:
     - name: Populate Maven cache
       run: |
         set -euo pipefail
-        for dir in java/server java-auth/server java-auth/client java-auth/scripts; do
+        for dir in java/server java-auth/server java-auth/client; do
           echo "::group::mvn dependency:resolve ${dir}"
           (cd "$dir" && mvn -q -B dependency:resolve)
           echo "::endgroup::"

@@ -3,8 +3,8 @@ set -euo pipefail
 
 HOST="${1:-localhost:8080}"
 
-echo "==> POST /api/auth/login"
-TOKEN=$(curl -sf -X POST "http://${HOST}/api/auth/login" \
+echo "==> POST /api/auth/session/login"
+TOKEN=$(curl -sf -X POST "http://${HOST}/api/auth/session/login" \
   -H "Content-Type: application/json" \
   -d '{"username":"demo","password":"password"}' \
   | jq -r '.accessToken')
@@ -17,11 +17,6 @@ curl -sf "http://${HOST}/api/auth/user" \
 echo "==> GET /api/auth/user (2)"
 curl -sf "http://${HOST}/api/auth/user" \
   -H "Authorization: Bearer $TOKEN" | jq .
-
-echo "==> POST /api/auth/validate"
-curl -sf -X POST "http://${HOST}/api/auth/validate" \
-  -H "Content-Type: application/json" \
-  -d "{\"token\":\"$TOKEN\"}" | jq .
 
 echo "==> GET /api/auth/user (3)"
 curl -sf "http://${HOST}/api/auth/user" \

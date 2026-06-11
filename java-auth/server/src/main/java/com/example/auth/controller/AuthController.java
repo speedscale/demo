@@ -29,7 +29,7 @@ public class AuthController {
     private final TokenService tokenService;
     private final AuditService auditService;
     
-    @PostMapping("/login")
+    @PostMapping({"/login", "/session/login"})
     @Operation(summary = "User login", description = "Authenticate user and return JWT tokens")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Login successful"),

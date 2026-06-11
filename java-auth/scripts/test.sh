@@ -18,11 +18,6 @@ echo "==> GET /api/auth/user (2)"
 curl -sf "http://${HOST}/api/auth/user" \
   -H "Authorization: Bearer $TOKEN" | jq .
 
-echo "==> POST /api/auth/validate"
-curl -sf -X POST "http://${HOST}/api/auth/validate" \
-  -H "Content-Type: application/json" \
-  -d "{\"token\":\"$TOKEN\"}" | jq .
-
 echo "==> GET /api/auth/user (3)"
 curl -sf "http://${HOST}/api/auth/user" \
   -H "Authorization: Bearer $TOKEN" | jq .

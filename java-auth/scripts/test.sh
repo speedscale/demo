@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-HOST="${1:-localhost:8080}"
+HOST="${1:-localhost:8081}"
 
 echo "==> POST /api/auth/session/login"
 TOKEN=$(curl -sf -X POST "http://${HOST}/api/auth/session/login" \

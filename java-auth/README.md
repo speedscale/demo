@@ -31,7 +31,7 @@ A Spring Boot microservice providing JWT-based authentication with MySQL databas
 docker compose up -d
 ```
 
-The service will be available at `http://localhost:8080`
+The service will be available at `http://localhost:8081` (Compose maps host `8081` to the container's `8080`)
 
 ### Manual Setup
 
@@ -161,7 +161,7 @@ The following test users are created by default:
 
 ## API Documentation
 
-Swagger UI is available at: `http://localhost:8080/swagger-ui.html`
+Swagger UI is available at: `http://localhost:8081/swagger-ui.html` (via Docker Compose; `8080` if you run the jar directly)
 
 ## Configuration
 

@@ -6,3 +6,5 @@ __pycache__/
 # Planning documents — working notes only, not for committing
 docs/**/*-plan.md
 docs/**/*-proposal.md
+
+.claude/worktrees/

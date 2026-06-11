@@ -11,7 +11,7 @@ services:
       MYSQL_USER: auth_user
       MYSQL_PASSWORD: secure_password
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -26,7 +26,7 @@ services:
     container_name: auth-service
     restart: always
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
@@ -34,7 +34,7 @@ services:
       MYSQL_USERNAME: auth_user
       MYSQL_PASSWORD: secure_password
       JWT_SECRET: your-secret-key-here-please-change-in-production
-      JWT_EXPIRATION: 3600000
+      JWT_EXPIRATION: 10000
       REFRESH_TOKEN_EXPIRATION: 604800000
     depends_on:
       mysql:

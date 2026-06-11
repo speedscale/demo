@@ -1,0 +1,21 @@
+services:
+  mysql:
+    ports:
+      - "3307:3306"
+
+  auth-service:
+    ports:
+      - "8081:8080"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: auth_db
+      MYSQL_USERNAME: auth_user
+      MYSQL_PASSWORD: secure_password
+      JWT_SECRET: your-secret-key-here-please-change-in-production
+      JWT_EXPIRATION: 10000
+      REFRESH_TOKEN_EXPIRATION: 604800000
+
+  auth-client:
+    profiles:
+      - disabled

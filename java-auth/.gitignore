@@ -65,3 +65,6 @@ mysql-data/
 # Application logs
 logs/
 *.log
+# proxymock recordings/replays (demo artifacts)
+proxymock/
+.proxymock/

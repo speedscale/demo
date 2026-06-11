@@ -3,8 +3,8 @@ set -euo pipefail
 
 HOST="${1:-localhost:8080}"
 
-echo "==> POST /api/auth/login"
-TOKEN=$(curl -sf -X POST "http://${HOST}/api/auth/login" \
+echo "==> POST /api/auth/session/login"
+TOKEN=$(curl -sf -X POST "http://${HOST}/api/auth/session/login" \
   -H "Content-Type: application/json" \
   -d '{"username":"demo","password":"password"}' \
   | jq -r '.accessToken')

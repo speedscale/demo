@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dotnet-orders-service
+  labels:
+    app: dotnet-orders
+spec:
+  selector:
+    app: dotnet-orders
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8082
+    protocol: TCP
+  type: ClusterIP
+  sessionAffinity: None

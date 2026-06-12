@@ -1,47 +1,93 @@
 using System.Collections.Concurrent;
 
 var builder = WebApplication.CreateBuilder(args);
-
 var app = builder.Build();
 
-// In-memory order store: orderId -> status
-var orders = new ConcurrentDictionary<string, string>();
+// In-memory stores. A real app would use a database; this keeps the demo
+// dependency-free (no MySQL/etc to stand up).
+var carts = new ConcurrentDictionary<string, Cart>();
+var orders = new ConcurrentDictionary<string, Order>();
 
-// Health check
+const decimal UnitPrice = 9.99m;
+
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
-// List orders
-app.MapGet("/orders", () =>
+// 1. Start a cart and add the first item. Returns a new cartId AND itemId.
+app.MapPost("/carts", (AddItemRequest? req) =>
 {
-    var list = orders.Select(kvp => new { orderId = kvp.Key, status = kvp.Value }).ToList();
-    return Results.Ok(list);
-});
+    var cartId = Guid.NewGuid().ToString();
+    var itemId = Guid.NewGuid().ToString();
+    var sku = req?.Sku ?? "WIDGET-1";
+    var qty = req?.Qty ?? 1;
 
-// Create order — generates a new UUID v4 order id
-app.MapPost("/orders", (CreateOrderRequest? req) =>
-{
-    var orderId = Guid.NewGuid().ToString();
-    orders[orderId] = "created";
-    return Results.Created($"/orders/{orderId}", new
+    var cart = new Cart(cartId);
+    cart.Items[itemId] = new CartItem(itemId, sku, qty);
+    carts[cartId] = cart;
+
+    return Results.Created($"/carts/{cartId}", new
     {
-        orderId,
-        status = "created",
-        item = req?.Item ?? "unknown",
-        quantity = req?.Quantity ?? 1,
-        createdAt = DateTime.UtcNow.ToString("O")
+        cartId,
+        itemId,
+        sku,
+        qty,
+        lineTotal = qty * UnitPrice
     });
 });
 
-// Confirm order — accepts the same orderId in the request body
+// 2. Update an item's quantity. Needs BOTH the cartId and itemId echoed back in
+//    the request body (not the URL) — so both are correlated values.
+app.MapPost("/carts/items/update", (UpdateItemRequest req) =>
+{
+    if (string.IsNullOrWhiteSpace(req.CartId) || string.IsNullOrWhiteSpace(req.ItemId))
+        return Results.BadRequest(new { error = "cartId and itemId are required" });
+    if (!carts.TryGetValue(req.CartId, out var cart))
+        return Results.NotFound(new { error = "cart not found", cartId = req.CartId });
+    if (!cart.Items.TryGetValue(req.ItemId, out var item))
+        return Results.NotFound(new { error = "item not found", itemId = req.ItemId });
+
+    var qty = req.Qty ?? item.Qty;
+    cart.Items[req.ItemId] = item with { Qty = qty };
+
+    return Results.Ok(new
+    {
+        cartId = req.CartId,
+        itemId = req.ItemId,
+        sku = item.Sku,
+        qty,
+        lineTotal = qty * UnitPrice
+    });
+});
+
+// 3. Checkout the cart -> creates an order. Needs the cartId; returns a new orderId.
+app.MapPost("/carts/checkout", (CheckoutRequest req) =>
+{
+    if (string.IsNullOrWhiteSpace(req.CartId))
+        return Results.BadRequest(new { error = "cartId is required" });
+    if (!carts.TryGetValue(req.CartId, out var cart))
+        return Results.NotFound(new { error = "cart not found", cartId = req.CartId });
+
+    var orderId = Guid.NewGuid().ToString();
+    var total = cart.Items.Values.Sum(i => i.Qty * UnitPrice);
+    orders[orderId] = new Order(orderId, req.CartId, "pending");
+
+    return Results.Created($"/orders/{orderId}", new
+    {
+        orderId,
+        cartId = req.CartId,
+        total,
+        status = "pending"
+    });
+});
+
+// 4. Confirm/pay the order. Needs the orderId in the body.
 app.MapPost("/orders/confirm", (ConfirmOrderRequest req) =>
 {
     if (string.IsNullOrWhiteSpace(req.OrderId))
         return Results.BadRequest(new { error = "orderId is required" });
-
-    if (!orders.ContainsKey(req.OrderId))
+    if (!orders.TryGetValue(req.OrderId, out var order))
         return Results.NotFound(new { error = "order not found", orderId = req.OrderId });
 
-    orders[req.OrderId] = "confirmed";
+    orders[req.OrderId] = order with { Status = "confirmed" };
     return Results.Ok(new
     {
         orderId = req.OrderId,
@@ -50,7 +96,32 @@ app.MapPost("/orders/confirm", (ConfirmOrderRequest req) =>
     });
 });
 
+app.MapGet("/carts", () => Results.Ok(carts.Values.Select(c => new
+{
+    cartId = c.CartId,
+    items = c.Items.Values
+})));
+
+app.MapGet("/orders", () => Results.Ok(orders.Values.Select(o => new
+{
+    orderId = o.OrderId,
+    cartId = o.CartId,
+    status = o.Status
+})));
+
 app.Run();
 
-record CreateOrderRequest(string? Item, int? Quantity);
+record AddItemRequest(string? Sku, int? Qty);
+record UpdateItemRequest(string CartId, string ItemId, int? Qty);
+record CheckoutRequest(string CartId);
 record ConfirmOrderRequest(string OrderId);
+
+record CartItem(string ItemId, string Sku, int Qty);
+record Order(string OrderId, string CartId, string Status);
+
+class Cart
+{
+    public Cart(string cartId) => CartId = cartId;
+    public string CartId { get; }
+    public ConcurrentDictionary<string, CartItem> Items { get; } = new();
+}

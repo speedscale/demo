@@ -57,10 +57,12 @@ Service is available at `http://localhost:8082`.
 
 ### Run Locally
 
-Requires .NET 8 SDK.
+Requires .NET 8 SDK. No Docker needed — the app listens on `:8082` by default
+(set via `Urls` in `appsettings.json`), so a plain `dotnet run` matches the
+scripts.
 
 ```bash
-make local
+dotnet run        # or: make local  — both listen on :8082
 ```
 
 ### Make Targets
@@ -68,7 +70,9 @@ make local
 ```bash
 make help          # list all targets
 make build         # dotnet build
-make local         # run locally on port 8082
+make local         # run locally on port 8082 (plain dotnet run)
+make record        # record the order flow with proxymock (launches the app too)
+make test-capture  # drive the flow through the recorder (while 'make record' is up)
 make up            # docker compose up -d
 make down          # docker compose down
 make docker-build  # build Docker image
@@ -92,7 +96,24 @@ The script:
 2. `POST /orders/confirm` — sends that same `orderId` in the request body
 3. `GET /orders` — lists all orders
 
-When recorded with `proxymock record`, the UUID round-trip triggers a `smart_replace_recorded` recommendation in `proxymock web`.
+### Record it with proxymock (two windows)
+
+`make record` launches the app *and* the recorder together, so you don't need a
+separate window for the app:
+
+```bash
+# window 1 — app + recorder (Ctrl-C to stop recording)
+make record
+
+# window 2 — drive the flow through the recorder
+make test-capture
+
+# then view the recommendation
+proxymock web
+```
+
+The UUID round-trip triggers a `smart_replace_recorded` "Correlated ID"
+recommendation in `proxymock web`.
 
 ## Storage
 

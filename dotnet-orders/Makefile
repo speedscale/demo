@@ -3,7 +3,7 @@ IMAGE_NAME = dotnet-orders
 REGISTRY = gcr.io/speedscale-demos
 NAMESPACE ?= default
 
-.PHONY: help build run local up down compose docker-build docker-multi test test-api test-capture record health kube kube-clean clean watch format
+.PHONY: help build run local up down compose docker-build docker-multi record health kube kube-clean clean watch format
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -33,14 +33,8 @@ docker-multi: ## Build and push multi-arch images
 		--tag $(REGISTRY)/$(IMAGE_NAME):latest \
 		.
 
-test-api: ## Run API test script against a running app (:8082)
-	./scripts/test.sh
-
-record: ## Record the order flow with proxymock (launches the app too — one window). Then run 'make test-capture' in another.
+record: ## Record the order flow with proxymock (launches the app too, one window). Then run test.http against the recorder (:4143).
 	proxymock record --app-port 8082 -- dotnet run
-
-test-capture: ## Drive the order flow THROUGH the proxymock recorder (run while 'make record' is up)
-	./scripts/test.sh localhost:4143
 
 health: ## Check health endpoint
 	curl -sf http://localhost:8082/healthz | jq .

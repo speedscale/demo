@@ -72,11 +72,9 @@ make help          # list all targets
 make build         # dotnet build
 make local         # run locally on port 8082 (plain dotnet run)
 make record        # record the order flow with proxymock (launches the app too)
-make test-capture  # drive the flow through the recorder (while 'make record' is up)
 make up            # docker compose up -d
 make down          # docker compose down
 make docker-build  # build Docker image
-make test-api      # run scripts/test.sh
 make health        # curl /healthz
 make kube          # kubectl apply k8s/base/
 make kube-clean    # kubectl delete k8s/base/
@@ -84,36 +82,29 @@ make kube-clean    # kubectl delete k8s/base/
 
 ## Demo Flow
 
-Run `scripts/test.sh` to exercise the full create→confirm flow:
+The flow lives in [`test.http`](./test.http) — open it in VS Code (REST Client),
+Visual Studio, or Rider and run each request with the "Send Request" button.
+
+1. **Create an order** — the response returns a generated `orderId`.
+2. **Confirm the order** — you have to **copy the `orderId` from step 1 and paste
+   it by hand** into step 2's body. That manual copy-paste is the annoying part.
+3. **List orders**.
+
+That hand-editing is exactly what proxymock's Smart Replace removes: record the
+flow once and it captures the live `orderId` and substitutes it on replay, so you
+never paste an id again.
+
+### Record it with proxymock
+
+`make record` launches the app *and* the recorder in one window. Point
+`test.http`'s `@host` at the recorder (`http://localhost:4143`) and run the
+requests, then open `proxymock web`:
 
 ```bash
-./scripts/test.sh                   # defaults to localhost:8082
-./scripts/test.sh localhost:8082    # explicit host
+make record          # window 1: app + recorder (Ctrl-C to stop)
+# in test.http, set @host = http://localhost:4143, then Send each request
+proxymock web        # see the "Correlated ID" smart_replace_recorded recommendation
 ```
-
-The script:
-1. `POST /orders` — captures the `orderId` from the response
-2. `POST /orders/confirm` — sends that same `orderId` in the request body
-3. `GET /orders` — lists all orders
-
-### Record it with proxymock (two windows)
-
-`make record` launches the app *and* the recorder together, so you don't need a
-separate window for the app:
-
-```bash
-# window 1 — app + recorder (Ctrl-C to stop recording)
-make record
-
-# window 2 — drive the flow through the recorder
-make test-capture
-
-# then view the recommendation
-proxymock web
-```
-
-The UUID round-trip triggers a `smart_replace_recorded` "Correlated ID"
-recommendation in `proxymock web`.
 
 ## Storage
 

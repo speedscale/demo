@@ -9,7 +9,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class AuthClient {
-    private static final String SERVER_URL = System.getenv().getOrDefault("SERVER_URL", "http://localhost:8080");
+    private static final String SERVER_URL = System.getenv().getOrDefault("SERVER_URL", "http://localhost:8081");
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

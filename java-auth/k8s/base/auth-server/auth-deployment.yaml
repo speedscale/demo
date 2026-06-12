@@ -25,7 +25,7 @@ spec:
         image: gcr.io/speedscale-demos/java-auth:v1.4.1
         imagePullPolicy: Always
         ports:
-        - containerPort: 8080
+        - containerPort: 8081
           name: http
           protocol: TCP
         env:
@@ -54,7 +54,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
-            port: 8080
+            port: 8081
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 5
@@ -62,7 +62,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness
-            port: 8080
+            port: 8081
           initialDelaySeconds: 30
           periodSeconds: 5
           timeoutSeconds: 3

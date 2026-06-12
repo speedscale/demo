@@ -1,31 +1,50 @@
-### dotnet-orders demo
+### dotnet-orders demo - a multi-step cart checkout.
 ### Open in VS Code (REST Client extension), Visual Studio, or Rider's HTTP client
-### and run each request with the "Send Request" / play button.
+### and run each request with the "Send Request" / play button, top to bottom.
+###
+### Each step hands you an id that the next step needs, and you copy-paste it in by
+### hand: cartId, then itemId, then orderId. That drudgery - and the off-by-one
+### "oops, wrong id" mistakes - is exactly what proxymock's Smart Replace
+### ("Correlated ID") recommendations remove when you record this flow.
 
 @host = http://localhost:8082
-# When recording with proxymock (`make record`), point at the recorder instead:
+# Recording with proxymock (`make record`)? point at the recorder instead:
 # @host = http://localhost:4143
 
-### 1 - Create an order. The response returns a freshly generated "orderId".
-POST {{host}}/orders
+### 1 - Start a cart and add an item. Note BOTH the cartId and itemId in the response.
+POST {{host}}/carts
 Content-Type: application/json
 
 {
-  "item": "widget",
-  "quantity": 2
+  "sku": "WIDGET-1",
+  "qty": 2
 }
 
-### 2 - Confirm the order.
-### Copy the "orderId" from the response above and paste it below by hand.
-### Yes - this manual copy-paste is the annoying part. It is exactly what
-### proxymock's Smart Replace ("Correlated ID") recommendation automates so your
-### recorded traffic replays with the right id every time, no hand-editing.
+### 2 - Bump the quantity. Paste the cartId AND the itemId from step 1 (two pastes).
+POST {{host}}/carts/items/update
+Content-Type: application/json
+
+{
+  "cartId": "paste-cartId-from-step-1",
+  "itemId": "paste-itemId-from-step-1",
+  "qty": 5
+}
+
+### 3 - Checkout the cart. Paste the cartId again. The response has a new orderId.
+POST {{host}}/carts/checkout
+Content-Type: application/json
+
+{
+  "cartId": "paste-cartId-from-step-1"
+}
+
+### 4 - Confirm/pay the order. Paste the orderId from step 3.
 POST {{host}}/orders/confirm
 Content-Type: application/json
 
 {
-  "orderId": "paste-orderId-from-step-1-here"
+  "orderId": "paste-orderId-from-step-3"
 }
 
-### 3 - List all orders
+### 5 - (optional) List orders
 GET {{host}}/orders

@@ -3,7 +3,7 @@ IMAGE_NAME = dotnet-orders
 REGISTRY = gcr.io/speedscale-demos
 NAMESPACE ?= default
 
-.PHONY: help build run local up down compose docker-build docker-multi test test-api health kube kube-clean clean watch format
+.PHONY: help build run local up down compose docker-build docker-multi record health kube kube-clean clean watch format
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -11,8 +11,8 @@ help: ## Show available commands
 build: ## Build the application
 	dotnet build -c Release
 
-local: ## Run locally
-	ASPNETCORE_URLS=http://+:8082 dotnet run
+local: ## Run locally (listens on :8082 via appsettings.json)
+	dotnet run
 
 run: local ## Alias for local
 
@@ -33,8 +33,8 @@ docker-multi: ## Build and push multi-arch images
 		--tag $(REGISTRY)/$(IMAGE_NAME):latest \
 		.
 
-test-api: ## Run API test script
-	./scripts/test.sh
+record: ## Record the order flow with proxymock (launches the app too, one window). Then run test.http against the recorder (:4143).
+	proxymock record --app-port 8082 -- dotnet run
 
 health: ## Check health endpoint
 	curl -sf http://localhost:8082/healthz | jq .
@@ -49,8 +49,8 @@ clean: ## Clean build artifacts
 	dotnet clean
 	rm -rf bin/ obj/
 
-watch: ## Run with hot reload
-	ASPNETCORE_URLS=http://+:8082 dotnet watch run
+watch: ## Run with hot reload (listens on :8082 via appsettings.json)
+	dotnet watch run
 
 format: ## Format code
 	dotnet format

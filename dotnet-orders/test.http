@@ -1,0 +1,31 @@
+### dotnet-orders demo
+### Open in VS Code (REST Client extension), Visual Studio, or Rider's HTTP client
+### and run each request with the "Send Request" / play button.
+
+@host = http://localhost:8082
+# When recording with proxymock (`make record`), point at the recorder instead:
+# @host = http://localhost:4143
+
+### 1 - Create an order. The response returns a freshly generated "orderId".
+POST {{host}}/orders
+Content-Type: application/json
+
+{
+  "item": "widget",
+  "quantity": 2
+}
+
+### 2 - Confirm the order.
+### Copy the "orderId" from the response above and paste it below by hand.
+### Yes - this manual copy-paste is the annoying part. It is exactly what
+### proxymock's Smart Replace ("Correlated ID") recommendation automates so your
+### recorded traffic replays with the right id every time, no hand-editing.
+POST {{host}}/orders/confirm
+Content-Type: application/json
+
+{
+  "orderId": "paste-orderId-from-step-1-here"
+}
+
+### 3 - List all orders
+GET {{host}}/orders

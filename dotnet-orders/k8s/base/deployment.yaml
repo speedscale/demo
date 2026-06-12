@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dotnet-orders
+  labels:
+    app: dotnet-orders
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dotnet-orders
+  template:
+    metadata:
+      labels:
+        app: dotnet-orders
+        version: v1
+    spec:
+      containers:
+      - name: dotnet-orders
+        image: gcr.io/speedscale-demos/dotnet-orders:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8082
+          name: http
+          protocol: TCP
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:8082"
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8082
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8082
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sh", "-c", "sleep 5"]
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

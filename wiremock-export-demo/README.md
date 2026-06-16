@@ -6,8 +6,7 @@ wiremock`, and load the result into a **real, unmodified WireMock server** —
 which then serves the recorded responses.
 
 Because the output is standard WireMock stub-mapping JSON (`{"mappings": [...]}`),
-the same file also loads into any WireMock-compatible runner, e.g.
-[mocknest-serverless](https://github.com/elenavanengelenmaslova/mocknest-serverless).
+the same file also loads into any other WireMock-compatible mock server.
 
 ## What's here
 

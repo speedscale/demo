@@ -1,14 +1,102 @@
 @baseUrl = http://localhost:4143
 
-### Get OAuth Token
-POST {{baseUrl}}/oauth/token
-Content-Type: application/json
+# OAuth2 client credentials (HTTP Basic on the token endpoint)
+@clientDemo = ZGVtby1jbGllbnQ6ZGVtby1zZWNyZXQ=
+@clientPartner = cGFydG5lci1hcHA6cGFydG5lci1zZWNyZXQ=
 
-### Access Protected Endpoint
-# First, run the /oauth/token request above to get a token
-# Then replace YOUR_TOKEN_HERE with the access_token from the response
+# End-user credentials (HTTP Basic on /basic/* resources)
+@basicAdmin = YWRtaW46c2VjcmV0MTIz
+@basicAdminRotated = YWRtaW46c2VjcmV0NDU2
+@basicUser = dXNlcjE6cGFzc3dvcmQx
+@basicReadonly = cmVhZG9ubHk6cmVhZGVycGFzcw==
+
+### OAuth Token - client_credentials grant (client authenticates with Basic)
+POST {{baseUrl}}/oauth/token
+Authorization: Basic {{clientDemo}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&scope=read write
+
+### OAuth Token - password grant (client Basic + end-user creds in body)
+POST {{baseUrl}}/oauth/token
+Authorization: Basic {{clientPartner}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&username=admin&password=secret123
+
+### OAuth Token - bad client secret (should fail: 401 invalid_client)
+POST {{baseUrl}}/oauth/token
+Authorization: Basic d3Jvbmc6d3Jvbmc=
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+
+### Access Protected Endpoint (Bearer)
+# First run a token request above, then paste its access_token here.
 GET {{baseUrl}}/protected
-Authorization: Bearer 79e5fda319aaf98a95594d630d48016d2a3a581b56d5f14faccbfafcee0162cf
+Authorization: Bearer YOUR_TOKEN_HERE
 
 ### Access Public Endpoint
 GET {{baseUrl}}/public
+
+### Basic Auth - Protected (user1)
+GET {{baseUrl}}/basic/protected
+Authorization: Basic {{basicUser}}
+
+### Basic Auth - Admin (admin)
+GET {{baseUrl}}/basic/admin
+Authorization: Basic {{basicAdmin}}
+
+### Basic Auth - Admin (admin, rotated password - same username, different secret)
+# Both this and the request above are valid admin credentials. Recording
+# both produces two distinct (admin, <pass>) rows in the credentials-swap
+# dataframe - the rotated-password case the composite key keeps separate.
+GET {{baseUrl}}/basic/admin
+Authorization: Basic {{basicAdminRotated}}
+
+### Basic Auth - Admin (user1 - should fail: 403 forbidden)
+GET {{baseUrl}}/basic/admin
+Authorization: Basic {{basicUser}}
+
+### Basic Auth - Status (readonly)
+GET {{baseUrl}}/basic/status
+Authorization: Basic {{basicReadonly}}
+
+### Basic Auth - Missing Credentials (should fail: 401)
+GET {{baseUrl}}/basic/protected
+
+###############################################################################
+# PII demo endpoints — synthetic data for proxymock "Identify PII"
+# Record these to give the PII detector a variety to find: email, SSN, credit
+# card, E.164 phone, DOB, IP, and PII inside JWT id_token claims.
+###############################################################################
+
+### Customers - list (response-body PII across multiple records)
+GET {{baseUrl}}/customers
+
+### Customer - by id (PII in body + X-Customer-Email response header)
+GET {{baseUrl}}/customers/7c9e6679-7425-40de-944b-e07fc1f90ae7
+
+### Customer - create (PII in request body)
+POST {{baseUrl}}/customers
+Content-Type: application/json
+
+{
+  "name": "Dave Singh",
+  "email": "dave.singh@example.com",
+  "phone": "+14155550133",
+  "ssn": "555-12-3456",
+  "creditCard": "4242424242424242",
+  "dateOfBirth": "1988-07-21"
+}
+
+### Order - nested payment PII (card number, CVV, billing address)
+GET {{baseUrl}}/orders/ord-1001
+
+### Search - PII in query parameters (note: + must be %2B-encoded in a URL)
+GET {{baseUrl}}/search?email=bob.martinez@example.org&phone=%2B14155550199
+
+### Profile (Bearer) - returns PII + a JWT id_token whose claims carry PII
+# First run a password-grant token request above, then paste its access_token.
+GET {{baseUrl}}/me
+Authorization: Bearer YOUR_TOKEN_HERE

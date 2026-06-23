@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "id": "rcfg_e510d88b0226",
+      "label": "http://localhost:9999 · 1vu · 1 iter",
+      "savedAt": "2026-05-14T01:31:49.489935Z",
+      "useCount": 2,
+      "cfg": {
+        "inDirs": [
+          "/Users/matthewleray/s2/demo/transform-recommendations/proxymock/recorded-2026-05-11_14-53-10.016187Z"
+        ],
+        "outDir": "",
+        "noOut": true,
+        "testAgainst": [
+          "http://localhost:9999"
+        ],
+        "vus": 1,
+        "duration": "",
+        "iterations": 1,
+        "performance": false,
+        "rewriteHost": false,
+        "userCommand": "",
+        "format": "",
+        "failIf": null
+      },
+      "signature": "e510d88b02266b02931ebe5370daf280e08dbbc84beebd94913ab0a616d698f1"
+    },
+    {
+      "id": "rcfg_1f0be6921fc3",
+      "label": "http://localhost:9999 · 1vu · 1 iter",
+      "savedAt": "2026-05-14T01:29:55.882234Z",
+      "useCount": 1,
+      "cfg": {
+        "inDirs": [
+          "proxymock/recorded-2026-05-11_14-53-10.016187Z"
+        ],
+        "outDir": "",
+        "noOut": true,
+        "testAgainst": [
+          "http://localhost:9999"
+        ],
+        "vus": 1,
+        "duration": "",
+        "iterations": 1,
+        "performance": false,
+        "rewriteHost": false,
+        "userCommand": "",
+        "format": "",
+        "failIf": null
+      },
+      "signature": "1f0be6921fc34bebc65f78aa969906289bc240691ffd37671de1ead3a33c8013"
+    }
+  ]
+}

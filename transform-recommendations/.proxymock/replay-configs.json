@@ -1,0 +1,29 @@
+{
+  "items": [
+    {
+      "id": "rcfg_03ec1d1bc097",
+      "label": "http://localhost:3000 · 1vu · 1 iter",
+      "savedAt": "2026-05-14T02:19:07.088505Z",
+      "useCount": 22,
+      "cfg": {
+        "inDirs": [
+          "/Users/matthewleray/s2/demo/transform-recommendations/proxymock/recorded-2026-05-11_14-53-10.016187Z"
+        ],
+        "outDir": "/Users/matthewleray/s2/demo/transform-recommendations/proxymock/results/replayed-2026-05-14_02-19-07.081187Z",
+        "noOut": false,
+        "testAgainst": [
+          "http://localhost:3000"
+        ],
+        "vus": 1,
+        "duration": "",
+        "iterations": 1,
+        "performance": false,
+        "rewriteHost": false,
+        "userCommand": "",
+        "format": "pretty",
+        "failIf": []
+      },
+      "signature": "03ec1d1bc0976803dc863cd59f0b8329603cf360a6d5c277a9a75e1437bf7a5f"
+    }
+  ]
+}

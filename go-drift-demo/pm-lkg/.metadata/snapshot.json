@@ -1,0 +1,13 @@
+{
+  "id": "834eb83e-ea1f-46c3-9f5a-516f0f07756d",
+  "meta": {
+    "services": [
+      "httpbin.org",
+      "localhost"
+    ]
+  },
+  "tokenizerConfig": {
+    "name": "standard",
+    "id": "standard"
+  }
+}

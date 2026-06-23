@@ -1,0 +1,12 @@
+{
+  "name": "sessions-demo",
+  "version": "1.0.0",
+  "description": "API whose multi-user, multi-scheme auth traffic records as a rich set of proxymock sessions",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "drive": "node client/drive.js"
+  },
+  "keywords": ["proxymock", "sessions", "auth", "jwt", "demo"],
+  "license": "ISC"
+}

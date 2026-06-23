@@ -1,0 +1,29 @@
+recording outbound traffic on proxy port 4140
+recording inbound traffic sent to port 4143 (forwarded to your app on port 3000)
+Paste the following environment variables into your app's terminal to record outbound HTTP-only traffic:
+  export http_proxy=http://localhost:4140
+  export https_proxy=http://localhost:4140
+  export grpc_proxy=http://$(hostname):4140
+Paste the following environemnt variables into your app's terminal to record outbound non-HTTP traffic:
+  export http_proxy=socks5h://localhost:4140
+  export https_proxy=socks5h://localhost:4140
+  export all_proxy=socks5h://localhost:4140
+  export grpc_proxy=http://$(hostname):4140
+See https://docs.speedscale.com/proxymock/getting-started/language-reference/ for language specific examples.
+recorded test / mock files are being written to proxymock/recorded-2026-05-11_14-53-10.016187Z
+Press ctrl-c to interrupt
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+2026-05-11 10:53:10 INFO  started user application  ( command:node index.js pid:57151 )
+2026-05-11 10:53:10 WARN  unable to connect to app port  ( host:localhost port:3000 error:Failed to connect to app on localhost:3000: dial tcp [::1]:3000: connect: connection refused. Your application does not appear to be listening on port 3000. Make sure your app is running and listening on the correct port, or remove the --app-port flag if you only need to record outbound traffic. )
+
+⚠️  Warning: Could not connect to your app on localhost:3000
+   Make sure your app is running and listening on the correct port.
+   If you only need to record outbound traffic, remove the --app-port flag.
+
+2026-05-11 17:40:18 INFO  gracefully stopping your app
+2026-05-11 17:40:18 INFO  stopping user application  ( pid:57151 )
+2026-05-11 17:40:18 INFO  sent interrupt signal to child process
+2026-05-11 17:40:18 INFO  user application stopped gracefully
+2026-05-11 17:40:18 INFO  user application exited  ( exit_code:-1 )

@@ -1,0 +1,12 @@
+2026-05-27 15:07:56 INFO  started user application  ( pid:67830 command:go run main.go )
+2026-05-27 15:07:56 WARN  unable to connect to app port  ( port:8080 error:Failed to connect to app on localhost:8080: dial tcp 127.0.0.1:8080: connect: connection refused. Your application does not appear to be listening on port 8080. Make sure your app is running and listening on the correct port, or remove the --app-port flag if you only need to record outbound traffic. host:localhost )
+
+⚠️  Warning: Could not connect to your app on localhost:8080
+   Make sure your app is running and listening on the correct port.
+   If you only need to record outbound traffic, remove the --app-port flag.
+
+2026-05-27 18:33:12 INFO  gracefully stopping your app
+2026-05-27 18:33:12 INFO  stopping user application  ( pid:67830 )
+2026-05-27 18:33:12 INFO  sent interrupt signal to child process
+2026-05-27 18:33:12 INFO  user application stopped gracefully
+2026-05-27 18:33:12 INFO  user application exited  ( exit_code:1 )

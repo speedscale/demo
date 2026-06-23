@@ -1,0 +1,1448 @@
+{
+  "id": "52de821e-1f95-49ac-af12-c8e48d44614e",
+  "name": "localhost Mocks",
+  "description": "Auto-managed blueprint built from accepted tuning recommendations. Edit the recommendations tab to add or remove rules.",
+  "createdAt": "2026-06-22T20:49:45.64394Z",
+  "services": [
+    "localhost"
+  ],
+  "iterationCount": 0,
+  "finalMatchRate": 0,
+  "tokenizeConfig": {
+    "name": "localhost Mocks",
+    "id": "52de821e-1f95-49ac-af12-c8e48d44614e",
+    "generator": [
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/login"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "user.email"
+            }
+          },
+          {
+            "type": "dlp_field"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_DLP|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/login\" AND command IS \"POST\") | res_body() | json_path(path=user.email) | dlp_field()"
+        },
+        "id": "6158c623-d611-42f7-8186-3d25fd47a9a6"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/login"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "username"
+            }
+          },
+          {
+            "type": "dlp_field"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_DLP|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/login\" AND command IS \"POST\") | req_body() | json_path(path=username) | dlp_field()"
+        },
+        "id": "114f51a4-b3dc-4a64-b361-ae891c19605e"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/login"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "access_token"
+            }
+          },
+          {
+            "type": "smart_replace_recorded",
+            "config": {
+              "overwrite": "true"
+            }
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_JWT_RESIGN|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/login\" AND command IS \"POST\") | res_body() | json_path(path=access_token) | smart_replace_recorded(overwrite=true)",
+          "source": "analyzer"
+        },
+        "id": "845bb61e-89b5-4e4c-bb95-5bc0798b70ef"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/login"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "access_token"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/login\" AND command IS \"POST\") | res_body() | json_path(path=access_token) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "ad4c45cf-e9bd-4f4c-ae1b-ebc1173817a2"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/account"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Basic\\s+(.+)$"
+            }
+          },
+          {
+            "type": "base64",
+            "config": {
+              "pad": "false"
+            }
+          },
+          {
+            "type": "split",
+            "config": {
+              "index": "0",
+              "separator": ":"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/account\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Basic\\s+(.+)$) | base64(pad=false) | split(index=0,separator=:) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "9a02aef0-9785-4bd9-a7e1-83a08516ef13"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/admin/metrics"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Basic\\s+(.+)$"
+            }
+          },
+          {
+            "type": "base64",
+            "config": {
+              "pad": "false"
+            }
+          },
+          {
+            "type": "split",
+            "config": {
+              "index": "0",
+              "separator": ":"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/admin/metrics\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Basic\\s+(.+)$) | base64(pad=false) | split(index=0,separator=:) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "b00985d3-2457-46ea-a4db-1ea7a8799142"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/admin/metrics"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/admin/metrics\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "6a2f3fd7-c996-4f26-82e4-67fd26d3aa7b"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/login"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "user.name"
+            }
+          },
+          {
+            "type": "dlp_field"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_DLP|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/login\" AND command IS \"POST\") | res_body() | json_path(path=user.name) | dlp_field()"
+        },
+        "id": "2c87a8fc-5c22-4c54-aaa5-616ead581e33"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/catalog"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/catalog\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "b8573eed-3d21-4dfa-ab10-6f82978dbbde"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/catalog/p-1001"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/catalog/p-1001\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "c621c261-3999-4b3a-8910-e269620e2c62"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/catalog/p-1004"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/catalog/p-1004\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "8bd20f1c-bdfb-4616-8061-3f9ba92f4a6d"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/account"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/account\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "b204db5b-f497-42dc-8cf0-31a78f69540e"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/catalog/p-1005"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/catalog/p-1005\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "39156de5-fecd-4950-ba62-a6a22c913800"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/catalog/p-1003"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/catalog/p-1003\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "819ede35-4929-4a60-a641-a404413d1720"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/logout"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/logout\" AND command IS \"POST\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "05bc52ec-3fad-44d6-9b9d-e90dbace556f"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/cart/items"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/cart/items\" AND command IS \"POST\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "c171bd20-33c0-4648-8d2a-4d0029900340"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/catalog"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Basic\\s+(.+)$"
+            }
+          },
+          {
+            "type": "base64",
+            "config": {
+              "pad": "false"
+            }
+          },
+          {
+            "type": "split",
+            "config": {
+              "index": "0",
+              "separator": ":"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/catalog\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Basic\\s+(.+)$) | base64(pad=false) | split(index=0,separator=:) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "3b2f150d-7c91-435f-b74f-04d2ebb0834d"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/orders"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/orders\" AND command IS \"POST\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "e8edfa70-2fbd-48a3-b23b-fee7de553220"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/catalog/p-1002"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Basic\\s+(.+)$"
+            }
+          },
+          {
+            "type": "base64",
+            "config": {
+              "pad": "false"
+            }
+          },
+          {
+            "type": "split",
+            "config": {
+              "index": "0",
+              "separator": ":"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/catalog/p-1002\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Basic\\s+(.+)$) | base64(pad=false) | split(index=0,separator=:) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "54db86ba-bca5-4636-a784-3e6bd594c8cb"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/catalog/p-9999"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/catalog/p-9999\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "41c88ca6-fc5e-4001-9b04-45098b35db79"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/account"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "identity"
+            }
+          },
+          {
+            "type": "dlp_field"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_DLP|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/account\" AND command IS \"GET\") | res_body() | json_path(path=identity) | dlp_field()"
+        },
+        "id": "dab549b6-293d-4e98-b061-0b903bf9696d"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/account"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "name"
+            }
+          },
+          {
+            "type": "dlp_field"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_DLP|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/account\" AND command IS \"GET\") | res_body() | json_path(path=name) | dlp_field()"
+        },
+        "id": "63e96a0a-3ef6-4057-b888-d5709bd99fa7"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/catalog/p-broken"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/catalog/p-broken\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "c0e360ef-22d2-4b00-af59-18be2dc788c2"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/cart"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/cart\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "438ee162-48cd-4579-9104-e1366db048f6"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/orders/o-1000"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "owner"
+            }
+          },
+          {
+            "type": "dlp_field"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_DLP|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/orders/o-1000\" AND command IS \"GET\") | res_body() | json_path(path=owner) | dlp_field()"
+        },
+        "id": "b62464fd-92a1-4aaa-a542-e2d6a7e3bcb2"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/orders/o-1000"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Basic\\s+(.+)$"
+            }
+          },
+          {
+            "type": "base64",
+            "config": {
+              "pad": "false"
+            }
+          },
+          {
+            "type": "split",
+            "config": {
+              "index": "0",
+              "separator": ":"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/orders/o-1000\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Basic\\s+(.+)$) | base64(pad=false) | split(index=0,separator=:) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "44c46b7f-6467-42cd-9265-af84d3c9adc8"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/orders/o-1005"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "owner"
+            }
+          },
+          {
+            "type": "dlp_field"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_DLP|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/orders/o-1005\" AND command IS \"GET\") | res_body() | json_path(path=owner) | dlp_field()"
+        },
+        "id": "2532898b-f215-4ed0-a2ef-63271c2bd5f2"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/orders/o-1005"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/orders/o-1005\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "73f6237d-65e7-430a-945f-95cdcfb1b54d"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/orders/o-1010"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "owner"
+            }
+          },
+          {
+            "type": "dlp_field"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_DLP|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/orders/o-1010\" AND command IS \"GET\") | res_body() | json_path(path=owner) | dlp_field()"
+        },
+        "id": "d2a03001-5092-48bd-bb73-ac6de24207e3"
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "CONTAINS",
+              "network_address": "localhost"
+            },
+            {
+              "include": true,
+              "detectedLocation": "/orders/o-1010"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "index": "0",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "regex",
+            "config": {
+              "captureGroup": "1",
+              "pattern": "^Bearer\\s+(.+)$"
+            }
+          },
+          {
+            "type": "jwt_claim",
+            "config": {
+              "claim": "uid"
+            }
+          },
+          {
+            "type": "tag_session"
+          }
+        ],
+        "tags": {
+          "detectedBy": "snapshotAnalytics",
+          "recommendation_id": "TRANSFORM_RECOMMENDATION_TAG_SESSION|0: (networkaddr CONTAINS \"localhost\" AND location IS \"/orders/o-1010\" AND command IS \"GET\") | http_req_header(index=0,name=Authorization) | regex(captureGroup=1,pattern=^Bearer\\s+(.+)$) | jwt_claim(claim=uid) | tag_session()",
+          "source": "analyzer"
+        },
+        "id": "ddc728f2-8c64-4018-9598-368b3ad7b5b8"
+      }
+    ],
+    "services": [
+      "localhost"
+    ]
+  },
+  "active": true,
+  "source": "tuning"
+}

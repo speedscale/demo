@@ -1,0 +1,14 @@
+{
+  "id": "48d5a10e-eda5-42ea-821b-740af63611ee",
+  "meta": {
+    "services": [
+      "httpbin.org",
+      "localhost",
+      "proxy.golang.org"
+    ]
+  },
+  "tokenizerConfig": {
+    "name": "standard",
+    "id": "standard"
+  }
+}

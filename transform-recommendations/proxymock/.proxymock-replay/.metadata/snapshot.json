@@ -1,0 +1,103 @@
+{
+  "id": "replay-blueprints",
+  "tokenizerConfig": {
+    "name": "standard",
+    "id": "standard",
+    "generator": [
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "detectedLocation": "/api/auth/token"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_req_header",
+          "config": {
+            "deleteIfEmpty": "false",
+            "name": "Authorization"
+          }
+        },
+        "transforms": [
+          {
+            "type": "http_auth",
+            "config": {
+              "password": "password",
+              "password_value": "${{dataframe:credentials_basic:${{user}}:replay_pass}}",
+              "smart_replace": "true",
+              "user": "user",
+              "user_value": "${{dataframe:credentials_basic:${{user}}:replay_user}}"
+            }
+          }
+        ],
+        "tags": {
+          "dataframeId": "credentials-basic-d4eb9fa3",
+          "source": "credentials.basic"
+        }
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "detectedLocation": "/api/auth/token"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "access_token"
+            }
+          },
+          {
+            "type": "smart_replace_recorded",
+            "config": {
+              "overwrite": "true"
+            }
+          }
+        ],
+        "tags": {
+          "dataframeId": "credentials-basic-d4eb9fa3",
+          "role": "access_token_rotation",
+          "source": "credentials.basic"
+        }
+      }
+    ],
+    "generatorVariables": [
+      {
+        "name": "credentials_basic",
+        "config": {
+          "extractor": {
+            "type": "file",
+            "config": {
+              "filename": "dataframe:credentials-basic-d4eb9fa3__payload.csv"
+            }
+          },
+          "transforms": [
+            {
+              "type": "csv_dataframe",
+              "config": {
+                "primary_key": "recorded_user"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

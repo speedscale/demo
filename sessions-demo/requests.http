@@ -1,0 +1,40 @@
+### Health check (no auth -> unattributed session bucket)
+GET http://localhost:4143/health
+
+### Log in as Alice (JWT bearer; session = alice@example.com via the uid claim)
+# @name login
+POST http://localhost:4143/login
+Content-Type: application/json
+
+{ "username": "alice@example.com", "password": "wonderland" }
+
+### Browse the catalog with Alice's token
+GET http://localhost:4143/catalog
+Authorization: Bearer {{login.response.body.access_token}}
+
+### Add an item to Alice's cart
+POST http://localhost:4143/cart/items
+Authorization: Bearer {{login.response.body.access_token}}
+Content-Type: application/json
+
+{ "productId": "p-1003", "qty": 1 }
+
+### Place an order
+POST http://localhost:4143/orders
+Authorization: Bearer {{login.response.body.access_token}}
+
+### HTTP Basic operator (session = ops-admin)
+GET http://localhost:4143/admin/metrics
+Authorization: Basic b3BzLWFkbWluOm9wc3Bhc3M=
+
+### Opaque API key (session = the key string, a service account)
+GET http://localhost:4143/admin/metrics
+Authorization: Bearer sk_live_billing_7f3a91
+
+### A customer hitting admin -> 403 (colors the session error rate)
+GET http://localhost:4143/admin/metrics
+Authorization: Bearer {{login.response.body.access_token}}
+
+### Broken product -> 500
+GET http://localhost:4143/catalog/p-broken
+Authorization: Bearer {{login.response.body.access_token}}

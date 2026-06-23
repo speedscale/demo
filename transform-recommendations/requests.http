@@ -1,0 +1,58 @@
+### TransformRecommendations Demo - HTTP Requests
+### Send these through the proxymock inbound proxy on port 4143
+### Compatible with VS Code REST Client and JetBrains HTTP Client
+
+@host = http://localhost:3000
+
+### Health check
+GET {{host}}/
+
+### DATETIME: outbound request with timestamp in body
+POST {{host}}/api/report
+Content-Type: application/json
+
+{
+  "reportName": "weekly-sync"
+}
+
+### JWT_RESIGN / OAUTH: Basic auth handshake that returns access_token
+### Credentials: demo-client / demo-secret (any username:password is accepted by the demo)
+# @name authToken
+POST {{host}}/api/auth/token
+Authorization: Basic ZGVtby1jbGllbnQ6ZGVtby1zZWNyZXQ=
+
+### JWT propagation: subsequent Bearer call -> /api/auth/validate (outbound with Authorization)
+POST {{host}}/api/data
+Content-Type: application/json
+Authorization: Bearer {{authToken.response.body.access_token}}
+
+{
+  "action": "resolve-roles"
+}
+
+### REQUEST_ID (inbound + outbound): call with X-Request-Id header
+POST {{host}}/api/search
+Content-Type: application/json
+X-Request-Id: my-test-request-id-001
+
+{
+  "query": "sample"
+}
+
+### DLP: outbound call with email, phone, credit card, SSN in body
+POST {{host}}/api/customers
+Content-Type: application/json
+
+{}
+
+### DLP (response): authenticated profile lookup returns sensitive data
+### Run the "Basic auth handshake" request above first (Bearer from that response)
+GET {{host}}/api/profile
+Authorization: Bearer {{authToken.response.body.access_token}}
+
+### DATETIME + REQUEST_ID combined: timestamp in body + X-Request-Id header
+POST {{host}}/api/events
+Content-Type: application/json
+X-Request-Id: events-trace-id-002
+
+{}

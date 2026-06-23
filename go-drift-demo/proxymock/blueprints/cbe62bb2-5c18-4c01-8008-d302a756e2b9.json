@@ -1,0 +1,271 @@
+{
+  "id": "cbe62bb2-5c18-4c01-8008-d302a756e2b9",
+  "name": "my-app Mocks",
+  "description": "Auto-managed blueprint built from accepted tuning recommendations. Edit the recommendations tab to add or remove rules.",
+  "createdAt": "2026-06-15T15:01:05.652519Z",
+  "services": [
+    "my-app"
+  ],
+  "iterationCount": 0,
+  "finalMatchRate": 0,
+  "tokenizeConfig": {
+    "name": "my-app Mocks",
+    "id": "cbe62bb2-5c18-4c01-8008-d302a756e2b9",
+    "responder": [
+      {
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "transaction_id"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|body:transaction_id",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "payment.auth_token"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|body:payment.auth_token",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "client_ip"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|body:client_ip",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "request_id"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|body:request_id",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "request_nonce"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|body:request_nonce",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "cart_id"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|body:cart_id",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "user_id"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|body:user_id",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "notify_email"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|body:notify_email",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "ts"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|body:ts",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "http_queryparam",
+          "config": {
+            "index": "0",
+            "name": "cache_bust"
+          }
+        },
+        "transforms": [
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|query:cache_bust",
+          "source": "mocks"
+        }
+      },
+      {
+        "extractor": {
+          "type": "http_queryparam",
+          "config": {
+            "index": "0",
+            "name": "req_uuid"
+          }
+        },
+        "transforms": [
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "my-app|query:req_uuid",
+          "source": "mocks"
+        }
+      }
+    ],
+    "services": [
+      "my-app"
+    ]
+  },
+  "active": true,
+  "source": "tuning"
+}

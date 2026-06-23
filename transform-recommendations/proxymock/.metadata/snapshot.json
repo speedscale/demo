@@ -1,0 +1,12 @@
+{
+  "id": "d4eb9fa3-ef57-47f5-9a94-661a4d999e7b",
+  "meta": {
+    "services": [
+      "localhost"
+    ]
+  },
+  "tokenizerConfig": {
+    "name": "standard",
+    "id": "standard"
+  }
+}

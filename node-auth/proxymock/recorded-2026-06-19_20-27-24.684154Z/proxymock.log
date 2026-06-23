@@ -1,0 +1,12 @@
+2026-06-19 16:27:24 INFO  started user application  ( command:npm start pid:17226 )
+2026-06-19 16:27:24 WARN  unable to connect to app port  ( host:localhost port:3000 error:Failed to connect to app on localhost:3000: dial tcp [::1]:3000: connect: connection refused. Your application does not appear to be listening on port 3000. Make sure your app is running and listening on the correct port, or remove the --app-port flag if you only need to record outbound traffic. )
+
+⚠️  Warning: Could not connect to your app on localhost:3000
+   Make sure your app is running and listening on the correct port.
+   If you only need to record outbound traffic, remove the --app-port flag.
+
+2026-06-19 16:27:30 INFO  gracefully stopping your app
+2026-06-19 16:27:30 INFO  stopping user application  ( pid:17226 )
+2026-06-19 16:27:30 INFO  sent interrupt signal to child process
+2026-06-19 16:27:30 INFO  user application stopped gracefully
+2026-06-19 16:27:30 INFO  user application exited  ( exit_code:-1 )

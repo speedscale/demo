@@ -1,0 +1,245 @@
+# Backend services behind the gateway. Each is the same image in a different
+# ROLE. pricing makes the one second-level call (pricing → tax), giving the
+# trace depth beyond the gateway's direct children. All are capture-enabled so a
+# recording sees every hop of every trace.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+  namespace: trace-demo
+  annotations:
+    capture.speedscale.com/enabled: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      containers:
+        - name: cart
+          image: trace-demo:local
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ROLE
+              value: "cart"
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 24Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart
+  namespace: trace-demo
+spec:
+  ports:
+    - { name: http, port: 80, targetPort: 8080 }
+  selector:
+    app: cart
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pricing
+  namespace: trace-demo
+  annotations:
+    capture.speedscale.com/enabled: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pricing
+  template:
+    metadata:
+      labels:
+        app: pricing
+    spec:
+      containers:
+        - name: pricing
+          image: trace-demo:local
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ROLE
+              value: "pricing"
+            - name: TAX_URL
+              value: "http://tax"
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 24Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pricing
+  namespace: trace-demo
+spec:
+  ports:
+    - { name: http, port: 80, targetPort: 8080 }
+  selector:
+    app: pricing
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tax
+  namespace: trace-demo
+  annotations:
+    capture.speedscale.com/enabled: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tax
+  template:
+    metadata:
+      labels:
+        app: tax
+    spec:
+      containers:
+        - name: tax
+          image: trace-demo:local
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ROLE
+              value: "tax"
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 24Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tax
+  namespace: trace-demo
+spec:
+  ports:
+    - { name: http, port: 80, targetPort: 8080 }
+  selector:
+    app: tax
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment
+  namespace: trace-demo
+  annotations:
+    capture.speedscale.com/enabled: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+        - name: payment
+          image: trace-demo:local
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ROLE
+              value: "payment"
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 24Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment
+  namespace: trace-demo
+spec:
+  ports:
+    - { name: http, port: 80, targetPort: 8080 }
+  selector:
+    app: payment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipping
+  namespace: trace-demo
+  annotations:
+    capture.speedscale.com/enabled: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shipping
+  template:
+    metadata:
+      labels:
+        app: shipping
+    spec:
+      containers:
+        - name: shipping
+          image: trace-demo:local
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ROLE
+              value: "shipping"
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 24Mi }
+            limits: { cpu: 100m, memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shipping
+  namespace: trace-demo
+spec:
+  ports:
+    - { name: http, port: 80, targetPort: 8080 }
+  selector:
+    app: shipping

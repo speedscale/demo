@@ -1,0 +1,66 @@
+# Gateway: the trace entry point. Fans every /checkout out to cart, pricing,
+# payment, and shipping, propagating trace context to each.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: trace-demo
+  annotations:
+    # Speedscale/proxymock capture: record this pod's inbound + outbound traffic.
+    capture.speedscale.com/enabled: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: trace-demo:local
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ROLE
+              value: "gateway"
+            - name: CART_URL
+              value: "http://cart"
+            - name: PRICING_URL
+              value: "http://pricing"
+            - name: PAYMENT_URL
+              value: "http://payment"
+            - name: SHIPPING_URL
+              value: "http://shipping"
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: trace-demo
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      nodePort: 30090
+  selector:
+    app: gateway

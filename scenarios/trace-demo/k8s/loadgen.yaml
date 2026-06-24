@@ -1,0 +1,39 @@
+# Load generator (the client). Drives at least COUNT distinct traces through the
+# gateway, then loops so any recording window captures traffic. Deployed as its
+# own unit and capture-enabled, so the client side of every call is recorded too.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen
+  namespace: trace-demo
+  annotations:
+    capture.speedscale.com/enabled: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loadgen
+  template:
+    metadata:
+      labels:
+        app: loadgen
+    spec:
+      containers:
+        - name: loadgen
+          image: trace-demo:local
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ROLE
+              value: "loadgen"
+            - name: GATEWAY_URL
+              value: "http://gateway"
+            # At least 100 distinct traces per pass (overshoot for headroom).
+            - name: COUNT
+              value: "150"
+            - name: DELAY_MS
+              value: "150"
+            - name: LOOP
+              value: "true"
+          resources:
+            requests: { cpu: 10m, memory: 24Mi }
+            limits: { cpu: 100m, memory: 64Mi }

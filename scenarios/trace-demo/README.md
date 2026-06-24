@@ -62,20 +62,44 @@ Tip: because the waterfall is driven by the *filtered* grid, adding a
 `Direction = IN` (or `OUT`) filter alongside `X-Trace-Id` shows just the
 server-side (or client-side) half of each hop.
 
-## Run locally (no Kubernetes)
+## Record locally with `proxymock record` (no Kubernetes)
 
-Each role is just an env var, so you can run the stack on your laptop and record
-it with the proxymock CLI:
+`proxymock record` runs two smart proxies around your app — an **inbound** proxy
+on `:4143` (in front of the app) and an **outbound** proxy on `:4140` (behind
+it). Requests through either are recorded. We record the gateway: its inbound
+`/checkout` plus its fan-out to the backends (and `pricing → tax`).
+
+There's a one-command helper:
 
 ```bash
-cd app
-ROLE=tax      PORT=8085 go run . &
-ROLE=cart     PORT=8081 go run . &
-ROLE=shipping PORT=8084 go run . &
-ROLE=payment  PORT=8083 go run . &
-ROLE=pricing  PORT=8082 TAX_URL=http://localhost:8085 go run . &
-ROLE=gateway  PORT=8080 \
-  CART_URL=http://localhost:8081 PRICING_URL=http://localhost:8082 \
-  PAYMENT_URL=http://localhost:8083 SHIPPING_URL=http://localhost:8084 go run . &
-ROLE=loadgen  GATEWAY_URL=http://localhost:8080 COUNT=150 LOOP=false go run .
+cd scenarios/trace-demo
+./record-local.sh            # terminal 1: starts backends + records the gateway
 ```
+
+Then drive traffic and view it:
+
+```bash
+# terminal 2: at least 100 distinct traces through the inbound proxy (:4143)
+ROLE=loadgen GATEWAY_URL=http://localhost:4143 COUNT=150 LOOP=false /tmp/trace-demo
+
+proxymock web                # browse the capture; filter X-Trace-Id, click Trace
+```
+
+Ctrl-C the recorder in terminal 1 when you're done; it stops the backends too.
+
+### Why the downstream URLs use `$(hostname)`, not `localhost`
+
+`proxymock record` captures the gateway's **outbound** calls only when they go
+through its outbound proxy — and Go's HTTP client (via `http_proxy`/`https_proxy`)
+**bypasses the proxy for `localhost` and loopback addresses**. So the helper
+points the gateway (and pricing → tax) at `http://$(hostname):<port>` instead,
+which Go routes through proxymock's `:4140` proxy and records. Inbound is
+unaffected — drive it at `localhost:4143`.
+
+### Doing it by hand
+
+If you'd rather not use the script, the equivalent is: start `cart`, `tax`,
+`payment`, `shipping` on their ports; start `pricing` with
+`http_proxy=https_proxy=http://localhost:4140` and `TAX_URL=http://$(hostname):8085`;
+then `proxymock record --app-port 8080 -- env ROLE=gateway PORT=8080 CART_URL=http://$(hostname):8081 … /tmp/trace-demo`.
+See `record-local.sh` for the exact commands.

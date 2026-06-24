@@ -216,7 +216,7 @@ func runLoadgen() {
 		}
 		if !loop {
 			log.Printf("done: %d traces sent (%d failed)", sent, errs)
-			select {} // idle so the pod (and its recorded data) stays up
+			return // one-shot batch (used by local recording); exit cleanly
 		}
 	}
 }

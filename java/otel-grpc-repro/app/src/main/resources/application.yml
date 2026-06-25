@@ -1,0 +1,17 @@
+micronaut:
+  application:
+    name: ${OTEL_SERVICE_NAME:micronaut-otel-grpc-repro}
+  server:
+    port: 8080
+
+otel:
+  exporter:
+    otlp:
+      protocol: grpc
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:`http://tracing-agent.tracing:4317`}
+  traces:
+    exporter: otlp
+    sampler:
+      type: always_on
+  propagation:
+    type: tracecontext

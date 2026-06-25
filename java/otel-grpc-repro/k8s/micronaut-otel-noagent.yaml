@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: micronaut-otel-noagent
+  namespace: otel-grpc-repro
+  labels:
+    app: micronaut-otel-noagent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: micronaut-otel-noagent
+  template:
+    metadata:
+      labels:
+        app: micronaut-otel-noagent
+    spec:
+      containers:
+        - name: app
+          image: localhost/micronaut-otel-grpc-repro:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OTEL_SERVICE_NAME
+              value: micronaut-otel-noagent
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://tracing-agent.tracing:4317
+            - name: OTEL_BSP_SCHEDULE_DELAY_MS
+              value: "100"
+            - name: OTEL_BSP_MAX_QUEUE_SIZE
+              value: "100000"
+            - name: OTEL_BSP_MAX_EXPORT_BATCH_SIZE
+              value: "512"
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: micronaut-otel-noagent
+  namespace: otel-grpc-repro
+spec:
+  selector:
+    app: micronaut-otel-noagent
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

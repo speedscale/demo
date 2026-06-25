@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: micronaut-otel-agent
+  namespace: otel-grpc-repro
+  labels:
+    app: micronaut-otel-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: micronaut-otel-agent
+  template:
+    metadata:
+      labels:
+        app: micronaut-otel-agent
+    spec:
+      initContainers:
+        - name: copy-nettap-agent
+          image: gcr.io/speedscale/nettap:v0.1.37
+          command:
+            - sh
+            - -c
+            - |
+              cp /nettap-agent/nettap-agent.jar /agent/nettap-agent.jar ||
+              cp /nettap-agent.jar /agent/nettap-agent.jar ||
+              find / -name nettap-agent.jar -exec cp {} /agent/nettap-agent.jar \; -quit
+          volumeMounts:
+            - name: nettap-agent
+              mountPath: /agent
+      containers:
+        - name: app
+          image: localhost/micronaut-otel-grpc-repro:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OTEL_SERVICE_NAME
+              value: micronaut-otel-agent
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://tracing-agent.tracing:4317
+            - name: OTEL_BSP_SCHEDULE_DELAY_MS
+              value: "100"
+            - name: OTEL_BSP_MAX_QUEUE_SIZE
+              value: "100000"
+            - name: OTEL_BSP_MAX_EXPORT_BATCH_SIZE
+              value: "512"
+            - name: NETTAP_JAVAAGENT_ENDPOINT
+              value: speedscale-nettap.speedscale:8000
+            - name: JAVA_TOOL_OPTIONS
+              value: -javaagent:/nettap-agent/nettap-agent.jar=speedscale-nettap.speedscale:8000
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: nettap-agent
+              mountPath: /nettap-agent
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+      volumes:
+        - name: nettap-agent
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: micronaut-otel-agent
+  namespace: otel-grpc-repro
+spec:
+  selector:
+    app: micronaut-otel-agent
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

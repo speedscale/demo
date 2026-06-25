@@ -17,8 +17,8 @@
 		<java.version>17</java.version>
 		<gatling.version>3.10.3</gatling.version>
 		<gatling-maven-plugin.version>4.4.0</gatling-maven-plugin.version>
-		<!-- Boot 3.5.x still manages a jackson-core affected by GHSA-72hv-8253-57qq -->
-		<jackson-bom.version>2.21.1</jackson-bom.version>
+		<!-- Boot 3.5.x still manages jackson artifacts affected by open CVEs -->
+		<jackson-bom.version>2.22.0</jackson-bom.version>
 		<!-- Boot 3.5.14 manages tomcat 10.1.54; CVE-2026-41293 et al. need 10.1.55 -->
 		<tomcat.version>10.1.55</tomcat.version>
 	</properties>

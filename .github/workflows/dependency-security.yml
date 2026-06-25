@@ -74,6 +74,11 @@ jobs:
           java:
             - *workflow
             - '**/pom.xml'
+            - '**/build.gradle'
+            - '**/build.gradle.kts'
+            - '**/settings.gradle'
+            - '**/settings.gradle.kts'
+            - '**/gradle.lockfile'
 
   node:
     name: Node.js (npm audit)

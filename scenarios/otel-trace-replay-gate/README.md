@@ -16,7 +16,18 @@ scenarios/otel-trace-replay-gate/
   otel/collector-replay-candidates.yaml
   github-actions/replay-gate.yml
   run-example.sh
+  user-journey/                 # trace one customer across 4 services, no trace IDs
 ```
+
+## Companion demo: trace a customer without traces
+
+`user-journey/` is a four-service checkout app (gateway → auth → orders →
+shipping) that threads one customer's email through HTTP headers, request
+bodies, and response bodies. Record it, then in proxymock-web apply a
+single **Full Text** filter on the email and switch to the **Trace** lens
+to see that one person's cross-service waterfall — with no trace IDs and
+no instrumentation. See `user-journey/README.md`. This is the demo behind
+the "How to trace without traces" video.
 
 ## Verified local run
 

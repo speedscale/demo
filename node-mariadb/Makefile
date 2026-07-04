@@ -130,10 +130,11 @@ demo-multi-user: build certs ## Run auth + multi-user proxymock demo flow
 		sleep 2; \
 	done; \
 	echo " ready."; \
-	proxymock record --app-port 3001 --map 13306=localhost:3306 --out "$${OUT_DIR}" > /tmp/proxymock-multi-user-record.log 2>&1 & \
+	docker exec demo-mariadb mariadb -uroot -prootpass --ssl -e "SET GLOBAL require_secure_transport=OFF"; \
+	proxymock record --app-port 3001 --map 13306=mysql://localhost:3306 --out "$${OUT_DIR}" > /tmp/proxymock-multi-user-record.log 2>&1 & \
 	PROXYMOCK_PID=$$!; \
 	sleep 3; \
-	DB_HOST=127.0.0.1 DB_PORT=13306 DB_SSL_CA=./certs/ca.pem PORT=3001 node server.js > /tmp/node-multi-user-record.log 2>&1 & \
+	DB_HOST=127.0.0.1 DB_PORT=13306 PORT=3001 node server.js > /tmp/node-multi-user-record.log 2>&1 & \
 	NODE_PID=$$!; \
 	cleanup() { \
 		kill $$NODE_PID 2>/dev/null || true; \

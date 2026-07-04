@@ -113,18 +113,26 @@ phase_record() {
   echo -e "${BLUE}  PHASE 1: Record Traffic${NC}"
   echo -e "${BLUE}================================================================${NC}"
 
-  # Ensure MariaDB is running
+  # Ensure MariaDB is running, and allow plaintext connections for the
+  # recording run: proxymock decodes the MySQL wire protocol, which it
+  # cannot do through the client's TLS upgrade. Runtime toggle only --
+  # a container restart resets require_secure_transport to ON.
   step "1/6" "Starting MariaDB (docker)"
   docker compose up -d mariadb
   wait_for_db "$DB_REAL_PORT"
+  docker exec demo-mariadb mariadb -uroot -prootpass --ssl \
+    -e "SET GLOBAL require_secure_transport=OFF" \
+    || fail "could not disable require_secure_transport"
+  ok "require_secure_transport=OFF for recording"
 
   # Start proxymock recorder
-  #   --map 13306=localhost:3306  intercepts DB traffic on :13306 -> real DB :3306
-  #   --app-port 3001            the Node app listens on :3001
+  #   --map 13306=mysql://localhost:3306  intercepts DB traffic on :13306 -> real DB :3306
+  #                                       (mysql:// prefix enables SQL decoding)
+  #   --app-port 3001                     the Node app listens on :3001
   step "2/6" "Starting proxymock recorder"
   proxymock record \
     --app-port "$APP_PORT" \
-    --map "${DB_PROXY_PORT}=localhost:${DB_REAL_PORT}" \
+    --map "${DB_PROXY_PORT}=mysql://localhost:${DB_REAL_PORT}" \
     --out "$RECORD_DIR" \
     > /tmp/proxymock-record.log 2>&1 &
   PROXYMOCK_PID=$!
@@ -134,11 +142,12 @@ phase_record() {
   fi
   ok "proxymock recording (PID $PROXYMOCK_PID, inbound :$PROXY_IN_PORT, outbound :$PROXY_OUT_PORT)"
 
-  # Start Node app pointed at the proxymock DB proxy port
-  step "3/6" "Starting Node.js API (DB via proxymock :$DB_PROXY_PORT)"
+  # Start Node app pointed at the proxymock DB proxy port.
+  # No DB_SSL_CA: the app must speak plaintext to the map port so
+  # proxymock can decode the SQL.
+  step "3/6" "Starting Node.js API (DB via proxymock :$DB_PROXY_PORT, plaintext)"
   DB_HOST=127.0.0.1 \
   DB_PORT=$DB_PROXY_PORT \
-  DB_SSL_CA=./certs/ca.pem \
   PORT=$APP_PORT \
   node server.js > /tmp/node-record.log 2>&1 &
   NODE_PID=$!
@@ -159,11 +168,18 @@ phase_record() {
   kill "$NODE_PID" 2>/dev/null; wait "$NODE_PID" 2>/dev/null || true
   NODE_PID=""
 
-  # Summarise
+  # Summarise -- and prove the DB side was actually decoded: a capture
+  # with HTTP but zero SQL means the map prefix or TLS toggle regressed.
   step "6/6" "Recording summary"
-  local file_count
+  local file_count sql_count
   file_count=$(find "$RECORD_DIR" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
   ok "Recorded ${file_count} RRPair files in ${RECORD_DIR}/"
+  sql_count=$(grep -rlE "SELECT|INSERT|UPDATE|DELETE" "$RECORD_DIR" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$sql_count" -gt 0 ]; then
+    ok "Decoded MariaDB SQL present in ${sql_count} RRPair files"
+  else
+    fail "No decoded SQL in ${RECORD_DIR} -- DB capture is empty (check mysql:// map prefix and require_secure_transport)"
+  fi
 }
 
 # ---------------------------------------------------------------------------

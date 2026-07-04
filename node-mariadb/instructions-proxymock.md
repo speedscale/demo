@@ -37,6 +37,16 @@ make infra
 npm install
 ```
 
+Allow plaintext DB connections while recording. proxymock decodes the
+MySQL wire protocol, which it cannot do through the client's TLS
+upgrade — with TLS on you still get HTTP capture, but zero SQL. This
+is a runtime toggle (a container restart resets it to ON):
+
+```bash
+docker exec demo-mariadb mariadb -uroot -prootpass --ssl \
+  -e "SET GLOBAL require_secure_transport=OFF"
+```
+
 Install proxymock if needed:
 
 ```bash
@@ -47,7 +57,8 @@ sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)
 
 ## Shared Step 1 - Record in Environment A
 
-Terminal A:
+Terminal A. The `mysql://` prefix on the map is what turns on SQL
+decoding — a bare `13306=localhost:3306` records opaque TCP:
 
 ```bash
 OUT_DIR="proxymock/captured-$(date +%Y%m%d-%H%M%S)"
@@ -55,15 +66,22 @@ echo "$OUT_DIR"
 
 proxymock record \
   --app-port 3001 \
-  --map 13306=localhost:3306 \
+  --map 13306=mysql://localhost:3306 \
   --out "$OUT_DIR" \
   --svc-name node-mariadb-demo
 ```
 
-Terminal B:
+The recorder immediately warns `unable to connect to app port ...
+localhost:3001` — **that is expected**: the app starts *after* the
+recorder (it needs the recorder's 13306 DB port). The warning clears
+as soon as the app is up; don't Ctrl-C out of it.
+
+Terminal B (note: no `DB_SSL_CA` — the app speaks plaintext to the
+local map port while recording, which is what lets proxymock decode
+the SQL):
 
 ```bash
-DB_HOST=127.0.0.1 DB_PORT=13306 DB_SSL_CA=./certs/ca.pem PORT=3001 node server.js
+DB_HOST=127.0.0.1 DB_PORT=13306 PORT=3001 node server.js
 ```
 
 Terminal C:
@@ -201,11 +219,17 @@ Use this when an AI agent is orchestrating proxymock tools directly.
 
 ### Suggested MCP sequence
 
-1. `proxymock_record_traffic_start`
+Note: `proxymock_record_traffic_start` has no `--map` parameter, so it
+cannot capture the MariaDB side. If the agent needs DB capture, it
+should shell out to the CLI recorder from Shared Step 1
+(`proxymock record --map 13306=mysql://localhost:3306 ...`) instead of
+using the MCP record tool; the rest of the sequence is unchanged.
+
+1. `proxymock_record_traffic_start` (HTTP capture only)
    - `app-port: "3001"`
    - `proxy-in-port: "4143"`
    - `out-directory: ["proxymock/captured-<ts>"]`
-2. Agent runs app with `DB_PORT=13306`
+2. Agent runs app with `DB_PORT=13306` (no `DB_SSL_CA` — see Shared Step 1)
 3. Agent runs `generate-users-traffic.sh 4143`
 4. `proxymock_record_traffic_stop`
 5. Copy capture directory to Environment B path
@@ -242,7 +266,21 @@ Then rerun automation/replay.
 
 ### App cannot connect to DB during record
 
-Wait until proxymock map port `13306` is listening before starting app.
+- wait until proxymock map port `13306` is listening before starting app
+- make sure `require_secure_transport` was set to `OFF` (Prerequisites)
+  and the app was started **without** `DB_SSL_CA` — with TLS enforced the
+  plaintext recording connection is rejected by MariaDB
+
+### Capture has HTTP but no SQL / DB traffic
+
+Two causes, both silent:
+
+- the map was missing the protocol prefix — it must be
+  `--map 13306=mysql://localhost:3306`, not `13306=localhost:3306`
+- the app connected with TLS (`DB_SSL_CA` set); proxymock cannot decode
+  through the client's TLS upgrade. Set
+  `require_secure_transport=OFF` (Prerequisites) and drop `DB_SSL_CA`
+  for the recording run.
 
 ### 401s during replay
 

@@ -21,6 +21,8 @@
 		<jackson-bom.version>2.22.0</jackson-bom.version>
 		<!-- Boot 3.5.14 manages tomcat 10.1.54; CVE-2026-41293 et al. need 10.1.55 -->
 		<tomcat.version>10.1.55</tomcat.version>
+		<logback.version>1.5.33</logback.version>
+		<spring-security.version>6.5.11</spring-security.version>
 	</properties>
 	<dependencies>
 		<dependency>

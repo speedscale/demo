@@ -9,7 +9,7 @@ GEM
       csv
       mini_mime (>= 1.0.0)
       multi_xml (>= 0.5.2)
-    json (2.17.1.2)
+    json (2.19.9)
     jwt (2.10.3)
       base64
     logger (1.7.0)
@@ -74,7 +74,7 @@ PLATFORMS
 
 DEPENDENCIES
   httparty (~> 0.24)
-  json (= 2.17.1.2)
+  json (= 2.19.9)
   jwt (~> 2.10, >= 2.10.3)
   pg (~> 1.5)
   puma (~> 8.0, >= 8.0.2)

@@ -1,0 +1,4 @@
+# Trivy lists fixed Jackson versions for CVE-2026-54515, but Maven Central
+# latest is still 2.22.0 as of 2026-07-06. Remove when a Jackson 2.x fixed
+# release is actually published.
+CVE-2026-54515

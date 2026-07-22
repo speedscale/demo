@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/models"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('status is 200', () => pm.response.to.have.status(200));
+      pm.test('models are returned', () => pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty);
+    language: text/javascript
+order: 2000

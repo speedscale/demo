@@ -1,0 +1,39 @@
+name: Replay Sandwich Driver Checks
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - scenarios/replay-sandwich/**
+      - thoughts/scripts/verify-replay-sandwich.sh
+      - .github/workflows/replay-sandwich.yml
+  pull_request:
+    branches: [master, main]
+    paths:
+      - scenarios/replay-sandwich/**
+      - thoughts/scripts/verify-replay-sandwich.sh
+      - .github/workflows/replay-sandwich.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify-drivers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Install latest Postman CLI
+        run: npm install -g postman-cli@latest
+
+      - name: Verify drivers and orchestration
+        run: thoughts/scripts/verify-replay-sandwich.sh

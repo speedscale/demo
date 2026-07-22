@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-server
+  annotations:
+    capture.speedscale.com/enabled: "true"
+spec:
+  template:
+    spec:
+      containers:
+        - name: node-server
+          imagePullPolicy: IfNotPresent

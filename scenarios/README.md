@@ -7,6 +7,7 @@ Standard demo scenarios using **Java**, **.NET**, and **Node.js** apps. Deployme
 | **[Monolith](monolith/)**                             | Run a **single** app in K8s: **Java**, **.NET**, or **Node.js** (each project’s own manifests). |
 | **[Microservices](microservices/)**                   | **Java + .NET + Node** behind one gateway in the `demo-stack` namespace.                        |
 | **[OTel Trace Replay Gate](otel-trace-replay-gate/)** | Minimal, verified proxymock record/replay merge-gate example using the `node/` demo.            |
+| **[External test drivers](replay-sandwich/)**         | Run a Speedscale replay sandwich with k6 or Postman Collection v3 as the test driver.           |
 
 ---
 

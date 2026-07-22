@@ -1,0 +1,29 @@
+{
+  "id": "external-driver",
+  "protected": false,
+  "generator": {
+    "stages": [
+      {
+        "virtualUsers": {
+          "virtualUsers": "1",
+          "requestDelay": {}
+        }
+      }
+    ]
+  },
+  "rules": [],
+  "version": 3,
+  "assertionGroups": [],
+  "responder": {
+    "numReplicas": 1,
+    "passthrough_mode": false,
+    "with_report": true
+  },
+  "cluster": {
+    "replayMode": "responder-only",
+    "logsCollected": false,
+    "sidecar_tls_out": true,
+    "cleanup": "inventory",
+    "logLevel": "info"
+  }
+}

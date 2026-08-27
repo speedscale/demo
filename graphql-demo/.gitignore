@@ -1,0 +1,8 @@
+# built binary
+/graphql-demo
+
+# proxymock working state — the committed recorded-*/ baseline is the one
+# deliberate exception, added with `git add -f` when refreshed
+proxymock/.proxymock/
+proxymock/results/
+proxymock/**/proxymock.log

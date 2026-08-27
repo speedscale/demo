@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.14</version>
+        <version>3.5.15</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
@@ -16,10 +16,15 @@
     <properties>
         <java.version>17</java.version>
         <!-- Boot 3.5.x still manages jackson artifacts affected by open CVEs -->
-        <jackson-bom.version>2.22.0</jackson-bom.version>
-        <!-- Boot 3.5.14 manages tomcat 10.1.54; CVE-2026-41293 et al. need 10.1.55 -->
+        <jackson-bom.version>2.22.1</jackson-bom.version>
+        <!-- Boot 3.5.15 manages tomcat 10.1.54; CVE-2026-41293 et al. need 10.1.55 -->
         <tomcat.version>10.1.55</tomcat.version>
-        <logback.version>1.5.33</logback.version>
+        <!-- Boot 3.5.15 manages logback 1.5.33; CVE-2026-10532 needs 1.5.34 -->
+        <logback.version>1.5.34</logback.version>
+        <!-- Boot 3.5.15 manages log4j 2.24.3; CVE-2026-49844 needs 2.25.5 -->
+        <log4j2.version>2.25.5</log4j2.version>
+        <!-- Boot 3.5.15 manages micrometer 1.15.11; CVE-2026-40983 needs 1.15.12 -->
+        <micrometer.version>1.15.12</micrometer.version>
         <spring-security.version>6.5.11</spring-security.version>
         <!-- transitive commons-lang3 3.17.0 has CVE-2025-48924 -->
         <commons-lang3.version>3.18.0</commons-lang3.version>

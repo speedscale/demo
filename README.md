@@ -19,7 +19,7 @@ Demos are **Kubernetes-only**. Use the [**scenarios/**](scenarios/README.md) dir
 ### [Getting Started with Mocks](getting-started-mocks/)
 
 Companion code for the **Getting Started with Mocks and Testing** blog series.
-One package notifier in Java, Node.js, and Go, grown one post at a time.
+One package notifier in Java, Node.js, Go, and Python, grown one post at a time.
 
 ### [Java](java/)
 

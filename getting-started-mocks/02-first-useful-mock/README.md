@@ -1,4 +1,4 @@
-# 01: Your First Useful Mock
+# 02: Your First Useful Mock
 
 The package notifier asks a carrier where a package is. If the carrier says
 `delayed`, the notifier produces a message for the customer. Otherwise it stays

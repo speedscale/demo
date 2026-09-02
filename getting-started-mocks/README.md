@@ -17,10 +17,12 @@ language without reading the others.
 
 | Directory | Post |
 |---|---|
-| [`01-first-useful-mock/`](01-first-useful-mock/) | Your First Useful Mock |
+| (no code) | What Mocks Are Actually For (post 1) |
+| [`02-first-useful-mock/`](02-first-useful-mock/) | Your First Useful Mock (post 2) |
 
-Later posts add `02-make-failure-boring/`, `03-did-it-actually-send/`, and so
-on as they are published.
+Later posts add `03-make-failure-boring/`, `04-did-it-actually-send/`, and so
+on as they are published. Directory numbers match the post numbers in the
+series; post 1 is prose only.
 
 ## Run everything
 
@@ -42,8 +44,8 @@ make test-python
 Or one post in one language:
 
 ```bash
-cd 01-first-useful-mock/go && go test ./...
-cd 01-first-useful-mock/java && mvn test
-cd 01-first-useful-mock/node && npm test
-cd 01-first-useful-mock/python && python3 -m unittest discover -v
+cd 02-first-useful-mock/go && go test ./...
+cd 02-first-useful-mock/java && mvn test
+cd 02-first-useful-mock/node && npm test
+cd 02-first-useful-mock/python && python3 -m unittest discover -v
 ```

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/speedscale/demo/getting-started-mocks/01-first-useful-mock/notifier"
+	"github.com/speedscale/demo/getting-started-mocks/01-first-useful-mock/go/notifier"
 )
 
 func main() {

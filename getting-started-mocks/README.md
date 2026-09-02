@@ -2,15 +2,18 @@
 
 Companion code for the **Getting Started with Mocks and Testing** blog series
 on speedscale.com. One small package notifier, grown one collaborator at a
-time across eight posts.
+time across eight posts, implemented in **Java, Node.js, and Go**.
 
-Everything is Go and, until the last post, standard library only. There is no
-mocking framework to install. That is the point.
+Every example in every post exists in all three languages. The scenario and
+the test names are the same; each implementation is idiomatic for its
+language. Until post 6 there is no mocking framework or test dependency
+beyond each language's own test runner. That is the point.
 
 ## Layout
 
 Each numbered directory is the notifier as it looks at the end of that post,
-so you can run any one of them without reading the others.
+with one subdirectory per language, so you can run any one post in your
+language without reading the others.
 
 | Directory | Post |
 |---|---|
@@ -21,12 +24,24 @@ on as they are published.
 
 ## Run everything
 
+Requires Go 1.23+, Java 17+ with Maven, and Node 20+.
+
 ```bash
 make test
 ```
 
-Or one post at a time:
+Or one language across every post:
 
 ```bash
-cd 01-first-useful-mock && go test ./...
+make test-go
+make test-java
+make test-node
+```
+
+Or one post in one language:
+
+```bash
+cd 01-first-useful-mock/go && go test ./...
+cd 01-first-useful-mock/java && mvn test
+cd 01-first-useful-mock/node && npm test
 ```

@@ -16,6 +16,12 @@ Demos are **Kubernetes-only**. Use the [**scenarios/**](scenarios/README.md) dir
 
 ## Demo Projects
 
+### [Getting Started with Mocks](getting-started-mocks/)
+
+The package-notifier example for the **Getting Started with Mocks and Testing**
+blog series. The same behavior and tests are implemented in Java, Go, Node.js,
+and Python so readers can follow the series in their preferred backend language.
+
 ### [Java](java/)
 
 A Spring Boot application that integrates with external APIs (SpaceX and US Treasury). Features JWT authentication, health checks, and comprehensive API endpoints for testing traffic capture and replay scenarios.

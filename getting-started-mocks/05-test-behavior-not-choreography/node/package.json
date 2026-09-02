@@ -1,0 +1,11 @@
+{
+  "name": "test-behavior-not-choreography",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}

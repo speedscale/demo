@@ -19,10 +19,12 @@ language without reading the others.
 |---|---|
 | (no code) | What Mocks Are Actually For (post 1) |
 | [`02-first-useful-mock/`](02-first-useful-mock/) | Your First Useful Mock (post 2) |
+| [`03-make-failure-boring/`](03-make-failure-boring/) | Make Failure Boring (post 3) |
+| [`04-did-it-actually-send/`](04-did-it-actually-send/) | Did It Actually Send? (post 4) |
+| [`05-test-behavior-not-choreography/`](05-test-behavior-not-choreography/) | Test Behavior, Not Choreography (post 5) |
 
-Later posts add `03-make-failure-boring/`, `04-did-it-actually-send/`, and so
-on as they are published. Directory numbers match the post numbers in the
-series; post 1 is prose only.
+Later posts add `06-they-arent-all-mocks/` and the rest as they are published.
+Directory numbers match the post numbers in the series; post 1 is prose only.
 
 ## Run everything
 

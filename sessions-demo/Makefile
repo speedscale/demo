@@ -7,6 +7,19 @@ BASE?=http://localhost:4143
 build:
 	@echo "sessions-demo has no dependencies; nothing to build"
 
+.PHONY: test bank-drive bank-dependency bank-proxymock
+test:
+	@node --test banking.test.js
+
+bank-drive:
+	@BASE=$(BASE) node client/banking.js
+
+bank-dependency:
+	@PORT=3001 node statement-data.js
+
+bank-proxymock:
+	@node test-banking-proxymock.js
+
 .PHONY: start
 start:
 	@PORT=$(PORT) node server.js

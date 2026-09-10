@@ -1,5 +1,8 @@
 # Sessions Demo
 
+For endpoint/session load-plan development, see the opt-in [banking fixture](BANKING.md)
+with statement/posting contention, prepared actors and an independent request journal.
+
 A small HTTP API whose traffic, when recorded with `proxymock record`, produces a
 **rich set of sessions** — exactly what the proxymock **Sessions** report view is
 built to analyze.

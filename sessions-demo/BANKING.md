@@ -2,7 +2,8 @@
 
 This extends the existing Sessions demo. It supplies real HTTP journeys and an
 independent app journal for S-13073. The fixture driver creates recordings; it is
-not a replacement for testing the new generator scheduler. The independent HTTP concurrency runtime is available as an internal test
+not a replacement for testing the new generator scheduler. Independent HTTP
+concurrency and scheduled request/session arrivals are available as an internal test
 breakpoint; see [LOAD-GROUPS.md](LOAD-GROUPS.md) for actual proxymock replay
 validation. The full release, Kraken job and customer docs remain in development.
 
@@ -117,7 +118,8 @@ PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-proxymock
 Success prints a JSON object with `"success":true` and the artifact directory.
 `make test` should pass six tests. This command validates the selection
 foundation and banking/dependency fixture. Use `make bank-load-groups` with the
-S-13077 candidate for actual endpoint-group and rotating-session execution.
+S-13080 candidate for actual endpoint-group concurrency, rotating sessions and
+scheduled request/session arrivals, including deliberate delivery failures.
 
 The harness chooses unused ports, records the real dependency, waits for the
 expected fixture count to reach disk, stops the real dependency, then runs all

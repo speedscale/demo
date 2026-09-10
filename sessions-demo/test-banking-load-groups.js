@@ -150,6 +150,53 @@ async function validateGroups({ base, driverOptions }) {
     if (reuse === 'ONCE') assert.equal(journal.sessions.completed, 12);
   }
 
+  const arrival = (id, url, sessionized, rate, maxConcurrency, duration = '2s') => ({
+    ...group(id, url, sessionized, 1), arrivalPolicy: { maxConcurrency, maxStartLag: '0.1s' },
+    stages: [{ duration, arrivals: { rate, ...(sessionized ? { requestDelay: { mode: 'FLAT', requestDelayFlat: '0.01s' } } : {}) } }],
+  });
+  const arrivalPlan = plan([arrival('statement-arrivals', '/statements', false, 30, 20), arrival('posting-arrivals', '/transactions', false, 5, 8)]);
+  const checkDelivery = (result, expected) => {
+    assert.deepEqual(result.summary.groups.map(g => g.scheduled), expected);
+    assert.deepEqual(result.summary.groups.map(g => g.started), expected);
+    assert.ok(result.summary.groups.every(g => (g.missed || 0) === 0));
+  };
+  const fastArrivals = await replay('arrivals-fast', requests, arrivalPlan, true, { statementWorkMs: 1, postingWorkMs: 1 });
+  const slowArrivals = await replay('arrivals-slow', requests, arrivalPlan, true, { statementWorkMs: 75, postingWorkMs: 1 });
+  checkDelivery(fastArrivals, [60, 10]); checkDelivery(slowArrivals, [60, 10]);
+  assert.ok(queuedPosting(slowArrivals.journal).length > 0, 'posting still arrives while statements occupy the shared pool');
+  const ramped = plan([arrival('ramped-arrivals', '/statements', false, 4, 4)]);
+  ramped.loadGroups[0].startAfter = '0.2s';
+  ramped.loadGroups[0].stages = [
+    { duration: '0.5s', arrivals: { rate: 4 } },
+    { duration: '0.25s', arrivals: { rate: 0 } },
+    { duration: '1s', rampFor: '0.5s', arrivals: { rate: 8 } },
+  ];
+  checkDelivery(await replay('arrivals-ramp', requests, ramped), [8]);
+  const sessionArrivals = plan([arrival('reader-arrivals', '/statements', true, 8, 3), arrival('writer-arrivals', '/transactions', true, 4, 2)]);
+  const sessionRate = await replay('session-arrivals', sessions, sessionArrivals);
+  checkDelivery(sessionRate, [16, 8]);
+  assert.deepEqual(sessionRate.summary.groups.map(g => Object.keys(g.sourceExecutions).length), [8, 4]);
+  assert.equal(sessionRate.journal.sessions.started, 24); assert.equal(sessionRate.journal.sessions.completed, 24);
+  sessionArrivals.loadGroups.forEach(g => { g.population.reuse = 'LOAD_SESSION_REUSE_ONCE'; });
+  const onceArrivals = await replay('session-arrivals-once', sessions, sessionArrivals);
+  checkDelivery(onceArrivals, [8, 4]); assert.equal(onceArrivals.journal.sessions.completed, 12);
+  const overload = await replay('arrivals-overload', requests, plan([arrival('overloaded', '/statements', false, 40, 1, '0.5s')]), false,
+    { statementWorkMs: 150 });
+  assert.ok(overload.summary.groups[0].missedCapacity > 0);
+  const occupied = arrival('occupied-identity', '/statements', true, 20, 4, '0.5s');
+  occupied.population.size = 1;
+  const identity = await replay('arrivals-identity', sessions, plan([occupied]), false, { statementWorkMs: 150 });
+  assert.ok(identity.summary.groups[0].missedIdentity > 0);
+  assert.equal(identity.summary.groups[0].peakConcurrency, 1);
+  for (const result of [overload, identity]) {
+    const g = result.summary.groups[0];
+    assert.equal(g.scheduled, g.started + g.missed);
+    assert.equal(g.missed, (g.missedCapacity || 0) + (g.missedIdentity || 0) + (g.missedLate || 0) + (g.missedCancelled || 0));
+    assert.equal(g.failedRequests, 0, 'delivery shortfall must be distinguished from app errors');
+    assert.equal(g.requests, result.journal.requests.completed);
+    assert.equal(result.journal.requests.failed, 0);
+    assert.equal(result.journal.sessions.active, 0);
+  }
   await control('reset', {});
 }
 

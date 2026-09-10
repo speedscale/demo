@@ -41,6 +41,7 @@ class WorkPool {
     if (signal.aborted) throw signal.reason;
     if (this.active >= this.capacity) {
       if (this.queue.length >= this.maxQueue) throw Object.assign(new Error('capacity_exhausted'), { status: 503 });
+      this.emit({ type: 'resource-queued', pool: this.name, ...context });
       await new Promise((resolve, reject) => {
         const entry = { resolve: () => { signal.removeEventListener('abort', cancel); resolve(); } };
         const cancel = () => {

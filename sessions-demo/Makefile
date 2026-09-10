@@ -37,3 +37,7 @@ record:
 docker-multi:
 	@echo "Building and pushing multi-arch Docker image"
 	@docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${REGISTRY} .
+
+.PHONY: bank-load-groups
+bank-load-groups:
+	node test-banking-load-groups.js

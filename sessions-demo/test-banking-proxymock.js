@@ -24,9 +24,9 @@ function start(command, args, name, env = {}) {
   return child;
 }
 
-async function stop(child) {
+async function stop(child, { alreadyInterrupted = false } = {}) {
   if (!child || !child.pid) return;
-  if (child.exitCode === null && child.signalCode === null) child.kill('SIGINT');
+  if (!alreadyInterrupted && child.exitCode === null && child.signalCode === null) child.kill('SIGINT');
   let timer;
   const result = await Promise.race([child.done, new Promise(resolve => {
     timer = setTimeout(() => { child.kill('SIGKILL'); resolve({ forced: true }); }, 5000);
@@ -84,7 +84,7 @@ async function recorded(directory, count) {
   }
 }
 
-async function main() {
+async function main({ validateGroups } = {}) {
   const [dependencyPort, mapPort, outboundPort, inboundPort] = await freePorts(4);
   const target = `127.0.0.1:${dependencyPort}`;
   const mapping = `${mapPort}=http://${target}`;
@@ -117,7 +117,7 @@ async function main() {
     assert.ok(!recordExit.forced && (recordExit.code === 0 || recordExit.signal === 'SIGINT'), 'recording must flush cleanly');
     await stop(dependency); // proves the mocked run cannot succeed by passthrough
     const mock = start(binary, ['mock', '--in', recording, '--out', path.join(artifacts, 'mocked'), '--out-format', 'markdown',
-      '--no-passthrough', '--map', mapping, '--proxy-out-port', String(outboundPort), '--timeout', '1m'], 'mock');
+      '--no-passthrough', '--map', mapping, '--proxy-out-port', String(outboundPort), '--timeout', process.env.BANK_KEEP_RUNNING === '1' ? '2h' : '5m'], 'mock');
     await ready(mapPort, mock);
     let expectedObserved = 0;
     for (const mode of ['sessions', 'requests', 'mixed']) {
@@ -125,6 +125,7 @@ async function main() {
       expectedObserved += result.journal.events.filter(e => e.type === 'resource-end' && e.operation === 'statement').length;
     }
     await recorded(path.join(artifacts, 'mocked'), expectedObserved);
+    if (validateGroups) await validateGroups({ base, driverOptions });
     // A new, unrecorded account must fail; missing mocks cannot look like success.
     const missing = await fetch(`http://127.0.0.1:${mapPort}/statement-data?account=never-recorded`);
     assert.equal(missing.status, 404, 'missing mock should fail closed');
@@ -143,7 +144,18 @@ async function main() {
     assert.equal(negativeJournal.requests.failed, 1);
     // This proxymock version logs fail-closed misses without writing RRPair
     // files for them; retain their independent HTTP/journal evidence above.
-    const mockExit = await stop(mock);
+    let manualInterrupted = false;
+    if (validateGroups && process.env.BANK_KEEP_RUNNING === '1') {
+      const manual = { base, artifacts, binary, controlToken: driverOptions.controlToken,
+        recording: path.join(artifacts, 'inbound-sessions'), plan: path.join(artifacts, 'sessions-rotate-plan.json') };
+      fs.writeFileSync(path.join(artifacts, 'manual.json'), JSON.stringify(manual, null, 2));
+      console.log(JSON.stringify({ success: true, manual: true, ...manual }));
+      console.log('Validation passed. Bank and dependency mock remain running; press Ctrl+C to stop both.');
+      // Terminal Ctrl+C also reaches the child mock. Avoid a second SIGINT
+      // while it is flushing its artifacts.
+      await new Promise(resolve => process.once('SIGINT', () => { manualInterrupted = true; resolve(); }));
+    }
+    const mockExit = await stop(mock, { alreadyInterrupted: manualInterrupted });
     assert.ok(!mockExit.forced && (mockExit.code === 0 || mockExit.signal === 'SIGINT'), 'mock observations must flush cleanly');
     const result = { success: true, elapsedMs: performance.now() - started, artifacts };
     fs.writeFileSync(path.join(artifacts, 'result.json'), JSON.stringify(result, null, 2));
@@ -154,8 +166,10 @@ async function main() {
   }
 }
 
-main().catch(error => {
+if (require.main === module) main().catch(error => {
   fs.writeFileSync(path.join(artifacts, 'failure.txt'), error.stack || String(error));
   console.error(`Banking validation failed. Artifacts: ${artifacts}\n${error.stack}`);
   process.exitCode = 1;
 });
+
+module.exports = { main, start, stop, freePorts, ready, artifacts, binary };

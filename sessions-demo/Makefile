@@ -41,3 +41,7 @@ docker-multi:
 .PHONY: bank-load-groups
 bank-load-groups:
 	node test-banking-load-groups.js
+
+.PHONY: bank-load-composition
+bank-load-composition:
+	BANK_LOAD_CASES=composition node test-banking-load-groups.js

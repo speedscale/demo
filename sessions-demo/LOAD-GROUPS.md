@@ -8,7 +8,7 @@ configuration.
 
 ## Run the milestone
 
-Build the Speedscale `s-13080-seeded-arrival-timing` branch, which includes the earlier
+Build the Speedscale `s-13081-arrival-composition` branch, which includes the earlier
 selection and artifact-preservation changes:
 
 ```sh
@@ -23,11 +23,21 @@ make test
 PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-load-groups
 ```
 
-Expect `"success":true` and an artifact directory after roughly two minutes on a
+Expect `"success":true` and an artifact directory after roughly two to three minutes on a
 warm local build. A failed check exits nonzero and retains logs and evidence.
 The harness stops its app, recorder and mock on completion. It records the real
 statement dependency, stops it, then starts proxymock with `--no-passthrough`.
 Both the input journeys and replay traffic use real HTTP requests.
+
+For the focused shares, budgets and weighted-session loop:
+
+```sh
+PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-load-composition
+```
+
+This reuses the same real capture, dependency mock and bank journal, but runs
+only composition cases. `load-group-profile.json` identifies `composition` or
+`all`; `bank-load-groups` still runs the full matrix. Both support the manual hold.
 
 The acceptance cases are:
 
@@ -44,6 +54,10 @@ The acceptance cases are:
 | Session arrivals | Readers start at 8 journeys/second and writers at 4/second; all 12 actors rotate. Once-only caps starts at eight readers and four writers. |
 | Seeded jitter | Same-seed fast/slow runs retain identical planned offsets and counts; a changed seed changes offsets. Jittered journeys still rotate all actors, and jittered overload fails. |
 | Undeliverable arrivals | A concurrency limit or occupied identity pool produces missed starts and a nonzero exit, with successful delivered requests verified separately. |
+| Shared request rate | A 25 requests/second pool splits 80/20: 40 statement starts and 10 posting starts over two seconds. |
+| Finite budgets | Shared groups stop at three statements and four posts without redistribution; a standalone three-request budget finishes before its 30-second maximum window. |
+| Weighted session starts | A 20 journeys/second pool splits 80/20: 32 reader journeys and eight writer journeys, visiting all 12 source actors. |
+| Shared-rate shortfall | Saturated statements miss their own starts; posting retains exactly its four allocated starts. |
 | Invalid plans | Missing data, unsupported TPS, conflicting flags and total concurrency over capacity fail before workload traffic. |
 | Missing dependency | A writer's statement has no recorded dependency response; the app returns 502 and proxymock replay exits nonzero with failed counts. |
 
@@ -73,7 +87,9 @@ BANK_BASE=http://127.0.0.1:PORT
 Edit a copy of `sessions-rotate-plan.json`, `endpoint-groups-plan.json`, or
 `shared-pressure-plan.json`. Arrival examples are `arrivals-fast-plan.json`,
 `arrivals-ramp-plan.json`, `session-arrivals-plan.json`, `jitter-fast-plan.json`
-and `jitter-sessions-plan.json`. Reset the app, then
+and `jitter-sessions-plan.json`. Composition examples include
+`composition-requests-plan.json`, `composition-budget-plan.json` and
+`composition-sessions-plan.json`. Reset the app, then
 replay to a new output directory:
 
 ```sh
@@ -200,6 +216,67 @@ evenly spaced plan passes. Such starts are counted as missed and fail; the sched
 does not smooth them or change later deadlines. Real dispatch/network timing and
 response-dependent actor availability are not made deterministic by the seed.
 
+### Shared rates and weighted session populations
+
+Add an entry to the top-level `loadArrivalPools` array to define one parent
+arrival timeline. For example:
+
+```json
+{
+  "id": "bank-mix",
+  "selection": "LOAD_SELECTION_REQUESTS",
+  "stages": [{"duration": "2s", "arrivals": {"rate": 25}}]
+}
+```
+
+Each member group retains its scope and `arrivalPolicy` admission bounds, and
+sets `arrivalShare`, for example
+`{"poolId":"bank-mix","basisPoints":8000}`. Use 2000 for the other group.
+Active members must total exactly 10000 basis points (100%). Remove each member's
+local `stages`, `startAfter` and `arrivalPolicy.spacing`; these are inherited from
+the pool. A disabled member does not cause automatic rescaling of other shares.
+
+The parent offers 50 starts; members receive 40 and 10. A bounded repeating
+allocation cycle spreads each member's share across the parent timeline. Stable
+group IDs break equal-position ties. Short runs use the cycle's prefix, so an
+80/20 split of three starts is two and one. No parent starts are lost through
+independent rounding. A positive share receiving zero starts is rejected; extend
+the parent window. Pool `startAfter`, ramps, zero stages and optional `spacing`
+work like independent arrival timelines. For jitter, the seed and pool ID control
+the parent timing; allocation selects each member's deadlines from that timeline.
+
+For weighted reader/writer journeys, use a pool with
+`selection: "LOAD_SELECTION_SESSIONS"` and separate session groups for each persona.
+Members must use the pool's unit. At 20 journeys/second for two seconds, 8000/2000
+produces 32 reader starts and eight writer starts. Each persona's population still
+rotates or sticks according to its own reuse policy. Longer journeys produce more
+requests and hold identities longer; an 80/20 start mix promises neither an 80/20
+request mix nor an 80/20 active-user split. Set session think time through
+`arrivalShare.requestDelay` rather than parent arrival stages.
+
+An unavailable identity or saturated member misses its assigned start and fails.
+Other members never absorb that work. Standalone request/session groups may
+coexist with pools under the same run clock and global capacity limit.
+
+### Finite primary-start budgets
+
+Set a positive `startBudget`, such as `"3"`, on an arrival group to consume only
+its first three planned starts. For request selection that is three individual
+primary requests, including failed attempts; for sessions it is three complete
+journey starts. Retries/redirects are not additional primary starts. Budgets do
+not promise successful completions, and never truncate an active journey.
+
+The schedule must offer at least the budget within its stages; an impossible
+budget fails setup. The stage timeline bounds admission, and the configured drain
+time bounds remaining work after that timeline. Completed budgeted groups can
+finish early after their in-flight work completes. Missed budgeted starts fail
+without replacement. Budget caps never transfer unused allocations to siblings.
+
+Budgets require arrival scheduling. Once-only populations cannot also use shares
+or budgets in this breakpoint: population exhaustion conflicts with the prescribed
+mix/count. Use independent once-only groups when every selected actor must run
+exactly once. Generic per-source weights and cloned identities remain later work.
+
 ## Saved evidence and remaining release work
 
 Each replay directory contains `load-groups.json`: resolved seed, population,
@@ -223,9 +300,21 @@ not HTTP timestamps or a complete event log. Compare the samples in `jitter-fast
 and `jitter-slow` to see that response speed leaves the plan unchanged, then compare
 `jitter-changed-seed` to see a different reproducible schedule.
 
+For shared groups, `allocation` includes the pool ID, basis points,
+`weighted-cycle-v1`, original `allocated` starts and intentionally `suppressed`
+starts due to a budget. Top-level `pools` preserve original parent totals.
+`startBudget` records an explicit cap; `scheduled` is the resulting planned count.
+Suppressed starts are intentional and differ from missed starts. The same compiled
+schedule supplies the compiler preview fields and runtime report samples.
+
+The harness obtains provenance with `proxymock version --client`, bounded to ten
+seconds, so local validation does not wait on cloud version discovery. Reported
+elapsed time now includes that setup step; older timings excluded it.
+
 The harness currently measures elapsed local validation time; it does not yet
 compare an equivalent end-to-end baseline or claim the 50% cycle-time goal.
-Grouped adaptive TPS, shares/weights/budgets, identity cloning,
+Grouped adaptive TPS, recorded multiples with baseline windows, generic per-source
+weights, identity cloning,
 scoped latency/delivery goals, UI editing, distributed Kubernetes validation,
 Kraken and final customer documentation/blog remain in the full release plan.
 Grouped non-HTTP protocols and TPS are rejected in this breakpoint.

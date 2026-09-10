@@ -85,6 +85,7 @@ async function recorded(directory, count) {
 }
 
 async function main({ validateGroups } = {}) {
+  const started = performance.now();
   const [dependencyPort, mapPort, outboundPort, inboundPort] = await freePorts(4);
   const target = `127.0.0.1:${dependencyPort}`;
   const mapping = `${mapPort}=http://${target}`;
@@ -92,11 +93,10 @@ async function main({ validateGroups } = {}) {
   fs.writeFileSync(path.join(artifacts, 'provenance.json'), JSON.stringify({
     binary, node: process.version, demoCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: __dirname, encoding: 'utf8' }).trim(),
     demoDirty: !!execFileSync('git', ['status', '--porcelain'], { cwd: __dirname, encoding: 'utf8' }).trim(),
-    proxymockVersion: execFileSync(binary, ['version'], { encoding: 'utf8' }).trim(),
+    proxymockVersion: execFileSync(binary, ['version', '--client'], { encoding: 'utf8', timeout: 10000, killSignal: 'SIGKILL' }).trim(),
     seed: 'bank-v1', population: 12, concurrency: 3, mapping,
   }, null, 2));
   let app;
-  const started = performance.now();
   try {
     const dependency = start(process.execPath, ['statement-data.js'], 'dependency', { PORT: String(dependencyPort) });
     await ready(dependencyPort, dependency);

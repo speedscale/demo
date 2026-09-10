@@ -118,9 +118,10 @@ PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-proxymock
 Success prints a JSON object with `"success":true` and the artifact directory.
 `make test` should pass six tests. This command validates the selection
 foundation and banking/dependency fixture. Use `make bank-load-groups` with the
-S-13080 candidate for actual endpoint-group concurrency, rotating sessions and
-scheduled request/session arrivals with repeatable jitter, including deliberate
-delivery failures.
+S-13081 candidate for actual endpoint-group concurrency, rotating sessions and
+scheduled request/session arrivals with repeatable jitter, parent-rate shares,
+budgets and weighted persona groups. `make bank-load-composition` runs the focused
+composition matrix, including deliberate delivery failures.
 
 The harness chooses unused ports, records the real dependency, waits for the
 expected fixture count to reach disk, stops the real dependency, then runs all

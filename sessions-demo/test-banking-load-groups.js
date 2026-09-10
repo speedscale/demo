@@ -155,6 +155,9 @@ async function validateGroups({ base, driverOptions }) {
     stages: [{ duration, arrivals: { rate, ...(sessionized ? { requestDelay: { mode: 'FLAT', requestDelayFlat: '0.01s' } } : {}) } }],
   });
   const arrivalPlan = plan([arrival('statement-arrivals', '/statements', false, 30, 20), arrival('posting-arrivals', '/transactions', false, 5, 8)]);
+  const invalidSpacing = structuredClone(arrivalPlan);
+  invalidSpacing.loadGroups[0].arrivalPolicy.spacing = 'LOAD_ARRIVAL_SPACING_UNKNOWN';
+  await rejectBeforeTraffic('unknown-arrival-spacing', invalidSpacing, /arrival spacing/);
   const checkDelivery = (result, expected) => {
     assert.deepEqual(result.summary.groups.map(g => g.scheduled), expected);
     assert.deepEqual(result.summary.groups.map(g => g.started), expected);
@@ -197,6 +200,45 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(result.journal.requests.failed, 0);
     assert.equal(result.journal.sessions.active, 0);
   }
+
+  const jitter = config => {
+    const copy = structuredClone(config);
+    copy.loadGroups.forEach(g => { g.arrivalPolicy.spacing = 'LOAD_ARRIVAL_SPACING_JITTERED'; });
+    return copy;
+  };
+  const timing = result => result.summary.groups.map(g => {
+    assert.equal(g.arrivalSchedule.version, 'integrated-v1');
+    assert.equal(g.arrivalSchedule.spacing, 'LOAD_ARRIVAL_SPACING_JITTERED');
+    assert.equal(g.arrivalSchedule.firstStartOffsets.length, Math.min(g.scheduled, 16));
+    return g.arrivalSchedule.firstStartOffsets;
+  });
+  const jitterPlan = jitter(arrivalPlan);
+  const jitterFast = await replay('jitter-fast', requests, jitterPlan, true, { statementWorkMs: 1, postingWorkMs: 1 });
+  const jitterSlow = await replay('jitter-slow', requests, jitterPlan, true, { statementWorkMs: 75, postingWorkMs: 1 });
+  checkDelivery(jitterFast, [60, 10]); checkDelivery(jitterSlow, [60, 10]);
+  assert.deepEqual(timing(jitterFast), timing(jitterSlow), 'response speed must not alter seeded planned timing');
+  assert.ok(queuedPosting(jitterSlow.journal).length > 0, 'jittered posting still encounters real statement contention');
+  jitterPlan.loadSeed = '8';
+  const jitterChanged = await replay('jitter-changed-seed', requests, jitterPlan);
+  checkDelivery(jitterChanged, [60, 10]);
+  timing(jitterChanged).forEach((offsets, i) => assert.notDeepEqual(offsets, timing(jitterFast)[i]));
+
+  const jitterSessionsPlan = jitter(sessionArrivals);
+  jitterSessionsPlan.loadGroups.forEach(g => { g.population.reuse = 'LOAD_SESSION_REUSE_ROTATE'; });
+  const jitterSessions = await replay('jitter-sessions', sessions, jitterSessionsPlan);
+  checkDelivery(jitterSessions, [16, 8]); timing(jitterSessions);
+  assert.deepEqual(jitterSessions.summary.groups.map(g => Object.keys(g.sourceExecutions).length), [8, 4]);
+  assert.equal(jitterSessions.journal.sessions.completed, 24);
+
+  const jitterOverload = await replay('jitter-overload', requests,
+    jitter(plan([arrival('overloaded', '/statements', false, 40, 1, '0.5s')])), false, { statementWorkMs: 150 });
+  const dropped = jitterOverload.summary.groups[0];
+  timing(jitterOverload);
+  assert.ok(dropped.missedCapacity > 0);
+  assert.equal(dropped.scheduled, dropped.started + dropped.missed);
+  assert.equal(dropped.missed, (dropped.missedCapacity || 0) + (dropped.missedIdentity || 0) + (dropped.missedLate || 0) + (dropped.missedCancelled || 0));
+  assert.equal(dropped.failedRequests, 0);
+  assert.equal(dropped.requests, jitterOverload.journal.requests.completed);
   await control('reset', {});
 }
 

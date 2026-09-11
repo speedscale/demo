@@ -57,3 +57,7 @@ bank-load-goals:
 .PHONY: bank-load-identity
 bank-load-identity:
 	BANK_LOAD_CASES=identity node test-banking-load-groups.js
+
+.PHONY: bank-load-synthesis
+bank-load-synthesis:
+	BANK_LOAD_CASES=synthesis node test-banking-load-groups.js

@@ -8,7 +8,7 @@ configuration.
 
 ## Run the milestone
 
-Build the Speedscale `s-13079-load-identity-verification` branch, which includes the earlier
+Build the Speedscale `s-13079-session-field-synthesis` branch, which includes the earlier
 selection and artifact-preservation changes:
 
 ```sh
@@ -506,3 +506,62 @@ For manual testing, add `BANK_KEEP_RUNNING=1` to the focused command. Reset the
 bank as above, then replay `identity-rotation-plan.json` from `inbound-sessions`
 to a fresh output directory. Change its claim to `role` and expect a nonzero
 exit with `identity verification failed`, despite successful bank requests.
+
+
+## Supply synthesized session fields to existing transforms
+
+```sh
+PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-load-synthesis
+```
+
+The focused loop maps four recorded writer sources, split into two groups, onto
+four real prepared bank accounts. Each source runs twice with a fresh login,
+JWT and execution ID. A live account response supplies the ID used by subsequent
+transaction paths. The app verifies ownership and idempotency. Missing accounts
+fail login; a shared username fails the identity objective even when HTTP
+requests succeed; omitting account correlation fails real ownership checks.
+The statement dependency remains mocked by proxymock and the app remains real.
+
+Add fields under a session group's existing population policy, for example:
+
+```json
+{
+  "size": 2,
+  "reuse": "LOAD_SESSION_REUSE_ROTATE",
+  "identityFields": [
+    {"name": "bank_username", "pattern": "bank-bank-v1-{n}@example.com"}
+  ]
+}
+```
+
+This seeds `bank_username` in each execution's variable cache. An existing
+`http_req_body` → `json_path(username)` → `var_load(bank_username)` transform
+applies it to login. Defining a field does not itself rewrite traffic or provision
+an account. Use the existing credential/secret workflow for credentials; field
+patterns are saved as plain configuration. Enable `identityVerification` to
+assert distinct observed JWT actors; a generated string alone is not evidence.
+
+The placeholders reuse `sessionreplay`: `{n}` is the global zero-based slot index,
+`{ordinal}` is zero in this breakpoint, and `{session}` is the existing short
+source-ID digest. The digest is not a uniqueness guarantee. Active session groups
+consume consecutive slots in configuration order, so two populations of size two
+use 0/1 and 2/3. Disabled groups consume none. This matches the existing
+`session_index` variable and accepted JWT blueprint patterns. A source keeps its
+assignment through rotations and repeats. Reproducing the mapping requires the
+same saved plan, resolved seed and recording; changing order, population or seed
+can reassign sources. Generic compiler preview JSON shows slot indices but omits
+synthesized values; the product readiness UI is a separate remaining integration.
+
+Fields allow at most 32 entries. Names are ASCII identifiers up to 64 characters;
+patterns contain 1–1024 bytes and only the supported placeholders. Constants are
+allowed. Duplicate names, malformed placeholders and the reserved variables
+`session_index`, `session_ordinal`, `session_id`, `load_group_id` fail before
+traffic. Response transforms may overwrite a value during a journey; the next
+execution receives the original compiled assignment in a fresh cache. Populations
+larger than their eligible source count are still rejected.
+
+For manual testing, add `BANK_KEEP_RUNNING=1` to `make bank-load-synthesis`.
+Use the printed `manual.json` paths: this profile retains `inbound-synthesis`
+with the matching login/account transforms. After resetting the bank, replay
+`synthesis-rotation-plan.json` using that input and a fresh output directory.
+The original `inbound-sessions` keeps its original transforms for earlier cases.

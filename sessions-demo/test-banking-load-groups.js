@@ -106,7 +106,7 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(journal.requests.arrived, 0, `${name} must fail before traffic`);
   }
   const profile = process.env.BANK_LOAD_CASES || 'all';
-  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals or identity');
+  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity', 'synthesis'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals, identity or synthesis');
   write('load-group-profile.json', { profile });
   const arrival = (id, url, sessionized, rate, maxConcurrency, duration = '2s') => ({
     ...group(id, url, sessionized, 1), arrivalPolicy: { maxConcurrency, maxStartLag: '0.1s' },
@@ -352,6 +352,68 @@ async function validateGroups({ base, driverOptions }) {
     const ambiguous = structuredClone(requestsAtMultiple);
     ambiguous.loadGroups[0].stages[0].arrivals.rate = 10;
     await rejectBeforeTraffic('multiples-conflicting-rate', ambiguous, /cannot use absolute rate/);
+  }
+  if (profile === 'all' || profile === 'synthesis') {
+    const mapped = plan([arrival('writers-one', '/transactions', true, 2, 2), arrival('writers-two', '/transactions', true, 2, 2)]);
+    mapped.loadGroups.forEach(g => {
+      g.population.size = 2;
+      g.population.identityFields = [{ name: 'bank_username', pattern: 'bank-bank-v1-{n}@example.com' }];
+      g.identityVerification = {};
+    });
+    const input = path.join(artifacts, 'inbound-synthesis');
+    fs.cpSync(sessions, input, { recursive: true });
+    const metadata = path.join(input, '.metadata', 'snapshot.json');
+    const original = fs.readFileSync(metadata, 'utf8');
+    const prepared = JSON.parse(original);
+    prepared.tokenizerConfig.generator.push(
+      chain('/bank/login', { type: 'http_req_body' }, [{ type: 'json_path', config: { path: 'username' } }, { type: 'var_load', config: { name: 'bank_username' } }]),
+      { ...chain('/bank/account', { type: 'http_res_body' }, [{ type: 'json_path', config: { path: 'id' } }, { type: 'var_store', config: { name: 'bank_account' } }]),
+        filters: { filters: [{ include: true, operator: 'EQUAL', optUrl: '/bank/account' }] } },
+      chain('/bank/accounts/', { type: 'http_url', config: { index: '2' } }, [{ type: 'var_load', config: { name: 'bank_account' } }]),
+    );
+    const preparedJSON = JSON.stringify(prepared);
+    try {
+      fs.writeFileSync(metadata, preparedJSON);
+      for (const name of ['synthesis-rotation', 'synthesis-repeat']) {
+        const result = await replay(name, input, mapped);
+        checkDelivery(result, [4, 4]);
+        assert.deepEqual(result.summary.groups.map(g => g.identity.verified), [4, 4]);
+        assert.equal(result.journal.requests.completed, 48);
+        assert.equal(result.journal.sessions.completed, 8);
+        const starts = result.journal.events.filter(e => e.type === 'session-start');
+        assert.deepEqual([...new Set(starts.map(e => e.actor))].sort(), [0, 1, 2, 3].map(n => `bank-bank-v1-${n}@example.com`));
+        assert.equal(new Set(starts.map(e => e.executionId)).size, 8);
+        assert.equal(result.journal.events.filter(e => e.type === 'transaction').length, 4);
+        assert.ok(result.summary.groups.every(g => Object.values(g.identity.sources).every(source => source.verified === 2)));
+      }
+      const colliding = structuredClone(mapped);
+      colliding.loadGroups.forEach(g => { g.population.identityFields[0].pattern = 'bank-bank-v1-0@example.com'; });
+      const collision = await replay('synthesis-collision', input, colliding, false);
+      checkDelivery(collision, [4, 4]);
+      assert.equal(collision.journal.requests.failed, 0);
+      assert.equal(collision.journal.sessions.completed, 8);
+      assert.ok(collision.summary.groups.every(g => g.identity.verified === 0 && g.identity.collidingSources === 2));
+      const absent = structuredClone(mapped);
+      absent.loadGroups.forEach(g => { g.population.identityFields[0].pattern = 'unprovisioned-{n}@example.com'; });
+      const missing = await replay('synthesis-missing-account', input, absent, false);
+      checkDelivery(missing, [4, 4]);
+      assert.equal(missing.journal.sessions.started, 0);
+      assert.ok(missing.summary.groups.every(g => g.identity.authFailures > 0 && g.identity.verified === 0));
+      // Remove only account-path correlation. Auth remains real and succeeds,
+      // but recorded account IDs must fail ownership for remapped actors.
+      prepared.tokenizerConfig.generator.pop();
+      fs.writeFileSync(metadata, JSON.stringify(prepared));
+      const stale = await replay('synthesis-stale-account', input, mapped, false);
+      checkDelivery(stale, [4, 4]);
+      assert.ok(stale.journal.events.some(e => e.type === 'request-end' && e.status === 403));
+      assert.ok(stale.summary.groups.some(g => g.failedRequests > 0));
+    } finally { fs.writeFileSync(metadata, preparedJSON); }
+    const invalid = structuredClone(mapped);
+    invalid.loadGroups[0].population.identityFields[0].name = 'session_index';
+    await rejectBeforeTraffic('synthesis-reserved-variable', invalid, /reserved for runtime metadata/);
+    invalid.loadGroups[0].population.identityFields[0].name = 'bank_username';
+    invalid.loadGroups[0].population.identityFields[0].pattern = 'bank-{slot}@example.com';
+    await rejectBeforeTraffic('synthesis-unknown-placeholder', invalid, /unknown or malformed placeholder/);
   }
   if (profile === 'all' || profile === 'identity') {
     const audited = plan([arrival('readers', '/statements', true, 8, 3), arrival('writers', '/transactions', true, 4, 2)]);

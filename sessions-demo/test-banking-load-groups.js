@@ -106,7 +106,7 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(journal.requests.arrived, 0, `${name} must fail before traffic`);
   }
   const profile = process.env.BANK_LOAD_CASES || 'all';
-  assert.ok(['all', 'composition'].includes(profile), 'BANK_LOAD_CASES must be all or composition');
+  assert.ok(['all', 'composition', 'multiples'].includes(profile), 'BANK_LOAD_CASES must be all, composition or multiples');
   write('load-group-profile.json', { profile });
   const arrival = (id, url, sessionized, rate, maxConcurrency, duration = '2s') => ({
     ...group(id, url, sessionized, 1), arrivalPolicy: { maxConcurrency, maxStartLag: '0.1s' },
@@ -245,58 +245,114 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(dropped.requests, jitterOverload.journal.requests.completed);
   }
 
-  const sharedPlan = (sessionized, rate = 25, duration = '2s') => {
-    const config = plan([
-      arrival('readers', '/statements', sessionized, rate, 20, duration),
-      arrival('writers', '/transactions', sessionized, rate, 8, duration),
-    ]);
-    config.loadArrivalPools = [{ id: 'bank-mix', selection: config.loadGroups[0].selection,
-      stages: [{ duration, arrivals: { rate } }] }];
-    config.loadGroups.forEach((g, i) => {
-      delete g.stages;
-      g.arrivalShare = { poolId: 'bank-mix', basisPoints: i === 0 ? 8000 : 2000,
-        ...(sessionized ? { requestDelay: { mode: 'FLAT', requestDelayFlat: '0.01s' } } : {}) };
-    });
-    return config;
-  };
-  const shares = sharedPlan(false);
-  const sharedRequests = await replay('composition-requests', requests, shares, true, { statementWorkMs: 75, postingWorkMs: 1 });
-  checkDelivery(sharedRequests, [40, 10]);
-  assert.equal(sharedRequests.summary.pools[0].scheduled, 50);
-  assert.deepEqual(sharedRequests.summary.groups.map(g => g.allocation.allocated), [40, 10]);
-  assert.ok(sharedRequests.summary.groups.every(g => g.allocation.suppressed === 0));
+  if (profile !== 'multiples') {
+    const sharedPlan = (sessionized, rate = 25, duration = '2s') => {
+      const config = plan([
+        arrival('readers', '/statements', sessionized, rate, 20, duration),
+        arrival('writers', '/transactions', sessionized, rate, 8, duration),
+      ]);
+      config.loadArrivalPools = [{ id: 'bank-mix', selection: config.loadGroups[0].selection,
+        stages: [{ duration, arrivals: { rate } }] }];
+      config.loadGroups.forEach((g, i) => {
+        delete g.stages;
+        g.arrivalShare = { poolId: 'bank-mix', basisPoints: i === 0 ? 8000 : 2000,
+          ...(sessionized ? { requestDelay: { mode: 'FLAT', requestDelayFlat: '0.01s' } } : {}) };
+      });
+      return config;
+    };
+    const shares = sharedPlan(false);
+    const sharedRequests = await replay('composition-requests', requests, shares, true, { statementWorkMs: 75, postingWorkMs: 1 });
+    checkDelivery(sharedRequests, [40, 10]);
+    assert.equal(sharedRequests.summary.pools[0].scheduled, 50);
+    assert.deepEqual(sharedRequests.summary.groups.map(g => g.allocation.allocated), [40, 10]);
+    assert.ok(sharedRequests.summary.groups.every(g => g.allocation.suppressed === 0));
 
-  const budgeted = structuredClone(shares);
-  budgeted.loadGroups[0].startBudget = '3'; budgeted.loadGroups[1].startBudget = '4';
-  const budget = await replay('composition-budget', requests, budgeted);
-  checkDelivery(budget, [3, 4]);
-  assert.deepEqual(budget.summary.groups.map(g => g.allocation.suppressed), [37, 6]);
-  const standalone = plan([arrival('exact-requests', '/statements', false, 20, 4, '30s')]);
-  standalone.loadGroups[0].startBudget = '3';
-  checkDelivery(await replay('composition-standalone-budget', requests, standalone), [3]);
+    const budgeted = structuredClone(shares);
+    budgeted.loadGroups[0].startBudget = '3'; budgeted.loadGroups[1].startBudget = '4';
+    const budget = await replay('composition-budget', requests, budgeted);
+    checkDelivery(budget, [3, 4]);
+    assert.deepEqual(budget.summary.groups.map(g => g.allocation.suppressed), [37, 6]);
+    const standalone = plan([arrival('exact-requests', '/statements', false, 20, 4, '30s')]);
+    standalone.loadGroups[0].startBudget = '3';
+    checkDelivery(await replay('composition-standalone-budget', requests, standalone), [3]);
 
-  const weighted = await replay('composition-sessions', sessions, sharedPlan(true, 20));
-  checkDelivery(weighted, [32, 8]);
-  assert.equal(weighted.journal.sessions.started, 40);
-  assert.equal(weighted.journal.sessions.completed, 40);
-  assert.deepEqual(weighted.summary.groups.map(g => Object.keys(g.sourceExecutions).length), [8, 4]);
+    const weighted = await replay('composition-sessions', sessions, sharedPlan(true, 20));
+    checkDelivery(weighted, [32, 8]);
+    assert.equal(weighted.journal.sessions.started, 40);
+    assert.equal(weighted.journal.sessions.completed, 40);
+    assert.deepEqual(weighted.summary.groups.map(g => Object.keys(g.sourceExecutions).length), [8, 4]);
 
-  const saturated = sharedPlan(false, 40, '0.5s');
-  saturated.loadGroups[0].arrivalPolicy.maxConcurrency = 1;
-  const shortfall = await replay('composition-shortfall', requests, saturated, false, { statementWorkMs: 150 });
-  const [reader, writer] = shortfall.summary.groups;
-  assert.equal(reader.scheduled, 16); assert.ok(reader.missedCapacity > 0);
-  assert.equal(reader.scheduled, reader.started + reader.missed);
-  assert.equal(writer.scheduled, 4); assert.equal(writer.started, 4);
-  assert.equal(writer.missed || 0, 0, 'writer allocation must not absorb reader shortfall');
-  assert.equal(shortfall.journal.requests.failed, 0);
-  assert.equal(shortfall.journal.requests.completed, reader.requests + writer.requests);
+    const saturated = sharedPlan(false, 40, '0.5s');
+    saturated.loadGroups[0].arrivalPolicy.maxConcurrency = 1;
+    const shortfall = await replay('composition-shortfall', requests, saturated, false, { statementWorkMs: 150 });
+    const [reader, writer] = shortfall.summary.groups;
+    assert.equal(reader.scheduled, 16); assert.ok(reader.missedCapacity > 0);
+    assert.equal(reader.scheduled, reader.started + reader.missed);
+    assert.equal(writer.scheduled, 4); assert.equal(writer.started, 4);
+    assert.equal(writer.missed || 0, 0, 'writer allocation must not absorb reader shortfall');
+    assert.equal(shortfall.journal.requests.failed, 0);
+    assert.equal(shortfall.journal.requests.completed, reader.requests + writer.requests);
 
-  const badShares = sharedPlan(false);
-  badShares.loadGroups[0].arrivalShare.basisPoints = 7000;
-  await rejectBeforeTraffic('composition-invalid-shares', badShares, /shares must sum to 10000/);
-  standalone.loadGroups[0].startBudget = '1000';
-  await rejectBeforeTraffic('composition-impossible-budget', standalone, /budget exceeds available/);
+    const badShares = sharedPlan(false);
+    badShares.loadGroups[0].arrivalShare.basisPoints = 7000;
+    await rejectBeforeTraffic('composition-invalid-shares', badShares, /shares must sum to 10000/);
+    standalone.loadGroups[0].startBudget = '1000';
+    await rejectBeforeTraffic('composition-impossible-budget', standalone, /budget exceeds available/);
+  }
+  if (profile !== 'composition') {
+    // Enclose actual capture times in an explicit, persisted window. Power-of-two
+    // seconds keep exact fixture totals independent of floating-point rounding.
+    const baselineFor = input => {
+      const times = files(input).map(file => Date.parse(JSON.parse(fs.readFileSync(file)).ts));
+      assert.ok(times.length > 0 && times.every(Number.isFinite));
+      const start = Math.floor(Math.min(...times) / 1000) * 1000;
+      const seconds = 2 ** Math.ceil(Math.log2(Math.max(2, (Math.max(...times) - start + 1) / 1000)));
+      return { seconds, window: { start: new Date(start).toISOString(), end: new Date(start + seconds * 1000).toISOString() } };
+    };
+    const multiplePlan = (input, sessionized) => {
+      const { seconds, window } = baselineFor(input);
+      const config = plan([
+        arrival('statements', '/statements', sessionized, 0, 20, `${seconds}s`),
+        arrival('posting', '/transactions', sessionized, 0, 8, `${seconds}s`),
+      ]);
+      config.loadGroups.forEach((g, i) => {
+        g.recordedBaseline = window;
+        delete g.stages[0].arrivals.rate;
+        g.stages[0].arrivals.recordedMultiple = i === 0 ? 2 : 1;
+      });
+      return config;
+    };
+    const requestsAtMultiple = multiplePlan(requests, false);
+    const doubled = await replay('multiples-requests', requests, requestsAtMultiple);
+    checkDelivery(doubled, [24, 8]);
+    assert.deepEqual(doubled.summary.groups.map(g => g.recordedBaseline.starts), [12, 8]);
+    const slow = await replay('multiples-requests-slow', requests, requestsAtMultiple, true, { statementWorkMs: 75 });
+    checkDelivery(slow, [24, 8]);
+    assert.deepEqual(slow.summary.groups.map(g => g.arrivalSchedule), doubled.summary.groups.map(g => g.arrivalSchedule));
+    for (const g of doubled.summary.groups) {
+      const expected = g.id === 'statements' ? 2 : 1;
+      assert.equal(g.recordedBaseline.stages[0].multiple, expected);
+      assert.equal(g.recordedBaseline.stages[0].ratePerSecond, g.recordedBaseline.ratePerSecond * expected);
+      assert.equal(g.recordedBaseline.unit, 'requests');
+    }
+    const journeys = await replay('multiples-sessions', sessions, multiplePlan(sessions, true));
+    checkDelivery(journeys, [16, 4]);
+    assert.deepEqual(journeys.summary.groups.map(g => g.recordedBaseline.starts), [8, 4]);
+    assert.ok(journeys.summary.groups.every(g => g.recordedBaseline.unit === 'sessions'));
+    assert.equal(journeys.journal.sessions.completed, 20);
+    assert.deepEqual(journeys.summary.groups.map(g => Object.keys(g.sourceExecutions).length), [8, 4]);
+    const budgeted = structuredClone(requestsAtMultiple);
+    budgeted.loadGroups[0].startBudget = '3'; budgeted.loadGroups[1].startBudget = '2';
+    checkDelivery(await replay('multiples-budget', requests, budgeted), [3, 2]);
+    budgeted.loadGroups[0].startBudget = '1000';
+    await rejectBeforeTraffic('multiples-impossible-budget', budgeted, /budget exceeds available/);
+    const empty = structuredClone(requestsAtMultiple);
+    empty.loadGroups.forEach(g => { g.recordedBaseline = { start: '2000-01-01T00:00:00Z', end: '2000-01-01T00:00:02Z' }; });
+    await rejectBeforeTraffic('multiples-empty-baseline', empty, /baseline has no starts/);
+    const ambiguous = structuredClone(requestsAtMultiple);
+    ambiguous.loadGroups[0].stages[0].arrivals.rate = 10;
+    await rejectBeforeTraffic('multiples-conflicting-rate', ambiguous, /cannot use absolute rate/);
+  }
   await control('reset', {});
 }
 

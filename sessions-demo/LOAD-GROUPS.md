@@ -277,6 +277,66 @@ or budgets in this breakpoint: population exhaustion conflicts with the prescrib
 mix/count. Use independent once-only groups when every selected actor must run
 exactly once. Generic per-source weights and cloned identities remain later work.
 
+## Recorded arrival multiples
+
+Run `PROXYMOCK_BIN=/path/to/candidate/proxymock make bank-load-multiples` for the
+focused real capture/mock/replay cases. `bank-load-groups` includes these cases
+with all previous assertions. The harness saves the baseline windows in each plan.
+
+For a group, specify an explicit recording window and a multiplier in every
+arrival stage:
+
+```json
+{
+  "recordedBaseline": {
+    "start": "2026-09-10T12:00:00Z",
+    "end": "2026-09-10T12:01:00Z"
+  },
+  "stages": [
+    {"duration": "30s", "rampFor": "10s", "arrivals": {"recordedMultiple": 2}},
+    {"duration": "5s", "arrivals": {"recordedMultiple": 0}}
+  ]
+}
+```
+
+These fields extend a normal scoped arrival group with explicit `selection` and
+`arrivalPolicy`. Replace the example timestamps with a window from your recording.
+The start is inclusive; the end is exclusive. With 60 selected statement requests
+in that minute, the baseline is one request/second; 2× targets two/second. The
+10-second ramp starts at zero and reaches that target, followed by 20 seconds at
+the target: 50 planned starts, then a five-second pause. This is a rate multiple,
+not two concurrent copies of the recording. Exact planned starts still use the
+arrival scheduler's floor of integrated offered work.
+
+For `LOAD_SELECTION_SESSIONS`, count each selected session's earliest request
+once, even when later requests fall outside the window. The recorded banking
+fixture contains 12 statement requests and eight posting requests, but eight
+reader journeys and four writer journeys. Across the same baseline-length replay,
+2× statements/1× posting yields 24/8 request starts; 2× readers/1× writers yields
+16/4 complete journeys. Different journey lengths and deliberate repeated client
+requests explain the different counts. Extra HTTP attempts caused by replay-time
+redirects/retries are not new primary scheduled starts.
+
+Ownership and the seeded population limit are applied before measurement. Changing
+a filter, group order, selected session population or recording can change the
+baseline. The full explicit window is the denominator, including quiet intervals.
+It measures the rate; it does not filter replay sources or cut up selected
+journeys. Session rotation/sticky/once behavior remains the group's population
+policy. Application latency never changes the planned rate.
+
+`load-groups.json` includes `recordedBaseline`: window boundaries and duration,
+`unit`, measured `starts`, `ratePerSecond`, and each stage's `multiple` and derived
+`ratePerSecond`. Ramps, start offsets, seeded jitter, concurrency/identity limits,
+start budgets and missed-start failures retain the existing arrival semantics.
+An impossible budget is rejected after compiling the recording and before traffic.
+
+Missing or invalid timestamps, an empty baseline, and derived rates beyond the
+scheduler's limits fail setup. All stages in this mode require an explicit
+`recordedMultiple`; use zero for a pause. Do not also set `rate` or `timeUnit`.
+Mixed absolute/multiple stages and recorded multiples inside shared pools are
+rejected in this breakpoint. Standalone multiple groups can coexist with absolute
+arrival groups and pools. The JSON plan remains unchanged by compilation.
+
 ## Saved evidence and remaining release work
 
 Each replay directory contains `load-groups.json`: resolved seed, population,
@@ -313,8 +373,7 @@ elapsed time now includes that setup step; older timings excluded it.
 
 The harness currently measures elapsed local validation time; it does not yet
 compare an equivalent end-to-end baseline or claim the 50% cycle-time goal.
-Grouped adaptive TPS, recorded multiples with baseline windows, generic per-source
-weights, identity cloning,
+Grouped adaptive TPS, generic per-source weights, identity cloning,
 scoped latency/delivery goals, UI editing, distributed Kubernetes validation,
 Kraken and final customer documentation/blog remain in the full release plan.
 Grouped non-HTTP protocols and TPS are rejected in this breakpoint.

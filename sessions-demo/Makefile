@@ -45,3 +45,7 @@ bank-load-groups:
 .PHONY: bank-load-composition
 bank-load-composition:
 	BANK_LOAD_CASES=composition node test-banking-load-groups.js
+
+.PHONY: bank-load-multiples
+bank-load-multiples:
+	BANK_LOAD_CASES=multiples node test-banking-load-groups.js

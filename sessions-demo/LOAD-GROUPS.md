@@ -8,7 +8,7 @@ configuration.
 
 ## Run the milestone
 
-Build the Speedscale `s-13082-scoped-load-goals` branch, which includes the earlier
+Build the Speedscale `s-13079-load-identity-verification` branch, which includes the earlier
 selection and artifact-preservation changes:
 
 ```sh
@@ -19,7 +19,6 @@ go build -o /tmp/proxymock-load-plans ./speedctl/cmd/proxymock
 Then, from this demo repository's `sessions-demo` directory:
 
 ```sh
-make test
 PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-load-groups
 ```
 
@@ -453,3 +452,57 @@ Grouped adaptive TPS, generic per-source weights, identity cloning,
 delivery/error tolerance overrides, distributed goal/report integration, UI editing, distributed Kubernetes validation,
 Kraken and final customer documentation/blog remain in the full release plan.
 Grouped non-HTTP protocols and TPS are rejected in this breakpoint.
+
+
+## Verify session identities
+
+Run the focused real-app matrix:
+
+```sh
+PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-load-identity
+```
+
+This runs 24 journeys across 12 bank actors, using real login, fresh JWTs and
+execution IDs, account ownership and transaction handling. It verifies each
+actor repeats twice. Negative cases select the shared `role` claim, an absent
+claim and the changing per-login `jti` claim: all 24 journeys still complete,
+but the identity objective fails. A separate corrupted-credential case verifies
+real authentication failures. Expected failures are required for the suite to
+print `success:true`; they do not mean the suite itself failed.
+
+Inside a session group, add `"identityVerification": {"jwtClaim": "sub"}`.
+An empty object defaults to `sub`; omitting the object disables the check.
+The claim must be a JWT string. Anonymous login is allowed, but each complete
+execution must present an unambiguous bearer identity on at least one successful
+HTTP response and retain that identity within and across repeats of its source.
+Refreshing a JWT is fine when its identity claim stays the same. Missing,
+malformed or ambiguous Authorization identity evidence fails the objective.
+Cookie-only and Basic-auth applications need a different verification mechanism;
+this option does not infer identity from a source label.
+
+Distinct source actors in enabled groups using the same claim share one identity
+namespace. Reusing the same identity across those sources fails both owners,
+even when their executions do not overlap. Different claim names are separate
+namespaces. Identity checks apply to the request associated with the final HTTP
+response, including client-added headers and followed redirects; intermediate
+redirect hops are not separately verified. Transport failures cannot verify.
+This checks presented identity evidence, not JWT signatures or whether an app
+actually enforces ownership. The bank's journal and real auth provide those
+independent checks in this demo. It neither provisions accounts nor enables
+population cloning.
+
+`load-groups.json` adds an `identity` object to enabled groups. `status` is
+`PASS` only if at least one execution ran and all executions verified.
+`executions`, `verified`, `missingIdentity`, `changedIdentity` and `incomplete`
+count executions; `authFailures` and `failedRequests` count HTTP attempts.
+Failure categories may overlap. `sources` preserves per-source counts and
+collision flags; `collidingSources` counts affected sources. Collisions remove
+all affected sources' executions from `verified`. Up to 16 failure examples
+identify group, source, execution and reasons. No claim values, tokens or internal
+fingerprints are added to this report; existing source IDs remain visible.
+An identity failure does not erase delivery counts or stop admission early.
+
+For manual testing, add `BANK_KEEP_RUNNING=1` to the focused command. Reset the
+bank as above, then replay `identity-rotation-plan.json` from `inbound-sessions`
+to a fresh output directory. Change its claim to `role` and expect a nonzero
+exit with `identity verification failed`, despite successful bank requests.

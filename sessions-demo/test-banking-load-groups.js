@@ -106,7 +106,7 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(journal.requests.arrived, 0, `${name} must fail before traffic`);
   }
   const profile = process.env.BANK_LOAD_CASES || 'all';
-  assert.ok(['all', 'composition', 'multiples', 'goals'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples or goals');
+  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals or identity');
   write('load-group-profile.json', { profile });
   const arrival = (id, url, sessionized, rate, maxConcurrency, duration = '2s') => ({
     ...group(id, url, sessionized, 1), arrivalPolicy: { maxConcurrency, maxStartLag: '0.1s' },
@@ -352,6 +352,52 @@ async function validateGroups({ base, driverOptions }) {
     const ambiguous = structuredClone(requestsAtMultiple);
     ambiguous.loadGroups[0].stages[0].arrivals.rate = 10;
     await rejectBeforeTraffic('multiples-conflicting-rate', ambiguous, /cannot use absolute rate/);
+  }
+  if (profile === 'all' || profile === 'identity') {
+    const audited = plan([arrival('readers', '/statements', true, 8, 3), arrival('writers', '/transactions', true, 4, 2)]);
+    audited.loadGroups.forEach(g => { g.identityVerification = {}; });
+    const success = await replay('identity-rotation', sessions, audited);
+    checkDelivery(success, [16, 8]);
+    assert.deepEqual(success.summary.groups.map(g => g.identity.verified), [16, 8]);
+    assert.ok(success.summary.groups.every(g => g.identity.status === 'PASS'));
+    assert.equal(success.journal.sessions.completed, 24);
+    const starts = success.journal.events.filter(e => e.type === 'session-start');
+    assert.equal(new Set(starts.map(e => e.actor)).size, 12);
+    assert.equal(new Set(starts.map(e => e.executionId)).size, 24);
+    assert.ok(success.summary.groups.every(g => Object.values(g.identity.sources).every(s => s.verified === 2 && !s.collision)));
+    // These claims come from real app-issued JWTs. Changing the verification
+    // claim makes deliberately invalid uniqueness goals without bypassing auth.
+    for (const [claim, name] of [['role', 'collision'], ['not_a_claim', 'missing'], ['jti', 'changing']]) {
+      const config = structuredClone(audited);
+      config.loadGroups.forEach(g => { g.identityVerification.jwtClaim = claim; });
+      const failed = await replay(`identity-${name}`, sessions, config, false);
+      checkDelivery(failed, [16, 8]);
+      assert.equal(failed.journal.requests.failed, 0);
+      assert.equal(failed.journal.sessions.completed, 24);
+      assert.match(failed.summary.error, /identity verification failed/);
+      for (const g of failed.summary.groups) {
+        assert.equal(g.identity.status, 'FAIL');
+        assert.ok(g.identity.failures.length <= 16);
+        if (name === 'collision') { assert.equal(g.identity.collidingSources, g.population); assert.equal(g.identity.verified, 0); }
+        if (name === 'missing') assert.equal(g.identity.missingIdentity, g.started);
+        if (name === 'changing') { assert.equal(g.identity.changedIdentity, g.started - g.population); assert.equal(g.identity.verified, g.population); }
+      }
+    }
+    const metadata = path.join(sessions, '.metadata', 'snapshot.json');
+    const original = fs.readFileSync(metadata, 'utf8');
+    try {
+      const corrupted = JSON.parse(original);
+      corrupted.tokenizerConfig.generator.push(...['/bank/account', '/bank/logout'].map(url =>
+        chain(url, { type: 'http_req_header', config: { name: 'Authorization' } }, [{ type: 'constant', config: { new: 'Bearer invalid' } }])));
+      fs.writeFileSync(metadata, JSON.stringify(corrupted));
+      const rejected = await replay('identity-auth-failure', sessions, audited, false);
+      assert.ok(rejected.journal.requests.failed > 0);
+      assert.equal(rejected.journal.sessions.completed, 0);
+      assert.ok(rejected.summary.groups.every(g => g.identity.status === 'FAIL' && g.identity.authFailures > 0 && g.identity.verified === 0));
+    } finally { fs.writeFileSync(metadata, original); }
+    const invalid = plan([arrival('requests', '/statements', false, 1, 1)]);
+    invalid.loadGroups[0].identityVerification = {};
+    await rejectBeforeTraffic('identity-invalid-request-mode', invalid, /identity verification requires session selection/);
   }
   if (profile === 'all' || profile === 'goals') {
     const goal = (id, url, value, window = {}) => ({ id, scope: scope(url), minSamples: '1',

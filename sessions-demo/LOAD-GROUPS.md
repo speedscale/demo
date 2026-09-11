@@ -8,8 +8,8 @@ configuration.
 
 ## Run the milestone
 
-Build the Speedscale `s-13077-group-worker-reservations` branch, which includes the earlier
-selection and artifact-preservation changes:
+Build the Speedscale `s-13076-http-capture-timing` branch, which includes worker
+reservations and the earlier selection and artifact-preservation changes:
 
 ```sh
 # In the Speedscale repository:
@@ -693,3 +693,13 @@ idle-sleep inhibitor does not prevent every kind of system sleep. Preserve a
 failed run's logs and journal rather than widening timing thresholds or silently
 retrying it. The full matrix for this worker-reservation candidate still needs
 verification on an awake host; its focused loop and Go checks have passed.
+
+
+If `workers-session-budgets` fails with an account 401 before its login, inspect
+that actor's captured timestamps in `inbound-sessions`. Older candidates could
+timestamp an account request before login because separate HTTP decoders ran out
+of order. [Engine !6927](https://gitlab.com/speedscale/speedscale/-/merge_requests/6927)
+uses captured byte times to preserve request order. Rebuild from the branch above
+and rerun `make bank-load-workers`; the harness records fresh input automatically.
+Existing misordered recordings must be recorded again. This capture defect is
+separate from missed deadlines caused by host sleep.

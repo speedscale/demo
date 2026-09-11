@@ -65,7 +65,7 @@ async function validateGroups({ base, driverOptions }) {
 
   // Grouped request execution is also a useful first check of capture/compile/
   // runtime/report wiring before session correlation is configured below.
-  async function replay(name, input, config, expectedSuccess = true, reset = {}) {
+  async function replay(name, input, config, expectedSuccess = true, reset = {}, idleGroups = []) {
     await control('reset', reset);
     const configPath = path.join(artifacts, `${name}-plan.json`);
     write(`${name}-plan.json`, config);
@@ -86,7 +86,7 @@ async function validateGroups({ base, driverOptions }) {
       assert.equal(journal.requests.arrived, journal.requests.completed);
       assert.equal(journal.sessions.active, 0);
       assert.equal(summary.groups.reduce((n, g) => n + g.requests, 0), journal.requests.completed);
-      assert.ok(summary.groups.every(g => g.started > 0 && g.failed === 0 && g.started === g.completed));
+      assert.ok(summary.groups.every(g => (g.started > 0 || idleGroups.includes(g.id)) && g.failed === 0 && g.started === g.completed));
     }
     return { summary, journal };
   }
@@ -106,7 +106,7 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(journal.requests.arrived, 0, `${name} must fail before traffic`);
   }
   const profile = process.env.BANK_LOAD_CASES || 'all';
-  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity', 'synthesis', 'clones'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals, identity, synthesis or clones');
+  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity', 'synthesis', 'clones', 'workers'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals, identity, synthesis, clones or workers');
   write('load-group-profile.json', { profile });
   const arrival = (id, url, sessionized, rate, maxConcurrency, duration = '2s') => ({
     ...group(id, url, sessionized, 1), arrivalPolicy: { maxConcurrency, maxStartLag: '0.1s' },
@@ -117,6 +117,49 @@ async function validateGroups({ base, driverOptions }) {
     assert.deepEqual(result.summary.groups.map(g => g.started), expected);
     assert.ok(result.summary.groups.every(g => (g.missed || 0) === 0));
   };
+  if (profile === 'all' || profile === 'workers') {
+    const mixed = plan([group('statement-copies', '/statements', false, 2), arrival('posting-probe', '/transactions', false, 5, 1, '1s')]);
+    mixed.loadGroups[0].stages = [stage(false, 2, '0.1s')];
+    mixed.loadGroups[1].startAfter = '0.2s';
+    mixed.maxVusers = 3;
+    const insufficient = structuredClone(mixed);
+    insufficient.maxVusers = 2;
+    await rejectBeforeTraffic('workers-mixed-overbooked', insufficient, /worker reservation.*capacity/);
+    const competing = plan([arrival('statements', '/statements', false, 4, 2), arrival('posting', '/transactions', false, 4, 2)]);
+    competing.maxVusers = 3;
+    competing.loadGroups[1].startAfter = '3s';
+    await rejectBeforeTraffic('workers-arrivals-overbooked', competing, /worker reservation.*capacity/);
+    for (const reversed of [false, true]) {
+      const config = structuredClone(mixed);
+      if (reversed) config.loadGroups.reverse();
+      const result = await replay(reversed ? 'workers-mixed-reversed' : 'workers-mixed', requests, config, true,
+        { isolated: true, statementWorkMs: 100, postingWorkMs: 1 });
+      assert.deepEqual(result.summary.workerCapacity, { limit: 3, reserved: 3, groups: { 'statement-copies': 2, 'posting-probe': 1 } });
+      const posting = result.summary.groups.find(g => g.id === 'posting-probe');
+      assert.equal(posting.scheduled, 5); assert.equal(posting.started, 5); assert.equal(posting.missed || 0, 0);
+      const statements = result.summary.groups.find(g => g.id === 'statement-copies');
+      assert.equal(statements.started, 2); assert.equal(statements.completed, 2);
+      const postStarts = result.journal.events.filter(e => e.type === 'request-start' && e.path.endsWith('/transactions'));
+      const statementEnds = result.journal.events.filter(e => e.type === 'request-end' && e.path.endsWith('/statements'));
+      assert.equal(postStarts.length, 5);
+      assert.ok(postStarts.at(-1).sequence < statementEnds.at(-1).sequence, 'posting must progress while statement copies drain');
+    }
+    const budgeted = plan([arrival('readers', '/statements', true, 4, 2, '10s'), arrival('writers', '/transactions', true, 4, 1, '10s')]);
+    budgeted.maxVusers = 3;
+    budgeted.loadGroups[0].startBudget = '3'; budgeted.loadGroups[1].startBudget = '2';
+    const sessionsResult = await replay('workers-session-budgets', sessions, budgeted, true, { isolated: true, statementWorkMs: 1, postingWorkMs: 1 });
+    checkDelivery(sessionsResult, [3, 2]);
+    assert.deepEqual(sessionsResult.summary.workerCapacity, { limit: 3, reserved: 3, groups: { readers: 2, writers: 1 } });
+    assert.equal(sessionsResult.journal.sessions.completed, 5);
+    const zero = group('paused', '/never-selected', false, 0);
+    const disabled = group('disabled', '/statements', false, 1000); disabled.disabled = true;
+    const lean = plan([arrival('posting', '/transactions', false, 2, 1, '1s'), zero, disabled]);
+    lean.maxVusers = 1;
+    const leanResult = await replay('workers-zero-disabled', requests, lean, true, {}, ['paused']);
+    assert.deepEqual(leanResult.summary.workerCapacity, { limit: 1, reserved: 1, groups: { posting: 1, paused: 0 } });
+    assert.equal(leanResult.summary.groups.find(g => g.id === 'posting').started, 2);
+    assert.equal(leanResult.summary.groups.find(g => g.id === 'paused').started, 0);
+  }
   if (profile === 'all') {
     await rejectBeforeTraffic('no-data', plan([group('empty', '/not-recorded', false, 1)]), /positive load has no eligible data/);
     const tps = group('tps', '/statements', false, 1);

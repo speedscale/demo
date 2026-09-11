@@ -65,3 +65,7 @@ bank-load-synthesis:
 .PHONY: bank-load-clones
 bank-load-clones:
 	BANK_LOAD_CASES=clones node test-banking-load-groups.js
+
+.PHONY: bank-load-workers
+bank-load-workers:
+	BANK_LOAD_CASES=workers node test-banking-load-groups.js

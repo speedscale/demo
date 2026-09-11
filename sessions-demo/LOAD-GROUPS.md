@@ -8,7 +8,7 @@ configuration.
 
 ## Run the milestone
 
-Build the Speedscale `s-13079-session-cloning` branch, which includes the earlier
+Build the Speedscale `s-13077-group-worker-reservations` branch, which includes the earlier
 selection and artifact-preservation changes:
 
 ```sh
@@ -627,3 +627,60 @@ also runs these cases using `inbound-synthesis`.
 
 Credential references, readiness UI, Kubernetes/Kraken parity and remaining load
 modes are still part of the full customer release plan.
+
+
+## Reserve workers for independent workloads
+
+```sh
+PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-load-workers
+```
+
+The focused loop verifies that statement work cannot consume the generator
+workers reserved for a posting probe. Two statement copies start in a short
+window and continue draining while five scheduled posting requests run. The
+bank uses isolated resource pools for this check so it measures generator
+capacity independently of app contention. Reversing group order preserves the
+posting result. Existing shared-pool tests still measure real app contention.
+
+Every enabled group reserves its peak worker requirement for the entire run:
+
+| Group strategy | Reserved workers |
+| --- | --- |
+| Request copies or concurrent sessions | Maximum configured concurrency across stages |
+| Request or session arrivals | `arrivalPolicy.maxConcurrency`, when starts are scheduled |
+| Disabled or all-zero workload | Zero |
+
+The sum must fit the generator's existing `maxVusers` limit. An oversized sum
+fails before readiness or workload requests, including when each group fits
+individually. Reservations remain in place during offsets, pauses and drain;
+requests from an earlier window may still be active when the next group starts.
+Finite budgets do not lend their reservation to other groups. Previously accepted
+plans that relied on sharing an undersized pool across separate windows must
+increase `maxVusers` to fit the summed peaks. No workers are launched for a paused
+or disabled group simply because capacity is reserved.
+
+For example, two statement copies plus a posting arrival group capped at one
+concurrent request require `maxVusers: 3`. A limit of two is rejected. The
+`load-groups.json` report records the decision:
+
+```json
+{
+  "workerCapacity": {
+    "limit": 3,
+    "reserved": 3,
+    "groups": {"statement-copies": 2, "posting-probe": 1}
+  }
+}
+```
+
+A group can still miss arrivals when its own capacity, available identities or
+start-lag allowance is insufficient. Those misses continue to fail by default.
+The focused loop also checks session budgets at exact capacity, zero/disabled
+groups, and oversubscribed arrival groups with separate start offsets.
+
+Add `BANK_KEEP_RUNNING=1` to keep the bank and mock available. `manual.json`
+points to `inbound-requests` and `workers-mixed-plan.json`; reset the bank before
+replaying into a fresh output directory. Lower `maxVusers` from three to two to
+observe rejection before any bank workload request. The full `bank-load-groups`
+matrix includes these cases. This remains an internal milestone; adaptive TPS
+and Kubernetes/Kraken integration are still pending.

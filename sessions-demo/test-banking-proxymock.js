@@ -147,7 +147,7 @@ async function main({ validateGroups } = {}) {
     let manualInterrupted = false;
     if (validateGroups && process.env.BANK_KEEP_RUNNING === '1') {
       const manual = { base, artifacts, binary, controlToken: driverOptions.controlToken,
-        recording: path.join(artifacts, process.env.BANK_LOAD_CASES === 'synthesis' ? 'inbound-synthesis' : 'inbound-sessions'), plan: path.join(artifacts, `${({ composition: 'composition-sessions', multiples: 'multiples-sessions', goals: 'goals-session-endpoint', identity: 'identity-rotation', synthesis: 'synthesis-rotation' })[process.env.BANK_LOAD_CASES] || 'sessions-rotate'}-plan.json`) };
+        recording: path.join(artifacts, ({ synthesis: 'inbound-synthesis', clones: 'inbound-clones' })[process.env.BANK_LOAD_CASES] || 'inbound-sessions'), plan: path.join(artifacts, `${({ composition: 'composition-sessions', multiples: 'multiples-sessions', goals: 'goals-session-endpoint', identity: 'identity-rotation', synthesis: 'synthesis-rotation', clones: 'clones-once' })[process.env.BANK_LOAD_CASES] || 'sessions-rotate'}-plan.json`) };
       fs.writeFileSync(path.join(artifacts, 'manual.json'), JSON.stringify(manual, null, 2));
       console.log(JSON.stringify({ success: true, manual: true, ...manual }));
       console.log('Validation passed. Bank and dependency mock remain running; press Ctrl+C to stop both.');

@@ -8,7 +8,7 @@ configuration.
 
 ## Run the milestone
 
-Build the Speedscale `s-13079-session-field-synthesis` branch, which includes the earlier
+Build the Speedscale `s-13079-session-cloning` branch, which includes the earlier
 selection and artifact-preservation changes:
 
 ```sh
@@ -22,7 +22,7 @@ Then, from this demo repository's `sessions-demo` directory:
 PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-load-groups
 ```
 
-Expect `"success":true` and an artifact directory after roughly two to three minutes on a
+Expect `"success":true` and an artifact directory after roughly three to four minutes on a
 warm local build. A failed check exits nonzero and retains logs and evidence.
 The harness stops its app, recorder and mock on completion. It records the real
 statement dependency, stops it, then starts proxymock with `--no-passthrough`.
@@ -480,25 +480,27 @@ malformed or ambiguous Authorization identity evidence fails the objective.
 Cookie-only and Basic-auth applications need a different verification mechanism;
 this option does not infer identity from a source label.
 
-Distinct source actors in enabled groups using the same claim share one identity
-namespace. Reusing the same identity across those sources fails both owners,
+Distinct logical actor slots in enabled groups using the same claim share one identity
+namespace. Reusing the same identity across those slots fails both owners,
 even when their executions do not overlap. Different claim names are separate
 namespaces. Identity checks apply to the request associated with the final HTTP
 response, including client-added headers and followed redirects; intermediate
 redirect hops are not separately verified. Transport failures cannot verify.
 This checks presented identity evidence, not JWT signatures or whether an app
 actually enforces ownership. The bank's journal and real auth provide those
-independent checks in this demo. It neither provisions accounts nor enables
-population cloning.
+independent checks in this demo. It does not provision accounts. Cloning additionally requires the explicit mapping
+contract below.
 
 `load-groups.json` adds an `identity` object to enabled groups. `status` is
 `PASS` only if at least one execution ran and all executions verified.
-`executions`, `verified`, `missingIdentity`, `changedIdentity` and `incomplete`
+`executions`, `verified`, `missingIdentity`, `mismatchedIdentity`, `changedIdentity` and `incomplete`
 count executions; `authFailures` and `failedRequests` count HTTP attempts.
-Failure categories may overlap. `sources` preserves per-source counts and
-collision flags; `collidingSources` counts affected sources. Collisions remove
-all affected sources' executions from `verified`. Up to 16 failure examples
-identify group, source, execution and reasons. No claim values, tokens or internal
+Failure categories may overlap. `slots` reports each logical actor by global slot
+index, with source ID, clone ordinal and counts. `sources` aggregates by original
+source. `collidingSlots` and `collidingSources` count affected slots and sources.
+Collisions remove affected slots' executions from `verified`; other clones
+retain their evidence. Up to 16 failure examples identify group, source, slot,
+execution and reasons. No claim values, tokens or internal
 fingerprints are added to this report; existing source IDs remain visible.
 An identity failure does not erase delivery counts or stop admission early.
 
@@ -542,11 +544,11 @@ patterns are saved as plain configuration. Enable `identityVerification` to
 assert distinct observed JWT actors; a generated string alone is not evidence.
 
 The placeholders reuse `sessionreplay`: `{n}` is the global zero-based slot index,
-`{ordinal}` is zero in this breakpoint, and `{session}` is the existing short
+`{ordinal}` is zero for originals and increases for each clone round, and `{session}` is the existing short
 source-ID digest. The digest is not a uniqueness guarantee. Active session groups
 consume consecutive slots in configuration order, so two populations of size two
 use 0/1 and 2/3. Disabled groups consume none. This matches the existing
-`session_index` variable and accepted JWT blueprint patterns. A source keeps its
+`session_index` variable and accepted JWT blueprint patterns. Each logical slot keeps its
 assignment through rotations and repeats. Reproducing the mapping requires the
 same saved plan, resolved seed and recording; changing order, population or seed
 can reassign sources. Generic compiler preview JSON shows slot indices but omits
@@ -558,10 +560,70 @@ allowed. Duplicate names, malformed placeholders and the reserved variables
 `session_index`, `session_ordinal`, `session_id`, `load_group_id` fail before
 traffic. Response transforms may overwrite a value during a journey; the next
 execution receives the original compiled assignment in a fresh cache. Populations
-larger than their eligible source count are still rejected.
+larger than their eligible source count require explicit cloning and verification
+as described below.
 
 For manual testing, add `BANK_KEEP_RUNNING=1` to `make bank-load-synthesis`.
 Use the printed `manual.json` paths: this profile retains `inbound-synthesis`
 with the matching login/account transforms. After resetting the bank, replay
 `synthesis-rotation-plan.json` using that input and a fresh output directory.
 The original `inbound-sessions` keeps its original transforms for earlier cases.
+
+
+## Clone recorded journeys into a larger actor population
+
+```sh
+PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-load-clones
+```
+
+This loop replays four recorded writer journeys as twelve distinct real bank
+accounts. Once completes twelve journeys with six concurrent actors. Rotation
+runs twenty-four fresh logins across all twelve actors; repeating the saved
+plan retains the mapping. Each clone affects its own account and repeated
+transactions remain idempotent.
+
+Configure a session group with this population and verification policy:
+
+```json
+{
+  "population": {
+    "size": 12,
+    "allowClones": true,
+    "reuse": "LOAD_SESSION_REUSE_ONCE",
+    "identityFields": [
+      {"name": "bank_username", "pattern": "bank-bank-v1-{n}@example.com"}
+    ]
+  },
+  "identityVerification": {"jwtClaim": "sub", "expectedField": "bank_username"}
+}
+```
+
+`allowClones` requires an explicit positive size and `expectedField` naming a
+configured field. Clone-enabled populations together may contain at most 10,000
+slots. Empty or duplicate expanded identities in the same JWT claim namespace
+fail compilation before traffic. Each live bearer claim must match its slot's
+expected value; unused or incorrect mappings fail even when every HTTP request
+succeeds. Identity reports exclude tokens, expected values and fingerprints.
+Source IDs remain visible.
+
+Accounts and credentials must already be valid. Existing request transforms
+apply mapped logins; response transforms correlate fresh JWTs, execution IDs
+and account paths. The fixture prepares all twelve bank accounts; synthesis
+does not create them. Negative controls cover missing accounts, incorrect claim
+mappings, duplicate identities, missing verification and stale account paths.
+
+`session_id` remains the original recorded source. `session_index` identifies
+the logical actor slot; `session_ordinal` identifies its clone round. Leases,
+variables and verification operate per slot. Once consumes each slot once;
+rotation revisits it with fresh execution state. Recorded baseline rates count
+each selected original journey once, regardless of clone count.
+
+Add `BANK_KEEP_RUNNING=1` for manual testing. This profile retains `inbound-clones`
+and `clones-once-plan.json`; exact paths appear in `manual.json`. Reset the bank
+before replaying into a new output directory. Change the username pattern to
+an unprovisioned account and expect login failure, or change the expected mapping
+to observe identity failure despite successful HTTP. Full `bank-load-groups`
+also runs these cases using `inbound-synthesis`.
+
+Credential references, readiness UI, Kubernetes/Kraken parity and remaining load
+modes are still part of the full customer release plan.

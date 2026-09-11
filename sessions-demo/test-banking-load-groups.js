@@ -106,7 +106,7 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(journal.requests.arrived, 0, `${name} must fail before traffic`);
   }
   const profile = process.env.BANK_LOAD_CASES || 'all';
-  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity', 'synthesis'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals, identity or synthesis');
+  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity', 'synthesis', 'clones'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals, identity, synthesis or clones');
   write('load-group-profile.json', { profile });
   const arrival = (id, url, sessionized, rate, maxConcurrency, duration = '2s') => ({
     ...group(id, url, sessionized, 1), arrivalPolicy: { maxConcurrency, maxStartLag: '0.1s' },
@@ -353,14 +353,14 @@ async function validateGroups({ base, driverOptions }) {
     ambiguous.loadGroups[0].stages[0].arrivals.rate = 10;
     await rejectBeforeTraffic('multiples-conflicting-rate', ambiguous, /cannot use absolute rate/);
   }
-  if (profile === 'all' || profile === 'synthesis') {
+  if (profile === 'all' || profile === 'synthesis' || profile === 'clones') {
     const mapped = plan([arrival('writers-one', '/transactions', true, 2, 2), arrival('writers-two', '/transactions', true, 2, 2)]);
     mapped.loadGroups.forEach(g => {
       g.population.size = 2;
       g.population.identityFields = [{ name: 'bank_username', pattern: 'bank-bank-v1-{n}@example.com' }];
       g.identityVerification = {};
     });
-    const input = path.join(artifacts, 'inbound-synthesis');
+    const input = path.join(artifacts, profile === 'clones' ? 'inbound-clones' : 'inbound-synthesis');
     fs.cpSync(sessions, input, { recursive: true });
     const metadata = path.join(input, '.metadata', 'snapshot.json');
     const original = fs.readFileSync(metadata, 'utf8');
@@ -374,39 +374,107 @@ async function validateGroups({ base, driverOptions }) {
     const preparedJSON = JSON.stringify(prepared);
     try {
       fs.writeFileSync(metadata, preparedJSON);
-      for (const name of ['synthesis-rotation', 'synthesis-repeat']) {
-        const result = await replay(name, input, mapped);
-        checkDelivery(result, [4, 4]);
-        assert.deepEqual(result.summary.groups.map(g => g.identity.verified), [4, 4]);
-        assert.equal(result.journal.requests.completed, 48);
-        assert.equal(result.journal.sessions.completed, 8);
-        const starts = result.journal.events.filter(e => e.type === 'session-start');
-        assert.deepEqual([...new Set(starts.map(e => e.actor))].sort(), [0, 1, 2, 3].map(n => `bank-bank-v1-${n}@example.com`));
-        assert.equal(new Set(starts.map(e => e.executionId)).size, 8);
-        assert.equal(result.journal.events.filter(e => e.type === 'transaction').length, 4);
-        assert.ok(result.summary.groups.every(g => Object.values(g.identity.sources).every(source => source.verified === 2)));
+      if (profile !== 'clones') {
+        for (const name of ['synthesis-rotation', 'synthesis-repeat']) {
+          const result = await replay(name, input, mapped);
+          checkDelivery(result, [4, 4]);
+          assert.deepEqual(result.summary.groups.map(g => g.identity.verified), [4, 4]);
+          assert.equal(result.journal.requests.completed, 48);
+          assert.equal(result.journal.sessions.completed, 8);
+          const starts = result.journal.events.filter(e => e.type === 'session-start');
+          assert.deepEqual([...new Set(starts.map(e => e.actor))].sort(), [0, 1, 2, 3].map(n => `bank-bank-v1-${n}@example.com`));
+          assert.equal(new Set(starts.map(e => e.executionId)).size, 8);
+          assert.equal(result.journal.events.filter(e => e.type === 'transaction').length, 4);
+          assert.ok(result.summary.groups.every(g => Object.values(g.identity.sources).every(source => source.verified === 2)));
+        }
+        const colliding = structuredClone(mapped);
+        colliding.loadGroups.forEach(g => { g.population.identityFields[0].pattern = 'bank-bank-v1-0@example.com'; });
+        const collision = await replay('synthesis-collision', input, colliding, false);
+        checkDelivery(collision, [4, 4]);
+        assert.equal(collision.journal.requests.failed, 0);
+        assert.equal(collision.journal.sessions.completed, 8);
+        assert.ok(collision.summary.groups.every(g => g.identity.verified === 0 && g.identity.collidingSources === 2));
+        const absent = structuredClone(mapped);
+        absent.loadGroups.forEach(g => { g.population.identityFields[0].pattern = 'unprovisioned-{n}@example.com'; });
+        const missing = await replay('synthesis-missing-account', input, absent, false);
+        checkDelivery(missing, [4, 4]);
+        assert.equal(missing.journal.sessions.started, 0);
+        assert.ok(missing.summary.groups.every(g => g.identity.authFailures > 0 && g.identity.verified === 0));
+        // Remove only account-path correlation. Auth remains real and succeeds,
+        // but recorded account IDs must fail ownership for remapped actors.
+        prepared.tokenizerConfig.generator.pop();
+        fs.writeFileSync(metadata, JSON.stringify(prepared));
+        const stale = await replay('synthesis-stale-account', input, mapped, false);
+        checkDelivery(stale, [4, 4]);
+        assert.ok(stale.journal.events.some(e => e.type === 'request-end' && e.status === 403));
+        assert.ok(stale.summary.groups.some(g => g.failedRequests > 0));
       }
-      const colliding = structuredClone(mapped);
-      colliding.loadGroups.forEach(g => { g.population.identityFields[0].pattern = 'bank-bank-v1-0@example.com'; });
-      const collision = await replay('synthesis-collision', input, colliding, false);
-      checkDelivery(collision, [4, 4]);
-      assert.equal(collision.journal.requests.failed, 0);
-      assert.equal(collision.journal.sessions.completed, 8);
-      assert.ok(collision.summary.groups.every(g => g.identity.verified === 0 && g.identity.collidingSources === 2));
-      const absent = structuredClone(mapped);
-      absent.loadGroups.forEach(g => { g.population.identityFields[0].pattern = 'unprovisioned-{n}@example.com'; });
-      const missing = await replay('synthesis-missing-account', input, absent, false);
-      checkDelivery(missing, [4, 4]);
-      assert.equal(missing.journal.sessions.started, 0);
-      assert.ok(missing.summary.groups.every(g => g.identity.authFailures > 0 && g.identity.verified === 0));
-      // Remove only account-path correlation. Auth remains real and succeeds,
-      // but recorded account IDs must fail ownership for remapped actors.
-      prepared.tokenizerConfig.generator.pop();
-      fs.writeFileSync(metadata, JSON.stringify(prepared));
-      const stale = await replay('synthesis-stale-account', input, mapped, false);
-      checkDelivery(stale, [4, 4]);
-      assert.ok(stale.journal.events.some(e => e.type === 'request-end' && e.status === 403));
-      assert.ok(stale.summary.groups.some(g => g.failedRequests > 0));
+      if (profile === 'all' || profile === 'clones') {
+        fs.writeFileSync(metadata, preparedJSON);
+        const cloned = plan([group('cloned-writers', '/transactions', true, 6, 'ONCE')]);
+        cloned.loadGroups[0].stages = [stage(true, 6, '2s')];
+        cloned.loadGroups[0].population = { size: 12, allowClones: true, reuse: 'LOAD_SESSION_REUSE_ONCE',
+          identityFields: [{ name: 'bank_username', pattern: 'bank-bank-v1-{n}@example.com' }] };
+        cloned.loadGroups[0].identityVerification = { expectedField: 'bank_username' };
+        const assertClones = (result, starts) => {
+          const g = result.summary.groups[0];
+          assert.equal(g.population, 12);
+          assert.equal(g.started, starts);
+          assert.equal(g.identity.verified, starts);
+          assert.equal(g.identity.status, 'PASS');
+          assert.equal(Object.keys(g.identity.slots).length, 12);
+          assert.equal(Object.keys(g.sourceExecutions).length, 4);
+          assert.ok(Object.values(g.sourceExecutions).every(n => n === starts / 4));
+          assert.ok(Object.values(g.identity.slots).every(s => s.executions === starts / 12 && s.verified === s.executions));
+          assert.deepEqual(Object.values(g.identity.slots).map(s => s.ordinal || 0).sort(), [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2]);
+          const live = result.journal.events.filter(e => e.type === 'session-start');
+          assert.equal(live.length, starts);
+          assert.equal(new Set(live.map(e => e.actor)).size, 12);
+          assert.equal(new Set(live.map(e => e.executionId)).size, starts);
+          assert.equal(result.journal.sessions.completed, starts);
+          assert.equal(result.journal.requests.completed, starts * 6);
+          assert.equal(result.journal.events.filter(e => e.type === 'transaction').length, 12);
+        };
+        const once = await replay('clones-once', input, cloned);
+        assertClones(once, 12);
+        assert.equal(once.summary.groups[0].peakConcurrency, 6);
+        const rotated = structuredClone(cloned);
+        Object.assign(rotated.loadGroups[0], { stages: [arrival('x', '', true, 12, 6).stages[0]],
+          arrivalPolicy: { maxConcurrency: 6, maxStartLag: '0.1s' } });
+        rotated.loadGroups[0].population.reuse = 'LOAD_SESSION_REUSE_ROTATE';
+        for (const name of ['clones-rotation', 'clones-repeat']) {
+          const result = await replay(name, input, rotated);
+          checkDelivery(result, [24]); assertClones(result, 24);
+        }
+        const mismapped = structuredClone(cloned);
+        mismapped.loadGroups[0].population.identityFields.push({ name: 'claimed_actor', pattern: 'unused-identity-{n}' });
+        mismapped.loadGroups[0].identityVerification.expectedField = 'claimed_actor';
+        const mismatch = await replay('clones-unused-mapping', input, mismapped, false);
+        assert.equal(mismatch.journal.requests.failed, 0);
+        assert.equal(mismatch.journal.sessions.completed, 12);
+        assert.equal(mismatch.summary.groups[0].identity.verified, 0);
+        assert.equal(mismatch.summary.groups[0].identity.mismatchedIdentity, 12);
+        const absent = structuredClone(cloned);
+        absent.loadGroups[0].population.identityFields[0].pattern = 'unprovisioned-{n}@example.com';
+        const missing = await replay('clones-missing-account', input, absent, false);
+        assert.equal(missing.journal.sessions.started, 0);
+        assert.equal(missing.summary.groups[0].identity.verified, 0);
+        assert.ok(missing.summary.groups[0].identity.authFailures > 0);
+        const staleMetadata = JSON.parse(preparedJSON);
+        staleMetadata.tokenizerConfig.generator.pop();
+        fs.writeFileSync(metadata, JSON.stringify(staleMetadata));
+        const stale = await replay('clones-stale-account', input, cloned, false);
+        assert.ok(stale.journal.events.some(e => e.type === 'request-end' && e.status === 403));
+        assert.ok(stale.summary.groups[0].identity.verified < 12);
+        fs.writeFileSync(metadata, preparedJSON);
+        const duplicate = structuredClone(cloned);
+        duplicate.loadGroups[0].population.identityFields[0].pattern = 'bank-bank-v1-0@example.com';
+        // Request recordings also contain all four writer source sessions, so
+        // static compilation can prove this collision without dispatching HTTP.
+        await rejectBeforeTraffic('clones-duplicate-identity', duplicate, /duplicate expected identity/);
+        delete duplicate.loadGroups[0].identityVerification;
+        await rejectBeforeTraffic('clones-missing-verification', duplicate, /expected identity field/);
+      }
     } finally { fs.writeFileSync(metadata, preparedJSON); }
     const invalid = structuredClone(mapped);
     invalid.loadGroups[0].population.identityFields[0].name = 'session_index';

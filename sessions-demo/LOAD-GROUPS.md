@@ -691,8 +691,8 @@ miss arrival deadlines or time out while obtaining CLI credentials, even when
 worker capacity is sufficient. Keep the system awake for the full run; an
 idle-sleep inhibitor does not prevent every kind of system sleep. Preserve a
 failed run's logs and journal rather than widening timing thresholds or silently
-retrying it. The full matrix for this worker-reservation candidate still needs
-verification on an awake host; its focused loop and Go checks have passed.
+retrying it. The full matrix passed in 244.5 seconds on September 11 with the
+capture-ordering fix below; the focused worker loop passed in 25.6 seconds.
 
 
 If `workers-session-budgets` fails with an account 401 before its login, inspect

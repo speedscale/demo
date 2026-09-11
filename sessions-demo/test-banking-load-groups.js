@@ -106,7 +106,7 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(journal.requests.arrived, 0, `${name} must fail before traffic`);
   }
   const profile = process.env.BANK_LOAD_CASES || 'all';
-  assert.ok(['all', 'composition', 'multiples'].includes(profile), 'BANK_LOAD_CASES must be all, composition or multiples');
+  assert.ok(['all', 'composition', 'multiples', 'goals'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples or goals');
   write('load-group-profile.json', { profile });
   const arrival = (id, url, sessionized, rate, maxConcurrency, duration = '2s') => ({
     ...group(id, url, sessionized, 1), arrivalPolicy: { maxConcurrency, maxStartLag: '0.1s' },
@@ -245,7 +245,7 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(dropped.requests, jitterOverload.journal.requests.completed);
   }
 
-  if (profile !== 'multiples') {
+  if (profile === 'all' || profile === 'composition') {
     const sharedPlan = (sessionized, rate = 25, duration = '2s') => {
       const config = plan([
         arrival('readers', '/statements', sessionized, rate, 20, duration),
@@ -299,7 +299,7 @@ async function validateGroups({ base, driverOptions }) {
     standalone.loadGroups[0].startBudget = '1000';
     await rejectBeforeTraffic('composition-impossible-budget', standalone, /budget exceeds available/);
   }
-  if (profile !== 'composition') {
+  if (profile === 'all' || profile === 'multiples') {
     // Enclose actual capture times in an explicit, persisted window. Power-of-two
     // seconds keep exact fixture totals independent of floating-point rounding.
     const baselineFor = input => {
@@ -352,6 +352,59 @@ async function validateGroups({ base, driverOptions }) {
     const ambiguous = structuredClone(requestsAtMultiple);
     ambiguous.loadGroups[0].stages[0].arrivals.rate = 10;
     await rejectBeforeTraffic('multiples-conflicting-rate', ambiguous, /cannot use absolute rate/);
+  }
+  if (profile === 'all' || profile === 'goals') {
+    const goal = (id, url, value, window = {}) => ({ id, scope: scope(url), minSamples: '1',
+      rule: { metricName: 'p95Latency', type: 'TOO_HIGH', action: 'ALERT', value }, ...window });
+    const measured = plan([
+      arrival('statement-pressure', '/statements', false, 30, 40, '2s'),
+      arrival('posting-probe', '/transactions', false, 10, 20, '4s'),
+    ]);
+    measured.loadGroups[0].stages = [
+      { duration: '0.5s', arrivals: { rate: 0 } }, { duration: '2s', arrivals: { rate: 30 } },
+      { duration: '1.5s', arrivals: { rate: 0 } },
+    ];
+    measured.loadGroups[1].goals = [
+      goal('baseline', '/transactions', 100, { startAfter: '0s', endAfter: '0.4s', minSamples: '3' }),
+      goal('pressure', '/transactions', 100, { startAfter: '0.75s', endAfter: '2.5s', minSamples: '12' }),
+      goal('recovery', '/transactions', 100, { startAfter: '3.6s', endAfter: '4s', minSamples: '3' }),
+    ];
+    const shared = await replay('goals-shared-pressure', requests, measured, false, { statementWorkMs: 100, postingWorkMs: 1 });
+    checkDelivery(shared, [60, 40]);
+    assert.equal(shared.journal.requests.failed, 0);
+    assert.ok(shared.summary.groups.every(g => g.failed === 0 && g.completed === g.started));
+    assert.match(shared.summary.error, /goal pressure failed: threshold/);
+    assert.doesNotMatch(shared.summary.error, /missed|execution failed/);
+    assert.deepEqual(shared.summary.groups[1].goals.map(g => g.status), ['PASS', 'FAIL', 'PASS']);
+    const isolated = await replay('goals-isolated-pressure', requests, measured, true, { isolated: true, statementWorkMs: 100, postingWorkMs: 1 });
+    checkDelivery(isolated, [60, 40]);
+    assert.ok(isolated.summary.groups[1].goals.every(g => g.status === 'PASS'));
+    const waits = result => result.journal.events.filter(e => e.type === 'resource-start' && e.operation === 'posting').map(e => e.waitMs);
+    assert.ok(Math.max(...waits(shared)) > 100, 'bank queue independently confirms posting contention');
+    assert.ok(Math.max(...waits(isolated)) < 100, 'isolated pool removes posting contention');
+    for (const result of [shared, isolated]) {
+      assert.equal(result.summary.groups.reduce((n, g) => n + g.response.samples, 0), result.journal.requests.completed);
+      assert.ok(result.summary.groups.every(g => g.response.distribution && g.response.failedRequests === 0));
+    }
+    const journeys = plan([
+      arrival('readers', '/statements', true, 8, 6), arrival('writers', '/transactions', true, 4, 3),
+    ]);
+    journeys.loadGroups[1].goals = [goal('posting-within-journey', '/transactions', 500, { minSamples: '16' })];
+    const inside = await replay('goals-session-endpoint', sessions, journeys);
+    checkDelivery(inside, [16, 8]);
+    const posting = inside.summary.groups[1].goals[0];
+    assert.equal(posting.status, 'PASS'); assert.equal(posting.response.samples, 16);
+    assert.equal(inside.journal.events.filter(e => e.type === 'request-end' && e.path.endsWith('/transactions')).length, 16);
+    assert.equal(inside.journal.sessions.completed, 24);
+    const missing = plan([arrival('requests', '/statements', false, 4, 4)]);
+    missing.loadGroups[0].goals = [goal('absent', '/not-recorded', 100)];
+    const absent = await replay('goals-missing-telemetry', requests, missing, false);
+    checkDelivery(absent, [8]); assert.equal(absent.journal.requests.failed, 0);
+    assert.match(absent.summary.error, /goal absent failed: missing_samples/);
+    assert.equal(absent.summary.groups[0].goals[0].response.samples, 0);
+    const invalid = structuredClone(missing);
+    invalid.loadGroups[0].goals[0].rule.metricName = 'unknown';
+    await rejectBeforeTraffic('goals-invalid-metric', invalid, /unsupported load metric/);
   }
   await control('reset', {});
 }

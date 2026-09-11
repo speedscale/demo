@@ -8,7 +8,7 @@ configuration.
 
 ## Run the milestone
 
-Build the Speedscale `s-13081-arrival-composition` branch, which includes the earlier
+Build the Speedscale `s-13082-scoped-load-goals` branch, which includes the earlier
 selection and artifact-preservation changes:
 
 ```sh
@@ -36,7 +36,7 @@ PROXYMOCK_BIN=/tmp/proxymock-load-plans make bank-load-composition
 ```
 
 This reuses the same real capture, dependency mock and bank journal, but runs
-only composition cases. `load-group-profile.json` identifies `composition` or
+only composition cases. `load-group-profile.json` identifies the selected focused profile or
 `all`; `bank-load-groups` still runs the full matrix. Both support the manual hold.
 
 The acceptance cases are:
@@ -337,6 +337,82 @@ Mixed absolute/multiple stages and recorded multiples inside shared pools are
 rejected in this breakpoint. Standalone multiple groups can coexist with absolute
 arrival groups and pools. The JSON plan remains unchanged by compilation.
 
+## Scoped latency and sample goals
+
+Run `PROXYMOCK_BIN=/path/to/candidate/proxymock make bank-load-goals` for the
+focused pressure/isolation and session-endpoint acceptance cases. The default
+`bank-load-groups` includes these with every earlier case.
+
+Add `goals` to a load group. For example, this goal measures transaction-posting
+requests whose attempts begin between 750 ms and 2.5 seconds after the run starts:
+
+```json
+{
+  "id": "posting-during-pressure",
+  "scope": {
+    "operator": "AND",
+    "conditions": [{"operator": "AND", "filters": [
+      {"include": true, "operator": "CONTAINS", "optUrl": "/transactions"}
+    ]}]
+  },
+  "startAfter": "0.75s",
+  "endAfter": "2.5s",
+  "minSamples": "12",
+  "rule": {"metricName": "p95Latency", "type": "TOO_HIGH", "action": "ALERT", "value": 100}
+}
+```
+
+The same goal works inside a complete-session group: its samples are matching
+HTTP requests, not journey starts. Goal scopes match the selected source RRPair supplied by the replay iterator,
+with request transforms already applied and before replacing its recorded response.
+They use the same filter expressions as group scopes. Latencies and errors come
+from actual replay.
+A filter on recorded status 200 therefore keeps those source requests even when
+replay returns 503; failures cannot filter themselves out. Omitted scope includes
+all HTTP attempts in the group. Nested rule location/method/metric-label filters
+are rejected; use the goal scope.
+
+Windows are half-open and use actual attempt start time on the common run clock.
+A request started within a window counts there even if it completes during drain.
+Omitted start means zero; omitted end includes the full run and drain. Add separate
+named goals for baseline, ramp, pressure, disruption or recovery intervals. A
+future or intentionally quiet window with no observations cannot pass a configured
+goal. `minSamples` defaults to one and must be positive; use a larger number for
+meaningful tail measurements. The limit is 64 goals per group and 256 active goals
+per plan.
+
+Supported metric names are `minLatency`, `maxLatency`, `avgLatency`, `p50Latency`,
+`p95Latency`, `p99Latency` and `totalTransactionCount`. Latency thresholds are in
+milliseconds. Timing matches the existing HTTP client's response-header metric;
+it excludes session think time and response-body consumption. Percentiles use the
+existing DDSketch convention with 1% relative accuracy; min/max/mean use the actual
+sample values. Small samples have coarse percentile ranks. Request-count goals
+measure attempted HTTP calls in the scope/window, not successful completions or
+session-start counts.
+
+The existing NotificationRule evaluator compares values rounded to two decimals.
+`TOO_HIGH` means actual must be <= value; `TOO_LOW` means actual must be >= value.
+Use `action: "ALERT"`. Thresholds must be finite, nonnegative and <= 1e12.
+Any breached goal fails replay after the work drains. Missing required samples
+fails independently of its numeric threshold. Existing HTTP/transport failures
+and missed-start failures remain strict; these goals do not relax delivery.
+
+`load-groups.json` now has group-level `response` aggregates and per-goal `response`
+aggregates: samples, HTTP/transport failures, min/max/mean/p50/p95/p99 milliseconds,
+and a bounded mergeable `distribution`. These survive low-data mode and failures.
+Merge distributions to combine runs or workers; never average their percentiles.
+Each goal also records its ID, PASS/FAIL status, actual value, minimum sample count,
+and the shared report-goal Assertion tagged by group and goal ID. Failure `reason`
+is `threshold`, `missing_samples`, or `invalid_telemetry`.
+
+The bank pressure case offers 60 statement requests and 40 posting requests.
+Both shared and isolated work pools receive all starts. With the shared pool,
+posting breaches its 100 ms p95 goal during pressure; baseline and recovery pass.
+With statement isolation, all three goals pass. The independent bank journal
+confirms posting queues only under shared contention. A separate session case
+verifies 16 posting samples within eight complete writer journeys, and a missing
+scope case fails with `missing_samples` despite full arrival delivery.
+
 ## Saved evidence and remaining release work
 
 Each replay directory contains `load-groups.json`: resolved seed, population,
@@ -374,6 +450,6 @@ elapsed time now includes that setup step; older timings excluded it.
 The harness currently measures elapsed local validation time; it does not yet
 compare an equivalent end-to-end baseline or claim the 50% cycle-time goal.
 Grouped adaptive TPS, generic per-source weights, identity cloning,
-scoped latency/delivery goals, UI editing, distributed Kubernetes validation,
+delivery/error tolerance overrides, distributed goal/report integration, UI editing, distributed Kubernetes validation,
 Kraken and final customer documentation/blog remain in the full release plan.
 Grouped non-HTTP protocols and TPS are rejected in this breakpoint.

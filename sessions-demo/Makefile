@@ -7,6 +7,19 @@ BASE?=http://localhost:4143
 build:
 	@echo "sessions-demo has no dependencies; nothing to build"
 
+.PHONY: test bank-drive bank-dependency bank-proxymock
+test:
+	@node --test banking.test.js
+
+bank-drive:
+	@BASE=$(BASE) node client/banking.js
+
+bank-dependency:
+	@PORT=3001 node statement-data.js
+
+bank-proxymock:
+	@node test-banking-proxymock.js
+
 .PHONY: start
 start:
 	@PORT=$(PORT) node server.js
@@ -24,3 +37,35 @@ record:
 docker-multi:
 	@echo "Building and pushing multi-arch Docker image"
 	@docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${REGISTRY} .
+
+.PHONY: bank-load-groups
+bank-load-groups:
+	node test-banking-load-groups.js
+
+.PHONY: bank-load-composition
+bank-load-composition:
+	BANK_LOAD_CASES=composition node test-banking-load-groups.js
+
+.PHONY: bank-load-multiples
+bank-load-multiples:
+	BANK_LOAD_CASES=multiples node test-banking-load-groups.js
+
+.PHONY: bank-load-goals
+bank-load-goals:
+	BANK_LOAD_CASES=goals node test-banking-load-groups.js
+
+.PHONY: bank-load-identity
+bank-load-identity:
+	BANK_LOAD_CASES=identity node test-banking-load-groups.js
+
+.PHONY: bank-load-synthesis
+bank-load-synthesis:
+	BANK_LOAD_CASES=synthesis node test-banking-load-groups.js
+
+.PHONY: bank-load-clones
+bank-load-clones:
+	BANK_LOAD_CASES=clones node test-banking-load-groups.js
+
+.PHONY: bank-load-workers
+bank-load-workers:
+	BANK_LOAD_CASES=workers node test-banking-load-groups.js

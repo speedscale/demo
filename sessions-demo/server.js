@@ -1,5 +1,6 @@
 const http = require('http');
 const crypto = require('crypto');
+const { createBanking } = require('./banking');
 
 const PORT = Number(process.env.PORT || 3000);
 const JWT_SECRET = process.env.JWT_SECRET || 'sessions-demo-signing-key';
@@ -276,13 +277,32 @@ async function route(req, res, path) {
   return send(res, 404, { error: 'not_found' });
 }
 
-const server = http.createServer((req, res) => {
-  const path = req.url.split('?')[0];
-  route(req, res, path).catch((err) => {
-    send(res, 500, { error: 'internal_error', detail: String(err && err.message) });
+function createServer(options = {}) {
+  const banking = createBanking(options.banking || {}, { resolveAuth, signJWT });
+  return http.createServer((req, res) => {
+    const path = req.url.split('?')[0];
+    if (path.startsWith('/bank/') && !banking) return send(res, 404, { error: 'not_found' });
+    const handler = path.startsWith('/bank/') ? banking : route;
+    handler(req, res, path).catch((err) => {
+      send(res, err.status || 500, { error: 'internal_error', detail: String(err && err.message) });
+    });
   });
-});
+}
 
-server.listen(PORT, () => {
-  console.log(`sessions-demo listening on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  const server = createServer({ banking: {
+    enabled: process.env.BANK_TEST_MODE === '1',
+    controlToken: process.env.BANK_CONTROL_TOKEN,
+    population: process.env.BANK_POPULATION,
+    seed: process.env.BANK_SEED,
+    slots: process.env.BANK_SLOTS,
+    statementWorkMs: process.env.BANK_STATEMENT_MS,
+    dependencyURL: process.env.BANK_DEPENDENCY_URL,
+    freshIds: process.env.BANK_FRESH_IDS === '1',
+  } });
+  server.listen(PORT, () => {
+    console.log(`sessions-demo listening on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = { createServer };

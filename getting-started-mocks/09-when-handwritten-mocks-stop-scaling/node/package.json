@@ -1,0 +1,14 @@
+{
+  "name": "when-handwritten-mocks-stop-scaling",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "msw": "2.15.0"
+  }
+}

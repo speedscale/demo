@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quote-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: quote-test}
+  template:
+    metadata:
+      labels: {app: quote-test}
+    spec:
+      containers:
+        - name: quote
+          image: python:3.12.12-slim
+          command: [python, /app/app.py]
+          env:
+            - {name: CATALOG_URL, value: "http://catalog:8080"}
+            - {name: http_proxy, value: "http://mocks:4140"}
+            - {name: no_proxy, value: "127.0.0.1,localhost"}
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080}
+          volumeMounts: [{name: app, mountPath: /app}]
+      volumes:
+        - name: app
+          configMap: {name: locust-app}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quote-test
+spec:
+  selector: {app: quote-test}
+  ports: [{port: 8080, targetPort: 8080}]
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: locust
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: locust
+          image: locustio/locust:2.46.5
+          args: [-f, /tests/locustfile.py, --headless, --host, "http://quote-test:8080", -u, "5", -r, "1", -t, 30s, --exit-code-on-error, "1", --csv, /tmp/results]
+          volumeMounts: [{name: tests, mountPath: /tests}]
+      volumes:
+        - name: tests
+          configMap: {name: locust-test}

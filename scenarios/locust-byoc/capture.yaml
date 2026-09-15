@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: locust-catalog}
+  template:
+    metadata:
+      labels: {app: locust-catalog}
+    spec:
+      containers:
+        - name: catalog
+          image: python:3.12.12-slim
+          command: [python, /app/app.py]
+          env:
+            - {name: ROLE, value: dependency}
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080}
+          volumeMounts: [{name: app, mountPath: /app}]
+      volumes:
+        - name: app
+          configMap: {name: locust-app}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog
+spec:
+  selector: {app: locust-catalog}
+  ports: [{port: 8080, targetPort: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quote-capture
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: quote-capture}
+  template:
+    metadata:
+      labels: {app: quote-capture}
+    spec:
+      containers:
+        - name: quote
+          image: python:3.12.12-slim
+          command: [python, /app/app.py]
+          env:
+            - {name: PORT, value: "8081"}
+            - {name: CATALOG_URL, value: "http://catalog:8080"}
+            - {name: http_proxy, value: "http://127.0.0.1:4140"}
+            - {name: no_proxy, value: "127.0.0.1,localhost"}
+          volumeMounts: [{name: app, mountPath: /app}]
+        - name: capture
+          image: gcr.io/speedscale/goproxy:v2.5.998
+          env:
+            - {name: PROXY_TYPE, value: reverse}
+            - {name: PROXY_PROTOCOL, value: tcp}
+            - {name: PROXY_IN_PORT, value: "8080"}
+            - {name: PROXY_OUT_PORT, value: "4140"}
+            - {name: REVERSE_PROXY_HOST, value: "127.0.0.1"}
+            - {name: REVERSE_PROXY_PORT, value: "8081"}
+            - {name: FORWARDER_ADDR, value: "speedscale-forwarder.speedscale.svc.cluster.local:8888"}
+            - {name: RECORD_ACTIVE, value: "true"}
+            - {name: APP_LABEL, value: quote-capture}
+            - {name: LOG_LEVEL, value: info}
+            - name: APP_POD_NAME
+              valueFrom:
+                fieldRef: {fieldPath: metadata.name}
+            - name: APP_POD_NAMESPACE
+              valueFrom:
+                fieldRef: {fieldPath: metadata.namespace}
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            tcpSocket: {port: 8080}
+        - name: capture-out
+          image: gcr.io/speedscale/goproxy:v2.5.998
+          env:
+            - {name: PROXY_TYPE, value: forward}
+            - {name: PROXY_PROTOCOL, value: http}
+            - {name: PROXY_OUT_PORT, value: "4140"}
+            - {name: FORWARDER_ADDR, value: "speedscale-forwarder.speedscale.svc.cluster.local:8888"}
+            - {name: RECORD_ACTIVE, value: "true"}
+            - {name: APP_LABEL, value: quote-capture}
+            - {name: LOG_LEVEL, value: info}
+            - {name: API_PORT, value: "4244"}
+            - {name: METRICS_HTTP_PORT, value: "4245"}
+            - {name: INTROSPECTION_PORT, value: "4200"}
+            - name: APP_POD_NAME
+              valueFrom:
+                fieldRef: {fieldPath: metadata.name}
+            - name: APP_POD_NAMESPACE
+              valueFrom:
+                fieldRef: {fieldPath: metadata.namespace}
+          ports: [{containerPort: 4140}]
+          readinessProbe:
+            tcpSocket: {port: 4140}
+      volumes:
+        - name: app
+          configMap: {name: locust-app}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quote-capture
+spec:
+  selector: {app: quote-capture}
+  ports: [{port: 8080, targetPort: 8080}]

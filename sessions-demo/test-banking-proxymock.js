@@ -116,16 +116,27 @@ async function main({ validateGroups } = {}) {
     const recordExit = await stop(recorder);
     assert.ok(!recordExit.forced && (recordExit.code === 0 || recordExit.signal === 'SIGINT'), 'recording must flush cleanly');
     await stop(dependency); // proves the mocked run cannot succeed by passthrough
-    const mock = start(binary, ['mock', '--in', recording, '--out', path.join(artifacts, 'mocked'), '--out-format', 'markdown',
-      '--no-passthrough', '--map', mapping, '--proxy-out-port', String(outboundPort), '--timeout', process.env.BANK_KEEP_RUNNING === '1' ? '2h' : '5m'], 'mock');
-    await ready(mapPort, mock);
+    let mock;
+    let mockGeneration = 0;
+    async function setDependencyChaos(rules = []) {
+      if (mock) {
+        const stopped = await stop(mock);
+        assert.ok(!stopped.forced && (stopped.code === 0 || stopped.signal === 'SIGINT'), 'dependency mock must stop cleanly before changing chaos');
+      }
+      const name = mockGeneration++ === 0 ? 'mock' : `mock-generation-${mockGeneration}`;
+      mock = start(binary, ['mock', '--in', recording, '--out', path.join(artifacts, name === 'mock' ? 'mocked' : name), '--out-format', 'markdown',
+        '--no-passthrough', '--map', mapping, '--proxy-out-port', String(outboundPort), '--timeout', process.env.BANK_KEEP_RUNNING === '1' ? '2h' : '15m',
+        ...rules.flatMap(rule => ['--chaos', rule])], name);
+      await ready(mapPort, mock);
+    }
+    await setDependencyChaos();
     let expectedObserved = 0;
     for (const mode of ['sessions', 'requests', 'mixed']) {
       const result = await drive({ ...driverOptions, mode, output: path.join(artifacts, `mock-${mode}-journal.json`) });
       expectedObserved += result.journal.events.filter(e => e.type === 'resource-end' && e.operation === 'statement').length;
     }
     await recorded(path.join(artifacts, 'mocked'), expectedObserved);
-    if (validateGroups) await validateGroups({ base, driverOptions });
+    if (validateGroups) await validateGroups({ base, driverOptions, setDependencyChaos });
     // A new, unrecorded account must fail; missing mocks cannot look like success.
     const missing = await fetch(`http://127.0.0.1:${mapPort}/statement-data?account=never-recorded`);
     assert.equal(missing.status, 404, 'missing mock should fail closed');

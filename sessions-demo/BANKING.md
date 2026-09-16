@@ -145,3 +145,14 @@ matrix or a portable reproduction bundle yet. It exercises the installed binary
 unless `PROXYMOCK_BIN` is set. Keep ledger updates, authentication and the bounded
 pool in the real app in every mode. Candidate container builds can reuse this
 demo's existing Dockerfile; no Docker daemon is required to run these tests.
+
+### Load groups with scoped dependency chaos
+
+`PROXYMOCK_BIN=/absolute/path/to/candidate/proxymock make bank-load-chaos`
+runs baseline, scoped-failure and recovered request groups. Statements ramp while
+posting retains its independent rate. A real proxymock chaos rule returns 503
+only for the recorded statement dependency; the bank must expose statement 502s
+while posting succeeds. Removing the rule must restore successful replay. The
+bank journal and per-group reports provide independent evidence. The original
+dependency stays offline throughout, and mock misses cannot pass through.
+This case is also included in `bank-load-groups`.

@@ -17,7 +17,7 @@ const group = (id, url, sessions, count, reuse = 'ROTATE') => ({ id, scope: scop
   ...(sessions ? { population: { reuse: `LOAD_SESSION_REUSE_${reuse}` } } : {}), stages: [stage(sessions, count)] });
 const plan = groups => ({ loadSeed: '7', loadUnmatchedPolicy: 'LOAD_UNMATCHED_EXCLUDE', loadDrainTimeout: '5s', loadGroups: groups });
 
-async function validateGroups({ base, driverOptions }) {
+async function validateGroups({ base, driverOptions, setDependencyChaos }) {
   async function control(route, body) {
     const r = await fetch(`${base}/bank/testing/${route}`, { method: body ? 'POST' : 'GET',
       headers: { 'x-bank-control': driverOptions.controlToken, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
@@ -106,7 +106,7 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(journal.requests.arrived, 0, `${name} must fail before traffic`);
   }
   const profile = process.env.BANK_LOAD_CASES || 'all';
-  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity', 'synthesis', 'clones', 'workers', 'tps'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals, identity, synthesis, clones, workers or tps');
+  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity', 'synthesis', 'clones', 'workers', 'tps', 'chaos'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals, identity, synthesis, clones, workers, tps or chaos');
   write('load-group-profile.json', { profile });
   const arrival = (id, url, sessionized, rate, maxConcurrency, duration = '2s') => ({
     ...group(id, url, sessionized, 1), arrivalPolicy: { maxConcurrency, maxStartLag: '0.1s' },
@@ -117,6 +117,29 @@ async function validateGroups({ base, driverOptions }) {
     assert.deepEqual(result.summary.groups.map(g => g.started), expected);
     assert.ok(result.summary.groups.every(g => (g.missed || 0) === 0));
   };
+  if (profile === 'all' || profile === 'chaos') {
+    const config = plan([
+      arrival('statements', '/statements', false, 4, 8, '1s'),
+      arrival('posting', '/transactions', false, 4, 8, '1s'),
+    ]);
+    config.loadGroups[0].stages[0].rampFor = '0.5s';
+    await replay('chaos-baseline', requests, config, true, { isolated: true });
+    try {
+      await setDependencyChaos(['(location REGEX "^/statement-data"): status=503,percent=100,seed=bank-chaos']);
+      const result = await replay('chaos-scoped-dependency', requests, config, false, { isolated: true });
+      const [statements, posting] = result.summary.groups;
+      assert.ok(statements.requests > 0 && posting.requests > 0);
+      assert.equal(statements.failedRequests, statements.requests, 'the selected dependency must fail every statement');
+      assert.equal(posting.failedRequests, 0, 'dependency chaos must not affect posting');
+      assert.equal(posting.failed, 0);
+      const responses = result.journal.events.filter(event => event.type === 'request-end');
+      assert.ok(responses.filter(event => event.path.endsWith('/statements')).every(event => event.status === 502));
+      assert.ok(responses.filter(event => event.path.endsWith('/transactions')).every(event => event.status === 200 || event.status === 201));
+      assert.equal(result.journal.requests.failed, statements.requests, 'bank independently observes the scoped failure');
+    } finally { await setDependencyChaos(); }
+    await replay('chaos-recovered', requests, config, true, { isolated: true });
+  }
+
   if (profile === 'all' || profile === 'workers') {
     const mixed = plan([group('statement-copies', '/statements', false, 2), arrival('posting-probe', '/transactions', false, 5, 1, '1s')]);
     mixed.loadGroups[0].stages = [stage(false, 2, '0.1s')];

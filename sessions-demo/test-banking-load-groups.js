@@ -17,7 +17,7 @@ const group = (id, url, sessions, count, reuse = 'ROTATE') => ({ id, scope: scop
   ...(sessions ? { population: { reuse: `LOAD_SESSION_REUSE_${reuse}` } } : {}), stages: [stage(sessions, count)] });
 const plan = groups => ({ loadSeed: '7', loadUnmatchedPolicy: 'LOAD_UNMATCHED_EXCLUDE', loadDrainTimeout: '5s', loadGroups: groups });
 
-async function validateGroups({ base, driverOptions }) {
+async function validateGroups({ base, driverOptions, setDependencyChaos }) {
   async function control(route, body) {
     const r = await fetch(`${base}/bank/testing/${route}`, { method: body ? 'POST' : 'GET',
       headers: { 'x-bank-control': driverOptions.controlToken, 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
@@ -106,7 +106,7 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(journal.requests.arrived, 0, `${name} must fail before traffic`);
   }
   const profile = process.env.BANK_LOAD_CASES || 'all';
-  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity', 'synthesis', 'clones', 'workers'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals, identity, synthesis, clones or workers');
+  assert.ok(['all', 'composition', 'multiples', 'goals', 'identity', 'synthesis', 'clones', 'workers', 'tps', 'chaos'].includes(profile), 'BANK_LOAD_CASES must be all, composition, multiples, goals, identity, synthesis, clones, workers, tps or chaos');
   write('load-group-profile.json', { profile });
   const arrival = (id, url, sessionized, rate, maxConcurrency, duration = '2s') => ({
     ...group(id, url, sessionized, 1), arrivalPolicy: { maxConcurrency, maxStartLag: '0.1s' },
@@ -117,6 +117,29 @@ async function validateGroups({ base, driverOptions }) {
     assert.deepEqual(result.summary.groups.map(g => g.started), expected);
     assert.ok(result.summary.groups.every(g => (g.missed || 0) === 0));
   };
+  if (profile === 'all' || profile === 'chaos') {
+    const config = plan([
+      arrival('statements', '/statements', false, 4, 8, '1s'),
+      arrival('posting', '/transactions', false, 4, 8, '1s'),
+    ]);
+    config.loadGroups[0].stages[0].rampFor = '0.5s';
+    await replay('chaos-baseline', requests, config, true, { isolated: true });
+    try {
+      await setDependencyChaos(['(location REGEX "^/statement-data"): status=503,percent=100,seed=bank-chaos']);
+      const result = await replay('chaos-scoped-dependency', requests, config, false, { isolated: true });
+      const [statements, posting] = result.summary.groups;
+      assert.ok(statements.requests > 0 && posting.requests > 0);
+      assert.equal(statements.failedRequests, statements.requests, 'the selected dependency must fail every statement');
+      assert.equal(posting.failedRequests, 0, 'dependency chaos must not affect posting');
+      assert.equal(posting.failed, 0);
+      const responses = result.journal.events.filter(event => event.type === 'request-end');
+      assert.ok(responses.filter(event => event.path.endsWith('/statements')).every(event => event.status === 502));
+      assert.ok(responses.filter(event => event.path.endsWith('/transactions')).every(event => event.status === 200 || event.status === 201));
+      assert.equal(result.journal.requests.failed, statements.requests, 'bank independently observes the scoped failure');
+    } finally { await setDependencyChaos(); }
+    await replay('chaos-recovered', requests, config, true, { isolated: true });
+  }
+
   if (profile === 'all' || profile === 'workers') {
     const mixed = plan([group('statement-copies', '/statements', false, 2), arrival('posting-probe', '/transactions', false, 5, 1, '1s')]);
     mixed.loadGroups[0].stages = [stage(false, 2, '0.1s')];
@@ -160,11 +183,37 @@ async function validateGroups({ base, driverOptions }) {
     assert.equal(leanResult.summary.groups.find(g => g.id === 'posting').started, 2);
     assert.equal(leanResult.summary.groups.find(g => g.id === 'paused').started, 0);
   }
+  if (profile === 'all' || profile === 'tps') {
+    const adaptive = (id, url, rate, maxWorkers) => ({ ...group(id, url, false, 1), maxWorkers,
+      stages: [{ duration: '3s', targetTps: { tps: String(rate) } }] });
+    const config = plan([adaptive('statements', '/statements', 20, 2), adaptive('posting', '/transactions', 10, 1)]);
+    config.maxVusers = 3;
+    config.evaluationIntervals = 1;
+    const delivered = await replay('tps-delivered', requests, config, true,
+      { isolated: true, statementWorkMs: 1, postingWorkMs: 1 });
+    assert.deepEqual(delivered.summary.groups.map(g => g.tps.status), ['PASS', 'PASS']);
+    assert.deepEqual(delivered.summary.groups.map(g => g.tps.expectedRequests), [60, 30]);
+    assert.ok(delivered.summary.groups.every(g => g.tps.actualRequests === g.requests));
+    const limited = structuredClone(config);
+    limited.loadGroups[0].maxWorkers = 1;
+    limited.loadGroups[0].stages[0].targetTps.tps = '40';
+    const missed = await replay('tps-capacity-failure', requests, limited, false,
+      { isolated: true, statementWorkMs: 100, postingWorkMs: 1 });
+    assert.deepEqual(missed.summary.groups.map(g => g.tps.status), ['FAIL', 'PASS']);
+    assert.equal(missed.journal.requests.failed, 0, 'unmet TPS must fail even when every HTTP request succeeds');
+    assert.equal(missed.summary.groups[0].peakConcurrency, 1);
+    assert.match(missed.summary.error, /statements: TPS target/);
+    const ramp = plan([adaptive('statements', '/statements', 30, 2)]);
+    ramp.evaluationIntervals = 1;
+    ramp.loadGroups[0].stages[0].rampFor = '2s';
+    ramp.loadGroups[0].stages.push({ duration: '1s', targetTps: { tps: '0' } }, { duration: '2s', targetTps: { tps: '20' } });
+    const resumed = await replay('tps-ramp-pause', requests, ramp, true, { isolated: true, statementWorkMs: 1 });
+    assert.equal(resumed.summary.groups[0].tps.expectedRequests, 100);
+    assert.equal(resumed.summary.groups[0].tps.stages[1].actualRequests, 0);
+    assert.equal(resumed.summary.groups[0].tps.status, 'PASS');
+  }
   if (profile === 'all') {
     await rejectBeforeTraffic('no-data', plan([group('empty', '/not-recorded', false, 1)]), /positive load has no eligible data/);
-    const tps = group('tps', '/statements', false, 1);
-    tps.stages = [{ duration: '1s', targetTps: { tps: 10 } }];
-    await rejectBeforeTraffic('unsupported-tps', plan([tps]), /grouped TPS is not supported/);
     await rejectBeforeTraffic('legacy-conflict', plan([group('load', '/statements', false, 1)]), /cannot be combined with --vus/, ['--vus', '1']);
     const overCapacity = plan([group('read-load', '/statements', false, 1), group('write-load', '/transactions', false, 1)]);
     overCapacity.maxVusers = 1;

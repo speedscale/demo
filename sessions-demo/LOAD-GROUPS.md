@@ -629,6 +629,28 @@ Credential references, readiness UI, Kubernetes/Kraken parity and remaining load
 modes are still part of the full customer release plan.
 
 
+## Adaptive TPS by endpoint
+
+With the endpoint-load completion candidate (engine MR !6975), run:
+
+```sh
+PROXYMOCK_BIN=/path/to/candidate/proxymock make bank-load-tps
+```
+
+This profile runs the real bank against its fail-closed proxymock statement
+dependency. It checks three workloads: independent statement/posting TPS targets,
+a deliberately under-capacity statement group while posting still passes, and a
+statement ramp followed by a pause and resume. The bank journal independently
+checks completed requests and failures. All HTTP requests can succeed while the
+statement group's throughput target fails; that is an expected test case.
+
+Inspect each `tps-*-plan.json`, `tps-*-journal.json`, and replay directory's
+`load-groups.json` in the printed artifact directory. `groups[].tps` includes
+stage targets, actual HTTP counts and PASS/FAIL. The tolerance is 5%, with a
+minimum allowance of one request per stage. `maxWorkers` caps each group's
+adaptive concurrency. TPS rotates individual recorded requests; use session
+schedules when login, account operations and logout must stay together.
+
 ## Reserve workers for independent workloads
 
 ```sh

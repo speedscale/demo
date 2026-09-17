@@ -69,3 +69,11 @@ bank-load-clones:
 .PHONY: bank-load-workers
 bank-load-workers:
 	BANK_LOAD_CASES=workers node test-banking-load-groups.js
+
+.PHONY: bank-load-tps
+bank-load-tps:
+	BANK_LOAD_CASES=tps node test-banking-load-groups.js
+
+.PHONY: bank-load-chaos
+bank-load-chaos:
+	BANK_LOAD_CASES=chaos node test-banking-load-groups.js

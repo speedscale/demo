@@ -1,0 +1,12 @@
+FROM curlimages/curl:8.12.1 AS download
+ARG TARGETARCH
+ARG PROXYMOCK_VERSION=v2.5.978
+RUN curl -fsSL "https://downloads.speedscale.com/proxymock/${PROXYMOCK_VERSION}/proxymock-linux-${TARGETARCH}" -o /tmp/proxymock \
+    && chmod +x /tmp/proxymock
+FROM debian:bookworm-slim
+COPY --from=download /tmp/proxymock /usr/local/bin/proxymock
+COPY --from=download /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+WORKDIR /demo
+COPY traffic/ /demo/traffic/
+ENTRYPOINT ["/bin/sh", "-ec"]
+CMD ["proxymock init --api-key \"$SPEEDSCALE_API_KEY\" --app-url \"${SPEEDSCALE_APP_URL:-app.speedscale.com}\" --yes --no-rcfile-update --quiet && exec proxymock mock --in /demo/traffic --no-passthrough --no-out --health-port 8082"]

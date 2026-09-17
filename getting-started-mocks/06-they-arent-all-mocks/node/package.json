@@ -1,0 +1,11 @@
+{
+  "name": "they-arent-all-mocks",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}

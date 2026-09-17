@@ -1,0 +1,11 @@
+{
+  "trackingNumber": "TRACK-123",
+  "shipmentStatus": "delayed",
+  "carrier": "example-carrier",
+  "lastScan": {
+    "location": "Memphis, TN",
+    "timestamp": "2026-08-28T14:22:11Z"
+  },
+  "estimatedDelivery": "2026-09-02",
+  "delayReason": "weather"
+}

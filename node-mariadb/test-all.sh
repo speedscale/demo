@@ -455,7 +455,7 @@ main() {
       echo "  Mock responses:      ${MOCK_DIR}/"
       echo "  Replay (with mocks): ${MOCK_REPLAY_DIR}/"
       echo ""
-      echo "  Inspect any of these with:  proxymock inspect --in <dir>"
+      echo "  Browse any of these with:  proxymock web --in <dir>"
       echo ""
       ok "All phases complete"
       ;;

@@ -95,7 +95,7 @@ Press `Ctrl+C` in the proxymock terminal to stop recording. The traffic is saved
 ### Inspect Recorded Traffic
 
 ```bash
-proxymock inspect
+proxymock web --in proxymock-recorded
 ```
 
 This shows what was captured and gives a preview of detected patterns.

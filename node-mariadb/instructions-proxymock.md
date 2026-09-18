@@ -207,7 +207,7 @@ proxymock replay \
 ### 5) Validate
 
 ```bash
-proxymock inspect --in proxymock/results/replayed-<timestamp>
+proxymock web --in proxymock/results/replayed-<timestamp>
 grep -r "Authorization: Basic" proxymock/results/replayed-<timestamp>/
 ```
 

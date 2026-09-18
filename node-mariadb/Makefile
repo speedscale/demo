@@ -158,7 +158,7 @@ demo-multi-user: build certs ## Run auth + multi-user proxymock demo flow
 	trap - EXIT INT TERM; \
 	echo "PASS: multi-user flow complete"; \
 	echo "Recording dir: $${OUT_DIR}"; \
-	echo "Inspect with: proxymock inspect --in $${OUT_DIR}"
+	echo "Browse with: proxymock web --in $${OUT_DIR}"
 
 .PHONY: demo-credentials-swap
 demo-credentials-swap: ## Generate/apply Basic auth credentials swap automation
@@ -186,11 +186,11 @@ demo-credentials-swap: ## Generate/apply Basic auth credentials swap automation
 	proxymock replay --in "$$IN_DIR" --test-against "$$REPLAY_TARGET" --fail-if "requests.failed != 0"
 
 .PHONY: inspect
-inspect: ## Open proxymock TUI to inspect recorded traffic
+inspect: ## Open proxymock web to browse recorded traffic
 	@dir=$$(ls -dt proxymock/recorded-* 2>/dev/null | head -1); \
 	if [ -z "$$dir" ]; then echo "No recordings found. Run 'make test-record' first."; exit 1; fi; \
 	echo "Inspecting: $$dir"; \
-	proxymock inspect --in "$$dir"
+	proxymock web --in "$$dir"
 
 .PHONY: down
 down: ## Stop infrastructure containers

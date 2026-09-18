@@ -213,7 +213,7 @@ graph LR
 
 ### Inspect recorded traffic
 
-After recording, you can browse the captured traffic in a terminal UI:
+After recording, you can browse the captured traffic in your browser with proxymock web:
 
 ```bash
 make inspect
@@ -316,7 +316,7 @@ make test-all        Automated: record -> replay -> mock (all 3 phases)
 make test-record     Automated: Phase 1 only (record traffic)
 make test-replay     Automated: Phase 2 only (replay, real DB)
 make test-mock       Automated: Phase 3 only (replay, mocked DB)
-make inspect         Browse recorded traffic in proxymock TUI
+make inspect         Browse recorded traffic in proxymock web
 make down            Stop Docker containers
 make clean           Stop containers, remove volumes + certs + recordings
 make logs            Tail Docker logs

@@ -92,9 +92,9 @@ proxymock replay --in ./proxymock/snapshot-<uuid> --test-against http://localhos
 
 ### Inspect Captured Traffic
 
-Browse captured traffic using the proxymock TUI:
+Browse captured traffic in your browser with proxymock web:
 ```bash
-proxymock inspect
+proxymock web
 ```
 
 ## Traffic Behavior

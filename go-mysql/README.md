@@ -214,4 +214,9 @@ MYSQL_USER=demo MYSQL_PWD=demo proxymock replay \
 
 This needs a proxymock release that includes MySQL replay.
 
+Expect two kinds of result mismatch, both on purpose:
+
+- `1062 Duplicate entry` on `INSERT INTO users`, because every virtual user replays the same recorded usernames. The guide's `mysql_param` blueprint regenerates them.
+- `1213 Deadlock found` on the checkout's `UPDATE users SET order_count`. Concurrent checkouts for one user insert an order, which locks the user row through the foreign key, and then update that row. The demo leaves this in so the load test has a real finding to show: a production app would retry the transaction or lock the row first.
+
 For the full walkthrough, see the [MySQL load testing guide](https://docs.speedscale.com/proxymock/guides/mysql-load-testing/).

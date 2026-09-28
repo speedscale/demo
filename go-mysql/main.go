@@ -76,6 +76,13 @@ func main() {
 	mux.HandleFunc("POST /users/{id}/orders", createOrderHandler)
 	mux.HandleFunc("GET /users/{id}/orders", listOrdersHandler)
 
+	// The showcase is opt-in so the default app's database traffic is unchanged.
+	if showcaseEnabled() {
+		if err := setupShowcase(context.Background(), mux); err != nil {
+			log.Fatalf("set up showcase: %v", err)
+		}
+	}
+
 	srv := &http.Server{
 		Addr:              ":8080",
 		Handler:           mux,

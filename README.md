@@ -37,6 +37,10 @@ A Node.js Express application with multiple endpoints that call external APIs in
 
 An IP distance calculator service that uses the ipstack API to determine geographical distances between IP addresses. Demonstrates API integration patterns and mathematical calculations in Go.
 
+### [Go MySQL](go-mysql/)
+
+A Go users and orders REST API on MySQL 8.4 that uses server-side prepared statements and an explicit transaction. It exercises proxymock's MySQL capture, mocking, replay and database load testing.
+
 ### [Python](python/)
 
 A Flask application that proxies SpaceX API data, providing a simple example of Python-based API integration suitable for traffic capture and replay testing.

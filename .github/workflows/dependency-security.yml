@@ -221,7 +221,7 @@ jobs:
         GOPATH_BIN="$(go env GOPATH)/bin"
         export PATH="${GOPATH_BIN}:${PATH}"
         status=0
-        for dir in go go-mongo go-postgres go-ses-demo aws/service/dynamodb/go go-rabbitmq/producer go-rabbitmq/consumer go-rabbitmq/generator; do
+        for dir in go go-mongo go-mysql go-postgres go-ses-demo aws/service/dynamodb/go go-rabbitmq/producer go-rabbitmq/consumer go-rabbitmq/generator; do
           echo "::group::govulncheck ${dir}"
           if ! (cd "$dir" && govulncheck ./...); then
             echo "::error title=govulncheck::vulnerabilities in ${dir}"

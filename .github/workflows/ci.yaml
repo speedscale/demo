@@ -254,6 +254,9 @@ jobs:
           - name: go-mysql
             path: go-mysql
             build_cmd: make build test
+          - name: go-postgres
+            path: go-postgres
+            build_cmd: make build test
     steps:
     - name: Checkout
       uses: actions/checkout@v4

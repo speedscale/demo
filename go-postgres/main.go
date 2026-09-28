@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -75,6 +76,13 @@ func main() {
 	r.HandleFunc("/users", createUserHandler).Methods("POST")
 	r.HandleFunc("/users/{id}", updateUserHandler).Methods("PUT")
 	r.HandleFunc("/users/{id}", deleteUserHandler).Methods("DELETE")
+
+	// The showcase is opt-in so the default app's database traffic is unchanged.
+	if showcaseEnabled() {
+		if err := setupShowcase(context.Background(), connStr, r); err != nil {
+			log.Fatal("Failed to set up showcase:", err)
+		}
+	}
 
 	fmt.Println("Server starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", r))

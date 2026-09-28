@@ -19,6 +19,19 @@ local:
 	@echo "Running go-mysql locally"
 	@go run .
 
+.PHONY: local-showcase
+local-showcase:
+	@echo "Running go-mysql locally with the /showcase endpoints"
+	@SHOWCASE=1 go run .
+
+.PHONY: traffic
+traffic:
+	@./traffic.sh
+
+.PHONY: traffic-showcase
+traffic-showcase:
+	@SHOWCASE=1 ./traffic.sh
+
 .PHONY: compose
 compose:
 	@docker compose up --build

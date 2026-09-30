@@ -149,15 +149,15 @@ Any failure the contract does not name (the database is down, for example): `500
 
 These exist on purpose. Each one is what a tutorial chapter's skill finds and fixes. Do not "fix" them in the app.
 
-| Plant | Where | Fixed by |
+| Plant | Where | Found and fixed by |
 | --- | --- | --- |
-| `ts` query parameter changes on every outbound call | outbound HTTP | a mock blueprint (tune the mocks) |
-| `X-Request-Id` header changes on every outbound call | outbound HTTP | nothing: headers are outside the mock signature, the skill should say so |
-| The order id is random, so S1, S2, S3, S4 and S7 bind a different `$1` every run | SQL | a mock blueprint (tune the mocks) |
-| The list cutoff `$1` in S5/S6 is time-relative | SQL | a mock blueprint (tune the mocks) |
-| `generated_at` in every response, and the random `id` in `POST /orders` | inbound responses | a transform (tune the tests) |
-| `APP_VERSION=v2`: `total_cents` is rendered as a string (`"2400"`) in the order object and in `GET /orders` | inbound responses | caught by the regression test |
-| `APP_SLOW=1`: `GET /orders` runs S5 plus S4 per order | SQL | caught by the performance test |
+| `ts` query parameter changes on every outbound call | outbound HTTP | tune the mocks: a mock blueprint that ignores `ts` |
+| `X-Request-Id` header changes on every outbound call | outbound HTTP | nothing: headers are outside the mock signature, and the skill should say so |
+| SQL mocks match on statement text, not bind values, so `GET /orders/{id}` with an id that was never recorded (or any lookup out of recorded order) is served another recorded row | SQL (S3, S4, S7) | tune the mocks: proxymock reports these as bind drift or fallback matches; key S3, S4 and S7 on `$1` with `sql_key_params` |
+| The order id in S1/S2 and the list cutoff in S5/S6 change every run | SQL | nothing: they do not affect matching, and they must not be keyed (keying them would turn every run into misses) |
+| `generated_at` in every response, and the random `id` in `POST /orders` | inbound responses | tune the tests: the default config already ignores them; the chapter creates a config from the stricter `standard` one (`proxymock test-config new tutorial --from standard`), finds both with `proxymock drift`, and ignores them |
+| `APP_VERSION=v2`: `total_cents` is rendered as a string (`"2400"`) in the order object and in `GET /orders` | inbound responses | the regression test, as a `type_change` mismatch |
+| `APP_SLOW=1`: `GET /orders` runs S5 plus S4 per order | SQL | the performance test, run with the HTTP dependency mocked and the real database (a mocked database never recorded the slow path's queries) |
 
 ## Traffic driver
 

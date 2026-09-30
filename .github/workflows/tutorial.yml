@@ -1,0 +1,165 @@
+name: Tutorial app
+
+# The proxymock tutorial app ships in four languages that must behave the
+# same. Each job runs a port's unit tests, then starts it against Postgres and
+# drives the shared traffic sequence through it, and builds its image.
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'tutorial/**'
+      - '.github/workflows/tutorial.yml'
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'tutorial/**'
+      - '.github/workflows/tutorial.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  port:
+    name: ${{ matrix.lang }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [go, java, python, node]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tutorial
+          POSTGRES_PASSWORD: tutorial
+          POSTGRES_DB: tutorial
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tutorial -d tutorial"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://tutorial:tutorial@localhost:5432/tutorial?sslmode=disable
+      PORT: "8080"
+    defaults:
+      run:
+        working-directory: tutorial/${{ matrix.lang }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Load schema
+      working-directory: tutorial
+      run: PGPASSWORD=tutorial psql -h localhost -U tutorial -d tutorial -v ON_ERROR_STOP=1 -f contract/schema.sql
+
+    - if: matrix.lang == 'go'
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: tutorial/go/go.mod
+        cache-dependency-path: tutorial/go/go.sum
+    - if: matrix.lang == 'java'
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: temurin
+        cache: maven
+    - if: matrix.lang == 'python'
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - if: matrix.lang == 'node'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: npm
+        cache-dependency-path: tutorial/node/package-lock.json
+
+    - name: Unit tests
+      run: |
+        set -euo pipefail
+        case "${{ matrix.lang }}" in
+          go)     go vet ./... && go test ./... && go build -o bin/tutorial-orders . ;;
+          java)   ./mvnw -B -q package ;;
+          python) python -m pip install -q -r requirements.txt -r requirements-dev.txt && python -m pytest -q ;;
+          node)   npm ci && npm test ;;
+        esac
+
+    - name: Start the app
+      run: |
+        set -euo pipefail
+        case "${{ matrix.lang }}" in
+          go)     nohup ./bin/tutorial-orders > app.log 2>&1 & ;;
+          java)   nohup java -jar target/tutorial-orders.jar > app.log 2>&1 & ;;
+          python) nohup python app.py > app.log 2>&1 & ;;
+          node)   nohup node server.js > app.log 2>&1 & ;;
+        esac
+        for i in $(seq 1 60); do
+          if curl -fsS http://localhost:8080/healthz; then echo; exit 0; fi
+          sleep 1
+        done
+        cat app.log
+        exit 1
+
+    - name: Drive the traffic sequence
+      run: |
+        set -euo pipefail
+        case "${{ matrix.lang }}" in
+          go)     go run ./cmd/traffic http://localhost:8080 ;;
+          java)   ./mvnw -B -q exec:java -Dexec.args="http://localhost:8080" ;;
+          python) python traffic.py http://localhost:8080 ;;
+          node)   node traffic.mjs http://localhost:8080 ;;
+        esac
+
+    - name: App log
+      if: always()
+      run: cat app.log || true
+
+    # Record the port under proxymock and compare the recording's shape with
+    # the Go reference in tutorial/conformance/shape.txt. Needs an API key for
+    # proxymock init, so it is skipped where the secret is not available.
+    - name: Conformance
+      env:
+        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+      run: |
+        set -euo pipefail
+        if [ -z "${SPEEDSCALE_API_KEY}" ]; then
+          echo "::notice title=conformance::skipped, SPEEDSCALE_API_KEY is not available"
+          exit 0
+        fi
+        sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
+        export PATH="$HOME/.speedscale:$PATH"
+        proxymock init --api-key "${SPEEDSCALE_API_KEY}" --yes --quiet --no-rcfile-update
+        pkill -f tutorial-orders || true
+        pkill -f "app.py" || true
+        pkill -f "server.js" || true
+        sleep 2
+        case "${{ matrix.lang }}" in
+          go)     run="./bin/tutorial-orders" ;;
+          java)   run="java -jar target/tutorial-orders.jar" ;;
+          python) run="python app.py" ;;
+          node)   run="node server.js" ;;
+        esac
+        DATABASE_URL="postgres://tutorial:tutorial@localhost:15432/tutorial?sslmode=disable" \
+          nohup proxymock record --app-port 8080 --map 15432=postgres://localhost:5432 --out "$RUNNER_TEMP/rec" -- $run > record.log 2>&1 &
+        pm=$!
+        for i in $(seq 1 60); do
+          if curl -fsS http://localhost:4143/healthz > /dev/null 2>&1; then break; fi
+          sleep 1
+        done
+        case "${{ matrix.lang }}" in
+          go)     go run ./cmd/traffic http://localhost:4143 ;;
+          java)   ./mvnw -B -q exec:java -Dexec.args="http://localhost:4143" ;;
+          python) python traffic.py http://localhost:4143 ;;
+          node)   node traffic.mjs http://localhost:4143 ;;
+        esac
+        kill -INT "$pm"
+        wait "$pm" || true
+        python3 ../conformance/shape.py "$RUNNER_TEMP/rec" --check ../conformance/shape.txt
+
+    - name: Record log
+      if: always()
+      run: cat record.log 2>/dev/null || true
+
+    - name: Build the image
+      run: docker build -t tutorial-orders-${{ matrix.lang }}:ci .

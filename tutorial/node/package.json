@@ -1,0 +1,19 @@
+{
+  "name": "tutorial-orders",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tutorial orders service (Node.js port)",
+  "type": "module",
+  "engines": {
+    "node": ">=22.21.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.23.0",
+    "undici": "^8.11.2"
+  }
+}

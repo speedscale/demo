@@ -143,8 +143,10 @@ jobs:
         DATABASE_URL="postgres://tutorial:tutorial@localhost:15432/tutorial?sslmode=disable" \
           nohup proxymock record --app-port 8080 --map 15432=postgres://localhost:5432 --out "$RUNNER_TEMP/rec" -- $run > record.log 2>&1 &
         pm=$!
+        # Probe the app directly and only open a socket to proxymock's inbound
+        # port: a request through it would be recorded and break the shape.
         for i in $(seq 1 60); do
-          if curl -fsS http://localhost:4143/healthz > /dev/null 2>&1; then break; fi
+          if curl -fsS http://localhost:8080/healthz > /dev/null 2>&1 && (exec 3<>/dev/tcp/localhost/4143) 2>/dev/null; then break; fi
           sleep 1
         done
         case "${{ matrix.lang }}" in

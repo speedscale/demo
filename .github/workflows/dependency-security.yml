@@ -98,7 +98,7 @@ jobs:
       run: |
         set -uo pipefail
         status=0
-        for dir in node node-auth node-mariadb node-websocket dlp-demo smart-replace-demo llm-simulation-demo/frontend scenarios/microservices/gateway csharp/requestor tutorial/node; do
+        for dir in node node-auth node-mariadb node-websocket dlp-demo smart-replace-demo llm-simulation-demo/frontend scenarios/microservices/gateway csharp/requestor; do
           echo "::group::npm ci + audit: ${dir}"
           if ! (cd "$dir" && npm ci && npm audit --audit-level=moderate); then
             echo "::error title=npm audit::vulnerabilities or install failure in ${dir}"
@@ -221,7 +221,7 @@ jobs:
         GOPATH_BIN="$(go env GOPATH)/bin"
         export PATH="${GOPATH_BIN}:${PATH}"
         status=0
-        for dir in go go-mongo go-mysql go-postgres go-ses-demo aws/service/dynamodb/go go-rabbitmq/producer go-rabbitmq/consumer go-rabbitmq/generator tutorial/go; do
+        for dir in go go-mongo go-mysql go-postgres go-ses-demo aws/service/dynamodb/go go-rabbitmq/producer go-rabbitmq/consumer go-rabbitmq/generator; do
           echo "::group::govulncheck ${dir}"
           if ! (cd "$dir" && govulncheck ./...); then
             echo "::error title=govulncheck::vulnerabilities in ${dir}"
@@ -288,7 +288,7 @@ jobs:
     - name: Populate Maven cache
       run: |
         set -euo pipefail
-        for dir in java/server java-auth/server java-auth/client tutorial/java; do
+        for dir in java/server java-auth/server java-auth/client; do
           echo "::group::mvn dependency:resolve ${dir}"
           (cd "$dir" && mvn -q -B dependency:resolve)
           echo "::endgroup::"
@@ -304,7 +304,7 @@ jobs:
       run: |
         set -uo pipefail
         status=0
-        for dir in java java-auth tutorial/java; do
+        for dir in java java-auth; do
           echo "::group::trivy ${dir}"
           if ! trivy fs --scanners vuln --pkg-types library --ignore-unfixed --offline-scan --exit-code 1 "$dir"; then
             echo "::error title=trivy::vulnerabilities in ${dir}"

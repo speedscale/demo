@@ -38,7 +38,7 @@ class JsonShapeTest {
 
     @Test
     void otherShapes() throws Exception {
-        assertThat(mapper.writeValueAsString(new Views.Health("ok", "v1"))).isEqualTo("{\"status\":\"ok\",\"version\":\"v1\"}");
+        assertThat(mapper.writeValueAsString(new Views.Health("ok"))).isEqualTo("{\"status\":\"ok\"}");
         assertThat(mapper.writeValueAsString(new Views.Status("id", "placed", "t"))).isEqualTo("{\"id\":\"id\",\"status\":\"placed\",\"generated_at\":\"t\"}");
         assertThat(mapper.writeValueAsString(new Views.Catalog(List.of(new Views.Product("k", "K", "Graduated", 1200)), "t")))
                 .isEqualTo("{\"products\":[{\"project_id\":\"k\",\"name\":\"K\",\"maturity\":\"Graduated\",\"unit_price_cents\":1200}],\"generated_at\":\"t\"}");

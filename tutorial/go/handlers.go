@@ -58,8 +58,7 @@ func (a *App) totalValue(cents int) any {
 // Response shapes. Field order is the JSON key order of the contract.
 
 type healthResponse struct {
-	Status  string `json:"status"`
-	Version string `json:"version"`
+	Status string `json:"status"`
 }
 
 type product struct {
@@ -133,7 +132,7 @@ func (a *App) internalError(w http.ResponseWriter, what string, err error) {
 }
 
 func (a *App) healthz(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, healthResponse{Status: "ok", Version: a.Version})
+	writeJSON(w, http.StatusOK, healthResponse{Status: "ok"})
 }
 
 func (a *App) catalog(w http.ResponseWriter, r *http.Request) {

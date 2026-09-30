@@ -315,7 +315,7 @@ def create_app(db=None, upstream=None, version: str | None = None, slow: bool | 
 
     @app.get("/healthz")
     async def healthz():
-        return JSONResponse({"status": "ok", "version": version})
+        return JSONResponse({"status": "ok"})
 
     @app.get("/catalog")
     async def catalog():

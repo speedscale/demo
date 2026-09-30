@@ -198,7 +198,7 @@ def test_healthz_compact():
     r = client("v2").get("/healthz")
     assert r.status_code == 200
     assert r.headers["content-type"] == "application/json"
-    assert r.text == '{"status":"ok","version":"v2"}'
+    assert r.text == '{"status":"ok"}'
 
 
 def test_catalog():

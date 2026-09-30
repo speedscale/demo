@@ -60,7 +60,7 @@ test('healthz', async () => {
   const res = await fetch(`${base}/healthz`)
   assert.equal(res.status, 200)
   assert.equal(res.headers.get('content-type'), 'application/json')
-  assert.equal(await res.text(), '{"status":"ok","version":"v1"}')
+  assert.equal(await res.text(), '{"status":"ok"}')
 })
 
 test('unknown path and malformed JSON use the contract errors', async () => {

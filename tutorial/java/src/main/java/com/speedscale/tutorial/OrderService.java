@@ -32,7 +32,7 @@ public class OrderService {
     }
 
     public Views.Health health() {
-        return new Views.Health("ok", settings.version());
+        return new Views.Health("ok");
     }
 
     public Views.Catalog catalog() {

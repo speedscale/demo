@@ -39,7 +39,7 @@ export function createApp({ store, catalog, version = 'v1', slow = false, clock 
   // Wrap async handlers so a rejection reaches the error handler.
   const route = (fn) => (req, res, next) => fn(req, res).catch(next)
 
-  app.get('/healthz', (req, res) => send(res, 200, { status: 'ok', version }))
+  app.get('/healthz', (req, res) => send(res, 200, { status: 'ok' }))
 
   app.get('/catalog', route(async (req, res) => {
     const products = await catalog.products()

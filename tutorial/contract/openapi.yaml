@@ -11,7 +11,7 @@ servers:
 paths:
   /healthz:
     get:
-      summary: Liveness and the running version
+      summary: Liveness
       responses:
         "200":
           description: OK
@@ -19,10 +19,9 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status, version]
+                required: [status]
                 properties:
                   status: {type: string, enum: [ok]}
-                  version: {type: string, example: v1}
   /catalog:
     get:
       summary: Every product, priced by CNCF maturity

@@ -361,7 +361,7 @@ func TestUnknownPath(t *testing.T) {
 func TestHealthz(t *testing.T) {
 	app, _, seen := newTestApp(t, "v2", false)
 	rec := do(app, "GET", "/healthz", "")
-	if rec.Body.String() != `{"status":"ok","version":"v2"}` || len(*seen) != 0 {
+	if rec.Body.String() != `{"status":"ok"}` || len(*seen) != 0 {
 		t.Fatalf("%s", rec.Body)
 	}
 }

@@ -81,7 +81,7 @@ Price by maturity, in cents: `Graduated` 1200, `Incubating` 800, `Sandbox` 500. 
 
 ### GET /healthz
 
-`200 {"status":"ok","version":"v1"}` (the `APP_VERSION` value). No database or upstream call.
+`200 {"status":"ok"}`. No database or upstream call. It does not report `APP_VERSION` (the startup log line does), so a v2 regression shows up in the order data rather than in the health check.
 
 ### GET /catalog
 

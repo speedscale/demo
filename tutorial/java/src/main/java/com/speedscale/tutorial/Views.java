@@ -16,8 +16,8 @@ public final class Views {
         return v2 ? Long.toString(cents) : (Object) cents;
     }
 
-    @JsonPropertyOrder({"status", "version"})
-    public record Health(String status, String version) {
+    @JsonPropertyOrder({"status"})
+    public record Health(String status) {
     }
 
     @JsonPropertyOrder({"project_id", "name", "maturity", "unit_price_cents"})

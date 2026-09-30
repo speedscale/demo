@@ -1,0 +1,23 @@
+{
+  "catalog_calls": 3,
+  "order_rounds": 40,
+  "list_calls": 5,
+  "orders": [
+    {"customer": "ada@example.com", "items": [{"project_id": "kubernetes", "quantity": 2}]},
+    {"customer": "grace@example.com", "items": [{"project_id": "prometheus", "quantity": 1}, {"project_id": "opentelemetry", "quantity": 3}]},
+    {"customer": "linus@example.com", "items": [{"project_id": "envoy", "quantity": 1}]},
+    {"customer": "margaret@example.com", "items": [{"project_id": "k3s", "quantity": 4}, {"project_id": "helm", "quantity": 1}]},
+    {"customer": "ken@example.com", "items": [{"project_id": "cilium", "quantity": 2}, {"project_id": "knative", "quantity": 1}, {"project_id": "chaos-mesh", "quantity": 1}]},
+    {"customer": "barbara@example.com", "items": [{"project_id": "etcd", "quantity": 5}]},
+    {"customer": "dennis@example.com", "items": [{"project_id": "argo", "quantity": 1}, {"project_id": "flux", "quantity": 1}]},
+    {"customer": "radia@example.com", "items": [{"project_id": "backstage", "quantity": 2}]}
+  ],
+  "bad_requests": [
+    {"method": "POST", "path": "/orders", "body": {"items": [{"project_id": "kubernetes", "quantity": 1}]}, "expect": 400},
+    {"method": "POST", "path": "/orders", "body": {"customer": "ada@example.com", "items": [{"project_id": "kubernetes", "quantity": 0}]}, "expect": 400},
+    {"method": "POST", "path": "/orders", "body": {"customer": "ada@example.com", "items": [{"project_id": "not-a-cncf-project", "quantity": 1}]}, "expect": 422},
+    {"method": "POST", "path": "/orders", "body": {"customer": "grace@example.com", "items": [{"project_id": "kubernetez", "quantity": 1}]}, "expect": 422},
+    {"method": "GET", "path": "/orders/00000000-0000-4000-8000-000000000000", "expect": 404},
+    {"method": "GET", "path": "/orders/00000000-0000-4000-8000-000000000000/status", "expect": 404}
+  ]
+}

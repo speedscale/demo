@@ -1,0 +1,183 @@
+openapi: 3.0.3
+info:
+  title: Tutorial orders service
+  version: "1"
+  description: >-
+    A small CNCF swag shop used by the proxymock agent tutorial. Every language
+    port implements this API. SPEC.md in this directory is the full behavior
+    contract; this file describes the wire shapes.
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      summary: Liveness
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: {type: string, enum: [ok]}
+  /catalog:
+    get:
+      summary: Every product, priced by CNCF maturity
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [products, generated_at]
+                properties:
+                  products:
+                    type: array
+                    items: {$ref: "#/components/schemas/Product"}
+                  generated_at: {$ref: "#/components/schemas/Timestamp"}
+        "502": {$ref: "#/components/responses/Error"}
+  /orders:
+    get:
+      summary: Orders created in the last hour, newest first
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [orders, generated_at]
+                properties:
+                  orders:
+                    type: array
+                    items: {$ref: "#/components/schemas/OrderSummary"}
+                  generated_at: {$ref: "#/components/schemas/Timestamp"}
+    post:
+      summary: Place an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/NewOrder"}
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "400": {$ref: "#/components/responses/Error"}
+        "422": {$ref: "#/components/responses/Error"}
+        "502": {$ref: "#/components/responses/Error"}
+  /orders/{id}:
+    get:
+      summary: One order with its items
+      parameters:
+        - {$ref: "#/components/parameters/OrderId"}
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Order"}
+        "404": {$ref: "#/components/responses/Error"}
+  /orders/{id}/status:
+    get:
+      summary: The status of one order
+      parameters:
+        - {$ref: "#/components/parameters/OrderId"}
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, status, generated_at]
+                properties:
+                  id: {type: string, format: uuid}
+                  status: {type: string, example: placed}
+                  generated_at: {$ref: "#/components/schemas/Timestamp"}
+        "404": {$ref: "#/components/responses/Error"}
+components:
+  parameters:
+    OrderId:
+      name: id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error: {type: string}
+  schemas:
+    Timestamp:
+      type: string
+      format: date-time
+      description: UTC, RFC 3339, exactly three fractional digits, Z suffix
+      example: "2026-09-30T10:44:50.123Z"
+    Cents:
+      type: integer
+      description: An amount in cents. APP_VERSION=v2 renders total_cents as a string, which is the planted regression.
+    Product:
+      type: object
+      required: [project_id, name, maturity, unit_price_cents]
+      properties:
+        project_id: {type: string, example: kubernetes}
+        name: {type: string, example: Kubernetes}
+        maturity: {type: string, enum: [Graduated, Incubating, Sandbox]}
+        unit_price_cents: {type: integer, example: 1200}
+    NewOrder:
+      type: object
+      required: [customer, items]
+      properties:
+        customer: {type: string, minLength: 1, example: ada@example.com}
+        items:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            type: object
+            required: [project_id, quantity]
+            properties:
+              project_id: {type: string, minLength: 1, example: kubernetes}
+              quantity: {type: integer, minimum: 1, maximum: 99, example: 2}
+    OrderItem:
+      type: object
+      required: [project_id, name, quantity, unit_price_cents]
+      properties:
+        project_id: {type: string}
+        name: {type: string}
+        quantity: {type: integer}
+        unit_price_cents: {type: integer}
+    Order:
+      type: object
+      required: [id, customer, status, items, total_cents, created_at, generated_at]
+      properties:
+        id: {type: string, format: uuid}
+        customer: {type: string}
+        status: {type: string, example: placed}
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/OrderItem"}
+        total_cents: {$ref: "#/components/schemas/Cents"}
+        created_at: {$ref: "#/components/schemas/Timestamp"}
+        generated_at: {$ref: "#/components/schemas/Timestamp"}
+    OrderSummary:
+      type: object
+      required: [id, customer, status, item_count, total_cents, created_at]
+      properties:
+        id: {type: string, format: uuid}
+        customer: {type: string}
+        status: {type: string}
+        item_count: {type: integer}
+        total_cents: {$ref: "#/components/schemas/Cents"}
+        created_at: {$ref: "#/components/schemas/Timestamp"}

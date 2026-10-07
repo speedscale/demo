@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: shop
+    # PG_HOST_PORT moves Postgres off 5432 when something else already uses it.
+    ports:
+      - "${PG_HOST_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "demo", "-d", "shop"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  app:
+    build: .
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+    ports:
+      - "${APP_HOST_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy

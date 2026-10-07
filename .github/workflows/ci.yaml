@@ -257,6 +257,9 @@ jobs:
           - name: go-postgres
             path: go-postgres
             build_cmd: make build test
+          - name: go-sqlcommenter
+            path: go-sqlcommenter
+            build_cmd: make build test
     steps:
     - name: Checkout
       uses: actions/checkout@v4

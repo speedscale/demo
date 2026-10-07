@@ -41,6 +41,10 @@ An IP distance calculator service that uses the ipstack API to determine geograp
 
 A Go users and orders REST API on MySQL 8.4 that uses server-side prepared statements and an explicit transaction. It exercises proxymock's MySQL capture, mocking, replay and database load testing.
 
+### [Go sqlcommenter](go-sqlcommenter/)
+
+A Go orders API on Postgres that tags every SQL statement with a sqlcommenter comment carrying the inbound request's W3C traceparent and route. Its recording shows proxymock linking each query to the request that ran it by trace id, including overlapping requests and the prepared statement caveat.
+
 ### [Python](python/)
 
 A Flask application that proxies SpaceX API data, providing a simple example of Python-based API integration suitable for traffic capture and replay testing.

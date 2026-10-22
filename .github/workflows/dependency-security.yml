@@ -49,6 +49,8 @@ jobs:
         filters: |
           workflow: &workflow
             - '.github/workflows/dependency-security.yml'
+            - '.github/scripts/audit-result.py'
+            - '.github/scripts/test-audit-result.py'
           node:
             - *workflow
             - '**/package.json'
@@ -95,8 +97,10 @@ jobs:
         node-version: '20'
 
     - name: npm audit
+      id: audit
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         status=0
         for dir in node node-auth node-mariadb node-websocket dlp-demo smart-replace-demo llm-simulation-demo/frontend scenarios/microservices/gateway csharp/requestor; do
           echo "::group::npm ci + audit: ${dir}"
@@ -107,6 +111,24 @@ jobs:
           echo "::endgroup::"
         done
         exit $status
+
+    - name: Record audit result
+      if: always()
+      env:
+        AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        AUDIT_COMPONENT: ${{ github.job }}
+      run: python3 .github/scripts/audit-result.py
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-node
+        path: |
+          nightly-audit.log
+          nightly-result.json
+        retention-days: 90
+        if-no-files-found: warn
 
   python:
     name: Python (pip-audit)
@@ -125,8 +147,10 @@ jobs:
     # Audits every requirements*.txt in the repo, including requirements-dev.txt
     # files — dev-only deps (e.g. pytest) get CVEs too.
     - name: pip-audit
+      id: audit
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         python -m pip install --upgrade pip pip-audit
         status=0
         while IFS= read -r f; do
@@ -138,6 +162,24 @@ jobs:
           echo "::endgroup::"
         done < <(find . -name 'requirements*.txt' -not -path '*/node_modules/*' -not -path '*/.git/*' | sort)
         exit $status
+
+    - name: Record audit result
+      if: always()
+      env:
+        AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        AUDIT_COMPONENT: ${{ github.job }}
+      run: python3 .github/scripts/audit-result.py
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-python
+        path: |
+          nightly-audit.log
+          nightly-result.json
+        retention-days: 90
+        if-no-files-found: warn
 
   php:
     name: PHP (composer audit)
@@ -155,13 +197,33 @@ jobs:
         tools: composer
 
     - name: Composer audit
+      id: audit
       working-directory: php
       run: |
+        exec > >(tee "$GITHUB_WORKSPACE/nightly-audit.log") 2>&1
         composer install --no-interaction --no-progress --prefer-dist
         # --abandoned=report: only fail on real security advisories. Don't
         # fail the build just because a transitive phpunit dep is marked
         # abandoned — matches semantics of bundle-audit / npm audit.
         composer audit --abandoned=report
+
+    - name: Record audit result
+      if: always()
+      env:
+        AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        AUDIT_COMPONENT: ${{ github.job }}
+      run: python3 .github/scripts/audit-result.py
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-php
+        path: |
+          nightly-audit.log
+          nightly-result.json
+        retention-days: 90
+        if-no-files-found: warn
 
   ruby:
     name: Ruby (bundle-audit)
@@ -179,8 +241,10 @@ jobs:
 
     # bundle-audit only reads Gemfile.lock, so no bundle install is needed.
     - name: bundle-audit
+      id: audit
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         gem install bundler-audit --no-document
         bundle-audit update
         status=0
@@ -193,6 +257,24 @@ jobs:
           echo "::endgroup::"
         done
         exit $status
+
+    - name: Record audit result
+      if: always()
+      env:
+        AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        AUDIT_COMPONENT: ${{ github.job }}
+      run: python3 .github/scripts/audit-result.py
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-ruby
+        path: |
+          nightly-audit.log
+          nightly-result.json
+        retention-days: 90
+        if-no-files-found: warn
 
   go:
     name: Go (govulncheck)
@@ -214,8 +296,10 @@ jobs:
     - name: govulncheck
       env:
         GOTOOLCHAIN: go1.26.6
+      id: audit
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         go version
         go install golang.org/x/vuln/cmd/govulncheck@latest
         GOPATH_BIN="$(go env GOPATH)/bin"
@@ -230,6 +314,24 @@ jobs:
           echo "::endgroup::"
         done
         exit $status
+
+    - name: Record audit result
+      if: always()
+      env:
+        AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        AUDIT_COMPONENT: ${{ github.job }}
+      run: python3 .github/scripts/audit-result.py
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-go
+        path: |
+          nightly-audit.log
+          nightly-result.json
+        retention-days: 90
+        if-no-files-found: warn
 
   dotnet:
     name: .NET (vulnerable packages)
@@ -248,8 +350,10 @@ jobs:
     # `dotnet list package --vulnerable` always exits 0, so grep its output
     # for findings (vulnerable packages are listed as "> PackageName ...").
     - name: dotnet list vulnerable packages
+      id: audit
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         status=0
         for proj in csharp/weatherService.csproj csharp/client/client.csproj csharp/tests/WeatherServiceTests.csproj; do
           dir=$(dirname "$proj")
@@ -265,6 +369,24 @@ jobs:
           echo "::endgroup::"
         done
         exit $status
+
+    - name: Record audit result
+      if: always()
+      env:
+        AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        AUDIT_COMPONENT: ${{ github.job }}
+      run: python3 .github/scripts/audit-result.py
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-dotnet
+        path: |
+          nightly-audit.log
+          nightly-result.json
+        retention-days: 90
+        if-no-files-found: warn
 
   java:
     name: Java (trivy)
@@ -301,8 +423,10 @@ jobs:
         echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
     - name: trivy scan (Maven poms)
+      id: audit
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         status=0
         for dir in java java-auth; do
           echo "::group::trivy ${dir}"
@@ -317,18 +441,50 @@ jobs:
   # Single required status check for branch protection. Passes when every
   # language job succeeded or was skipped (not relevant to this PR); fails if
   # any ran and failed.
+    - name: Record audit result
+      if: always()
+      env:
+        AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        AUDIT_COMPONENT: ${{ github.job }}
+      run: python3 .github/scripts/audit-result.py
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-java
+        path: |
+          nightly-audit.log
+          nightly-result.json
+        retention-days: 90
+        if-no-files-found: warn
+
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
     needs: [changes, node, python, php, ruby, go, dotnet, java]
     if: always()
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Test audit summaries
+      run: python3 .github/scripts/test-audit-result.py
     - name: Check results
       env:
         RESULTS: ${{ toJSON(needs) }}
       run: |
+        mkdir -p nightly-results
+        printf '%s\n' "$RESULTS" > nightly-results/jobs.json
         echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
-        if echo "$RESULTS" | jq -e 'any(.[]; .result == "failure" or .result == "cancelled")' > /dev/null; then
+        if echo "$RESULTS" | jq -e 'any(to_entries[]; .value.result == "failure" or .value.result == "cancelled" or (env.GITHUB_EVENT_NAME == "schedule" and .key != "changes" and .value.result != "success"))' > /dev/null; then
           echo "::error title=security::one or more language audits failed"
           exit 1
         fi
+    - name: Retain scheduled check results
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-summary
+        path: nightly-results/jobs.json
+        retention-days: 90
+        if-no-files-found: error

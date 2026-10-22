@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "schedules": [
+    {
+      "id": ".github/workflows/dependency-security.yml@0 8 * * 1",
+      "name": "Dependency Security",
+      "cron": "0 8 * * 1",
+      "timezone": "UTC",
+      "kind": "security",
+      "grace_minutes": 240,
+      "owner": "ken-ahrens",
+      "route": "security",
+      "required_jobs": [
+        "Node\\.js\\ \\(npm\\ audit\\)",
+        "Python\\ \\(pip\\-audit\\)",
+        "PHP\\ \\(composer\\ audit\\)",
+        "Ruby\\ \\(bundle\\-audit\\)",
+        "Go\\ \\(govulncheck\\)",
+        "\\.NET\\ \\(vulnerable\\ packages\\)",
+        "Java\\ \\(trivy\\)",
+        "Security\\ Summary"
+      ],
+      "reports": {
+        "Node\\.js\\ \\(npm\\ audit\\)": "log-footer",
+        "Python\\ \\(pip\\-audit\\)": "log-footer",
+        "PHP\\ \\(composer\\ audit\\)": "log-footer",
+        "Ruby\\ \\(bundle\\-audit\\)": "log-footer",
+        "Go\\ \\(govulncheck\\)": "log-footer",
+        "\\.NET\\ \\(vulnerable\\ packages\\)": "log-footer",
+        "Java\\ \\(trivy\\)": "log-footer"
+      }
+    }
+  ]
+}

@@ -96,7 +96,7 @@ jobs:
 
     - name: Cache Dependencies
       if: matrix.service.setup == 'java'
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -292,11 +292,11 @@ jobs:
       if: startsWith(matrix.service.name, 'go-')
       uses: actions/setup-go@v5
       with:
-        go-version: '1.26.6'
+        go-version: '1.26.10'
 
     - name: Cache Dependencies
       if: contains(matrix.service.name, 'java')
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}

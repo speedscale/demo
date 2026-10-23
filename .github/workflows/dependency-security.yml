@@ -96,7 +96,8 @@ jobs:
 
     - name: npm audit
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         status=0
         for dir in node node-auth node-mariadb node-websocket dlp-demo smart-replace-demo llm-simulation-demo/frontend scenarios/microservices/gateway csharp/requestor; do
           echo "::group::npm ci + audit: ${dir}"
@@ -107,6 +108,15 @@ jobs:
           echo "::endgroup::"
         done
         exit $status
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-node
+        path: nightly-audit.log
+        retention-days: 90
+        if-no-files-found: warn
 
   python:
     name: Python (pip-audit)
@@ -126,7 +136,8 @@ jobs:
     # files — dev-only deps (e.g. pytest) get CVEs too.
     - name: pip-audit
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         python -m pip install --upgrade pip pip-audit
         status=0
         while IFS= read -r f; do
@@ -138,6 +149,15 @@ jobs:
           echo "::endgroup::"
         done < <(find . -name 'requirements*.txt' -not -path '*/node_modules/*' -not -path '*/.git/*' | sort)
         exit $status
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-python
+        path: nightly-audit.log
+        retention-days: 90
+        if-no-files-found: warn
 
   php:
     name: PHP (composer audit)
@@ -157,11 +177,21 @@ jobs:
     - name: Composer audit
       working-directory: php
       run: |
+        exec > >(tee "$GITHUB_WORKSPACE/nightly-audit.log") 2>&1
         composer install --no-interaction --no-progress --prefer-dist
         # --abandoned=report: only fail on real security advisories. Don't
         # fail the build just because a transitive phpunit dep is marked
         # abandoned — matches semantics of bundle-audit / npm audit.
         composer audit --abandoned=report
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-php
+        path: nightly-audit.log
+        retention-days: 90
+        if-no-files-found: warn
 
   ruby:
     name: Ruby (bundle-audit)
@@ -180,7 +210,8 @@ jobs:
     # bundle-audit only reads Gemfile.lock, so no bundle install is needed.
     - name: bundle-audit
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         gem install bundler-audit --no-document
         bundle-audit update
         status=0
@@ -194,6 +225,15 @@ jobs:
         done
         exit $status
 
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-ruby
+        path: nightly-audit.log
+        retention-days: 90
+        if-no-files-found: warn
+
   go:
     name: Go (govulncheck)
     runs-on: ubuntu-latest
@@ -203,19 +243,20 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # Pin Go to the toolchain used in go.mod (go1.26.6). setup-go@v5 + go-version-file may follow only
+    # Pin Go to the toolchain used in go.mod (go1.26.10). setup-go@v5 + go-version-file may follow only
     # the `go` line (1.23.x), leaving a stale preinstalled Go (e.g. 1.24) on PATH — then `go install
     # govulncheck` builds against 1.24 and govulncheck fails loading stdlib (fips140only_go1.26.go).
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.26.6'
+        go-version: '1.26.10'
 
     - name: govulncheck
       env:
-        GOTOOLCHAIN: go1.26.6
+        GOTOOLCHAIN: go1.26.10
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         go version
         go install golang.org/x/vuln/cmd/govulncheck@latest
         GOPATH_BIN="$(go env GOPATH)/bin"
@@ -230,6 +271,15 @@ jobs:
           echo "::endgroup::"
         done
         exit $status
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-go
+        path: nightly-audit.log
+        retention-days: 90
+        if-no-files-found: warn
 
   dotnet:
     name: .NET (vulnerable packages)
@@ -249,7 +299,8 @@ jobs:
     # for findings (vulnerable packages are listed as "> PackageName ...").
     - name: dotnet list vulnerable packages
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         status=0
         for proj in csharp/weatherService.csproj csharp/client/client.csproj csharp/tests/WeatherServiceTests.csproj; do
           dir=$(dirname "$proj")
@@ -265,6 +316,15 @@ jobs:
           echo "::endgroup::"
         done
         exit $status
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-dotnet
+        path: nightly-audit.log
+        retention-days: 90
+        if-no-files-found: warn
 
   java:
     name: Java (trivy)
@@ -302,7 +362,8 @@ jobs:
 
     - name: trivy scan (Maven poms)
       run: |
-        set -uo pipefail
+        exec > >(tee nightly-audit.log) 2>&1
+        set -euo pipefail
         status=0
         for dir in java java-auth; do
           echo "::group::trivy ${dir}"
@@ -313,6 +374,15 @@ jobs:
           echo "::endgroup::"
         done
         exit $status
+
+    - name: Retain audit evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-java
+        path: nightly-audit.log
+        retention-days: 90
+        if-no-files-found: warn
 
   # Single required status check for branch protection. Passes when every
   # language job succeeded or was skipped (not relevant to this PR); fails if
@@ -327,8 +397,18 @@ jobs:
       env:
         RESULTS: ${{ toJSON(needs) }}
       run: |
+        mkdir -p nightly-results
+        printf '%s\n' "$RESULTS" > nightly-results/jobs.json
         echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
-        if echo "$RESULTS" | jq -e 'any(.[]; .result == "failure" or .result == "cancelled")' > /dev/null; then
+        if echo "$RESULTS" | jq -e 'any(to_entries[]; .value.result == "failure" or .value.result == "cancelled" or (env.GITHUB_EVENT_NAME == "schedule" and .key != "changes" and .value.result != "success"))' > /dev/null; then
           echo "::error title=security::one or more language audits failed"
           exit 1
         fi
+    - name: Retain scheduled check results
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: security-summary
+        path: nightly-results/jobs.json
+        retention-days: 90
+        if-no-files-found: error

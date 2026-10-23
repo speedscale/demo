@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.16</version>
+        <version>4.0.9</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
@@ -15,31 +15,18 @@
     <description>Authentication microservice for Spring Boot</description>
     <properties>
         <java.version>17</java.version>
-        <!-- Boot 3.5.x still manages jackson artifacts affected by open CVEs -->
-        <jackson-bom.version>2.22.3</jackson-bom.version>
-        <!-- Override Boot 3.5.15 to include Tomcat authentication and access-control fixes. -->
-        <tomcat.version>10.1.59</tomcat.version>
-        <!-- Boot 3.5.15 manages logback 1.5.33; CVE-2026-10532 needs 1.5.34 -->
-        <logback.version>1.5.34</logback.version>
-        <!-- Boot 3.5.15 manages log4j 2.24.3; CVE-2026-49844 needs 2.25.5 -->
-        <log4j2.version>2.25.5</log4j2.version>
-        <!-- Boot 3.5.15 manages micrometer 1.15.11; CVE-2026-40983 needs 1.15.12 -->
-        <micrometer.version>1.15.12</micrometer.version>
-        <spring-security.version>6.5.11</spring-security.version>
-        <!-- transitive commons-lang3 3.17.0 has CVE-2025-48924 -->
-        <commons-lang3.version>3.18.0</commons-lang3.version>
     </properties>
     <dependencies>
         <!-- Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
         <!-- MyBatis -->
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>3.0.3</version>
+            <version>4.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -83,8 +70,8 @@
 
         <!-- Flyway for database migrations -->
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -102,7 +89,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
+            <version>3.0.3</version>
         </dependency>
 
         <!-- Janino for Logback conditional processing -->
@@ -115,12 +102,12 @@
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

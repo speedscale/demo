@@ -14,6 +14,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Test version validation
+      run: python3 scripts/test_validate_version.py
+
     - name: Validate version consistency
       run: make validate-version
 

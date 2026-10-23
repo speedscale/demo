@@ -58,7 +58,6 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@sed -i '' '/<artifactId>auth<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/server/pom.xml
 	@sed -i '' '/<artifactId>auth-client<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/client/pom.xml
 	@sed -i '' '/<artifactId>server<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java/server/pom.xml
-	@sed -i '' '/<artifactId>jwt-generator<\/artifactId>/,+1 s|<version>[^<]*</version>|<version>$(VERSION)</version>|' java-auth/scripts/pom.xml
 	@echo "Updating Node package.json..."
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node/package.json
 	@sed -i '' 's|"version": "[0-9.]*"|"version": "$(VERSION)"|' node-auth/package.json
@@ -76,109 +75,7 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@$(MAKE) validate-version
 
 validate-version: ## Validate that all versions are consistent with VERSION file
-	@echo "🔍 Validating version consistency..."
-	@VERSION_FILE=$$(cat VERSION); \
-	echo "Expected version: $$VERSION_FILE"; \
-	echo ""; \
-	echo "Checking Kubernetes manifests:"; \
-	grep -n "image:.*gcr.io/speedscale-demos/.*:[v]*[0-9.]" java-auth/k8s/base/auth-server/auth-deployment.yaml java-auth/k8s/base/auth-client/auth-client-deployment.yaml java/manifest.yaml node/manifest.yaml smart-replace-demo/manifest.yaml ruby-api/k8s/base/ruby-server/ruby-deployment.yaml ruby-api/k8s/base/ruby-client/client-deployment.yaml csharp/manifest.yaml php/manifest.yaml scenarios/microservices/k8s/gateway.yaml scenarios/microservices/k8s/java-server.yaml scenarios/microservices/k8s/csharp-weather.yaml scenarios/microservices/k8s/node-server.yaml scenarios/microservices/k8s/php-server.yaml | \
-	while read line; do \
-		if echo "$$line" | grep -q ":$$VERSION_FILE" || echo "$$line" | grep -q ":v$$VERSION_FILE"; then \
-			echo "  ✅ $$line"; \
-		else \
-			echo "  ❌ $$line (expected $$VERSION_FILE or v$$VERSION_FILE)"; \
-		fi; \
-	done; \
-	echo ""; \
-	echo "Checking Maven pom.xml files:"; \
-	VERSION_IN_AUTH=$$(grep -A1 '<artifactId>auth</artifactId>' java-auth/server/pom.xml | grep '<version>' | sed 's/.*<version>//g' | sed 's/<\/version>.*//g' | xargs); \
-	if [ "$$VERSION_IN_AUTH" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ java-auth/server/pom.xml: $$VERSION_IN_AUTH"; \
-	else \
-		echo "  ❌ java-auth/server/pom.xml: $$VERSION_IN_AUTH (expected $$VERSION_FILE)"; \
-	fi; \
-	VERSION_IN_CLIENT=$$(grep -A1 '<artifactId>auth-client</artifactId>' java-auth/client/pom.xml | grep '<version>' | sed 's/.*<version>//g' | sed 's/<\/version>.*//g' | xargs); \
-	if [ "$$VERSION_IN_CLIENT" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ java-auth/client/pom.xml: $$VERSION_IN_CLIENT"; \
-	else \
-		echo "  ❌ java-auth/client/pom.xml: $$VERSION_IN_CLIENT (expected $$VERSION_FILE)"; \
-	fi; \
-	VERSION_IN_SERVER=$$(grep -A1 '<artifactId>server</artifactId>' java/server/pom.xml | grep '<version>' | sed 's/.*<version>//g' | sed 's/<\/version>.*//g' | xargs); \
-	if [ "$$VERSION_IN_SERVER" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ java/server/pom.xml: $$VERSION_IN_SERVER"; \
-	else \
-		echo "  ❌ java/server/pom.xml: $$VERSION_IN_SERVER (expected $$VERSION_FILE)"; \
-	fi; \
-	VERSION_IN_SCRIPTS=$$(grep -A1 '<artifactId>jwt-generator</artifactId>' java-auth/scripts/pom.xml | grep '<version>' | sed 's/.*<version>//g' | sed 's/<\/version>.*//g' | xargs); \
-	if [ "$$VERSION_IN_SCRIPTS" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ java-auth/scripts/pom.xml: $$VERSION_IN_SCRIPTS"; \
-	else \
-		echo "  ❌ java-auth/scripts/pom.xml: $$VERSION_IN_SCRIPTS (expected $$VERSION_FILE)"; \
-	fi; \
-	echo ""; \
-	echo "Checking LLM Simulation Demo:"; \
-	LLM_TOOLS_IMG=$$(grep 'llm-simulation-tools:' llm-simulation-demo/k8s/tools.yaml | grep -o 'v[0-9.]*' | head -1); \
-	if [ "$$LLM_TOOLS_IMG" = "v$$VERSION_FILE" ]; then \
-		echo "  ✅ llm-simulation-demo/k8s/tools.yaml: $$LLM_TOOLS_IMG"; \
-	else \
-		echo "  ❌ llm-simulation-demo/k8s/tools.yaml: $$LLM_TOOLS_IMG (expected v$$VERSION_FILE)"; \
-	fi; \
-	LLM_BACKEND_IMG=$$(grep 'llm-simulation-backend:' llm-simulation-demo/k8s/backend.yaml | grep -o 'v[0-9.]*' | head -1); \
-	if [ "$$LLM_BACKEND_IMG" = "v$$VERSION_FILE" ]; then \
-		echo "  ✅ llm-simulation-demo/k8s/backend.yaml: $$LLM_BACKEND_IMG"; \
-	else \
-		echo "  ❌ llm-simulation-demo/k8s/backend.yaml: $$LLM_BACKEND_IMG (expected v$$VERSION_FILE)"; \
-	fi; \
-	LLM_FRONTEND_IMG=$$(grep 'llm-simulation-frontend:' llm-simulation-demo/k8s/frontend.yaml | grep -o 'v[0-9.]*' | head -1); \
-	if [ "$$LLM_FRONTEND_IMG" = "v$$VERSION_FILE" ]; then \
-		echo "  ✅ llm-simulation-demo/k8s/frontend.yaml: $$LLM_FRONTEND_IMG"; \
-	else \
-		echo "  ❌ llm-simulation-demo/k8s/frontend.yaml: $$LLM_FRONTEND_IMG (expected v$$VERSION_FILE)"; \
-	fi; \
-	LLM_FE_PKG=$$(grep -o '"version": "[0-9.]*"' llm-simulation-demo/frontend/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
-	if [ "$$LLM_FE_PKG" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ llm-simulation-demo/frontend/package.json: $$LLM_FE_PKG"; \
-	else \
-		echo "  ❌ llm-simulation-demo/frontend/package.json: $$LLM_FE_PKG (expected $$VERSION_FILE)"; \
-	fi; \
-	LLM_BE_VER=$$(grep -o 'version="[0-9.]*"' llm-simulation-demo/backend/app/main.py | sed 's/version="//g' | sed 's/"//g'); \
-	if [ "$$LLM_BE_VER" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ llm-simulation-demo/backend/app/main.py: $$LLM_BE_VER"; \
-	else \
-		echo "  ❌ llm-simulation-demo/backend/app/main.py: $$LLM_BE_VER (expected $$VERSION_FILE)"; \
-	fi; \
-	LLM_TOOLS_VER=$$(grep -o 'version="[0-9.]*"' llm-simulation-demo/tools-service/app/main.py | sed 's/version="//g' | sed 's/"//g'); \
-	if [ "$$LLM_TOOLS_VER" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ llm-simulation-demo/tools-service/app/main.py: $$LLM_TOOLS_VER"; \
-	else \
-		echo "  ❌ llm-simulation-demo/tools-service/app/main.py: $$LLM_TOOLS_VER (expected $$VERSION_FILE)"; \
-	fi; \
-	echo ""; \
-	echo "Checking Node package.json:"; \
-	VERSION_IN_PKG=$$(grep -o '"version": "[0-9.]*"' node/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
-	if [ "$$VERSION_IN_PKG" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ node/package.json: $$VERSION_IN_PKG"; \
-	else \
-		echo "  ❌ node/package.json: $$VERSION_IN_PKG (expected $$VERSION_FILE)"; \
-	fi; \
-	VERSION_IN_AUTH_PKG=$$(grep -o '"version": "[0-9.]*"' node-auth/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
-	if [ "$$VERSION_IN_AUTH_PKG" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ node-auth/package.json: $$VERSION_IN_AUTH_PKG"; \
-	else \
-		echo "  ❌ node-auth/package.json: $$VERSION_IN_AUTH_PKG (expected $$VERSION_FILE)"; \
-	fi; \
-	VERSION_IN_SMART_PKG=$$(grep -o '"version": "[0-9.]*"' smart-replace-demo/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
-	if [ "$$VERSION_IN_SMART_PKG" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ smart-replace-demo/package.json: $$VERSION_IN_SMART_PKG"; \
-	else \
-		echo "  ❌ smart-replace-demo/package.json: $$VERSION_IN_SMART_PKG (expected $$VERSION_FILE)"; \
-	fi; \
-	VERSION_IN_GATEWAY_PKG=$$(grep -o '"version": "[0-9.]*"' scenarios/microservices/gateway/package.json | sed 's/"version": "//g' | sed 's/"//g'); \
-	if [ "$$VERSION_IN_GATEWAY_PKG" = "$$VERSION_FILE" ]; then \
-		echo "  ✅ scenarios/microservices/gateway/package.json: $$VERSION_IN_GATEWAY_PKG"; \
-	else \
-		echo "  ❌ scenarios/microservices/gateway/package.json: $$VERSION_IN_GATEWAY_PKG (expected $$VERSION_FILE)"; \
-	fi
+	@python3 scripts/validate-version.py
 
 bump-version: ## Bump to next patch version and update all files
 	@CURRENT_VERSION=$$(cat VERSION); \

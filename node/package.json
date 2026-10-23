@@ -1,6 +1,6 @@
 {
   "name": "node-server",
-  "version": "2.0.0",
+  "version": "1.4.1",
   "description": "demo app for node — calls Hugging Face, OpenRouter, NASA, and GitHub APIs",
   "main": "index.js",
   "scripts": {

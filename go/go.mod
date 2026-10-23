@@ -2,7 +2,7 @@ module test
 
 go 1.23.2
 
-toolchain go1.26.6
+toolchain go1.26.10
 
 require github.com/aws/aws-sdk-go v1.55.8
 

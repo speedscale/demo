@@ -12,7 +12,14 @@ import java.util.Optional;
 @Repository
 public interface RefreshTokenRepository {
     
-    @Select("SELECT id, token, expires_at, user_id FROM refresh_tokens WHERE token = #{token}")
+    @Select("SELECT id, token, expires_at, created_at, user_id FROM refresh_tokens WHERE token = #{token}")
+    @Results(id = "refreshToken", value = {
+        @Result(column = "id", property = "id", id = true),
+        @Result(column = "expires_at", property = "expiresAt"),
+        @Result(column = "created_at", property = "createdAt"),
+        @Result(column = "user_id", property = "user",
+                one = @One(select = "com.example.auth.repository.UserRepository.findById"))
+    })
     Optional<RefreshToken> findByToken(String token);
     
     @Delete("DELETE FROM refresh_tokens WHERE expires_at < #{now}")
@@ -25,10 +32,12 @@ public interface RefreshTokenRepository {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int save(RefreshToken refreshToken);
     
-    @Select("SELECT id, token, expires_at, user_id FROM refresh_tokens WHERE id = #{id}")
+    @Select("SELECT id, token, expires_at, created_at, user_id FROM refresh_tokens WHERE id = #{id}")
+    @ResultMap("refreshToken")
     Optional<RefreshToken> findById(Long id);
     
-    @Select("SELECT id, token, expires_at, user_id FROM refresh_tokens")
+    @Select("SELECT id, token, expires_at, created_at, user_id FROM refresh_tokens")
+    @ResultMap("refreshToken")
     List<RefreshToken> findAll();
     
     @Delete("DELETE FROM refresh_tokens WHERE id = #{id}")

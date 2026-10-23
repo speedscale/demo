@@ -34,6 +34,7 @@ update-version: ## Update VERSION file and all manifests/configs (usage: make up
 	@echo "$(VERSION)" > VERSION
 	@echo "Updating Kubernetes manifests..."
 	@sed -i '' 's|gcr.io/speedscale-demos/java-auth:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth:v$(VERSION)|g' java-auth/k8s/base/auth-server/auth-deployment.yaml
+	@sed -i '' 's|gcr.io/speedscale-demos/java-auth:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth:v$(VERSION)|g' java-auth/k8s/base/auth-server-statefulset/auth-statefulset.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/java-auth-client:[v]*[0-9.]*|gcr.io/speedscale-demos/java-auth-client:v$(VERSION)|g' java-auth/k8s/base/auth-client/auth-client-deployment.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/java-server:[v]*[0-9.]*|gcr.io/speedscale-demos/java-server:v$(VERSION)|g' java/manifest.yaml
 	@sed -i '' 's|gcr.io/speedscale-demos/node-server:[v]*[0-9.]*|gcr.io/speedscale-demos/node-server:v$(VERSION)|g' node/manifest.yaml

@@ -47,6 +47,14 @@ class VersionValidationTest(unittest.TestCase):
         self.assertIn('node/package.json', result.stdout)
         self.assertIn('2 version check(s) failed', result.stdout)
 
+    def test_supported_statefulset_version_is_checked(self):
+        path = self.root / 'java-auth/k8s/base/auth-server-statefulset/auth-statefulset.yaml'
+        version = (self.root / 'VERSION').read_text().strip()
+        path.write_text(path.read_text().replace('java-auth:v' + version, 'java-auth:v9.9.9'))
+        result = self.run_check()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(str(path.relative_to(self.root)), result.stdout)
+
     def test_missing_manifest_fails(self):
         (self.root / 'node/manifest.yaml').unlink()
         self.assertNotEqual(self.run_check().returncode, 0)

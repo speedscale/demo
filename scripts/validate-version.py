@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 
 MANIFESTS = [
     'java-auth/k8s/base/auth-server/auth-deployment.yaml',
+    'java-auth/k8s/base/auth-server-statefulset/auth-statefulset.yaml',
     'java-auth/k8s/base/auth-client/auth-client-deployment.yaml',
     'java/manifest.yaml', 'node/manifest.yaml', 'smart-replace-demo/manifest.yaml',
     'ruby-api/k8s/base/ruby-server/ruby-deployment.yaml',

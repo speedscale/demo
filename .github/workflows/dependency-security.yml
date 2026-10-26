@@ -99,7 +99,7 @@ jobs:
         exec > >(tee nightly-audit.log) 2>&1
         set -euo pipefail
         status=0
-        for dir in node node-auth node-mariadb node-websocket dlp-demo smart-replace-demo llm-simulation-demo/frontend scenarios/microservices/gateway csharp/requestor; do
+        for dir in node node-auth node-mariadb node-websocket dlp-demo smart-replace-demo llm-simulation-demo/frontend scenarios/microservices/gateway csharp/requestor graphql-demo/node; do
           echo "::group::npm ci + audit: ${dir}"
           if ! (cd "$dir" && npm ci && npm audit --audit-level=moderate); then
             echo "::error title=npm audit::vulnerabilities or install failure in ${dir}"
@@ -348,7 +348,7 @@ jobs:
     - name: Populate Maven cache
       run: |
         set -euo pipefail
-        for dir in java/server java-auth/server java-auth/client; do
+        for dir in java/server java-auth/server java-auth/client graphql-demo/java; do
           echo "::group::mvn dependency:resolve ${dir}"
           (cd "$dir" && mvn -q -B dependency:resolve)
           echo "::endgroup::"
@@ -365,7 +365,7 @@ jobs:
         exec > >(tee nightly-audit.log) 2>&1
         set -euo pipefail
         status=0
-        for dir in java java-auth; do
+        for dir in java java-auth graphql-demo/java; do
           echo "::group::trivy ${dir}"
           if ! trivy fs --scanners vuln --pkg-types library --ignore-unfixed --offline-scan --exit-code 1 "$dir"; then
             echo "::error title=trivy::vulnerabilities in ${dir}"

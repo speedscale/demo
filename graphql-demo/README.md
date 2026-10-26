@@ -8,6 +8,35 @@ parsed and validated for real. A transform that mangles a query produces a
 visible GraphQL error on replay: the server is a correctness oracle, not just a
 traffic sink.
 
+## Four languages, one API
+
+The API and its driver exist in four editions. Each one defines the same
+schema in code with its language's standard GraphQL library, answers every
+request the same way, and has a driver that sends byte-for-byte the same
+requests, so any walkthrough written against one runs unchanged against the
+others.
+
+| Edition | Directory | Library | Build | Run the server | Run the driver |
+|---|---|---|---|---|---|
+| Go | `.` | [graphql-go](https://github.com/graphql-go/graphql) | `go build -o graphql-demo .` | `./graphql-demo` | `./graphql-demo -drive` |
+| Java | `java/` | [graphql-java](https://www.graphql-java.com/) | `mvn -q package` | `java -jar target/graphql-demo.jar` | `java -jar target/graphql-demo.jar -drive` |
+| Node.js | `node/` | [graphql-js](https://github.com/graphql/graphql-js) | `npm ci` | `node graphql-demo.js` | `node graphql-demo.js -drive` |
+| Python | `python/` | [graphql-core](https://github.com/graphql-python/graphql-core) | `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` | `.venv/bin/python graphql_demo.py` | `.venv/bin/python graphql_demo.py -drive` |
+
+Every edition takes the same flags (`-drive`, `-target URL`, `-loop`) and the
+same `PORT` variable, and every directory has the same make targets. Where the
+editions differ, it is the libraries talking:
+
+- The order of a type's fields. graphql-go lists them alphabetically; the
+  others keep the order they were defined in. Anything generated from the
+  schema, such as `proxymock generate` output, follows that order.
+- The wording of validation and syntax errors, and graphql-java's
+  `extensions.classification` on every error. Resolver errors such as
+  `token expired` carry the same message in all four.
+- Whether the driver's HTTP client sends `localhost` through a proxy. Go's and
+  Java's never do. Node.js (with `NODE_USE_ENV_PROXY=1`, which proxymock sets)
+  and Python's `urllib` do.
+
 ## What the traffic covers
 
 One driver pass sends 7 GraphQL operations plus 2 negative cases, chosen so the
@@ -38,6 +67,8 @@ variable) fixes the traffic. The signing secret is fixed and published:
 `speedscale-demo-secret` (HS256).
 
 ## Running it
+
+From the edition's directory (the Go edition shown):
 
 ```bash
 make run                 # server alone on :8080

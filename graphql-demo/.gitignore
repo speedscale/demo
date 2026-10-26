@@ -6,3 +6,11 @@
 proxymock/.proxymock/
 proxymock/results/
 proxymock/**/proxymock.log
+
+# language editions: build output and per-edition proxymock workspaces
+node/node_modules/
+python/.venv/
+java/target/
+node/proxymock/
+python/proxymock/
+java/proxymock/

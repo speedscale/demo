@@ -1,0 +1,18 @@
+{
+  "name": "graphql-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Node.js edition of graphql-demo: the same GraphQL API and driver as the Go version",
+  "type": "module",
+  "main": "graphql-demo.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node graphql-demo.js",
+    "drive": "node graphql-demo.js -drive"
+  },
+  "dependencies": {
+    "graphql": "16.14.2"
+  }
+}

@@ -13,7 +13,7 @@ A PHP Slim Framework application that proxies SpaceX API data, demonstrating mod
 
 ## Prerequisites
 
-- PHP 8.3 or later
+- PHP 8.3.36+, 8.4.27+, or 8.5.12+ within those release branches
 - Composer
 - Docker (for containerized deployment)
 - Kubernetes cluster (for k8s deployment)
@@ -73,7 +73,7 @@ The application will start on `http://localhost:8081`
 
 ```bash
 # Build the image
-docker build -t php-server:latest .
+docker build --pull -t php-server:latest .
 
 # Run the container
 docker run -d -p 8081:8081 php-server:latest

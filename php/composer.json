@@ -3,7 +3,7 @@
     "description": "PHP Slim Framework demo service for Speedscale traffic capture and replay",
     "type": "project",
     "require": {
-        "php": "^8.3",
+        "php": "~8.3.36 || ~8.4.27 || ~8.5.12",
         "slim/slim": "^4.12",
         "guzzlehttp/guzzle": "^7.8"
     },

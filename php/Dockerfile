@@ -2,7 +2,7 @@
 ################################################################################
 # BUILDER IMAGE
 ################################################################################
-FROM php:8.3-cli-alpine AS build
+FROM php:8.3.36-cli-alpine@sha256:86a7a8f46bbf73120a19cf72246f606b6de9aaa84a00971c25d187fbae44c211 AS build
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -22,7 +22,7 @@ COPY . .
 # ------------------------------------------------------------------------------
 # RUNTIME STAGE (optional; keeps image small)
 # ------------------------------------------------------------------------------
-FROM php:8.3-cli-alpine
+FROM php:8.3.36-cli-alpine@sha256:86a7a8f46bbf73120a19cf72246f606b6de9aaa84a00971c25d187fbae44c211
 
 WORKDIR /app
 

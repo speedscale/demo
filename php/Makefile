@@ -10,4 +10,4 @@ build:
 .PHONY: docker-multi
 docker-multi:
 	@echo "Building and pushing multi-arch Docker image"
-	@docker buildx build --push --platform linux/amd64,linux/arm64 --tag ${REGISTRY} .
+	@docker buildx build --pull --push --platform linux/amd64,linux/arm64 --tag ${REGISTRY} .

@@ -1,6 +1,6 @@
 ## Java Demo
 
-This is a Java Spring Boot app that makes makes requests to the [SpaceX API](https://github.com/r-spacex/SpaceX-API/tree/master) and the [US Treasury API](https://fiscaldata.treasury.gov/api-documentation/). The Speedscale documentation also includes a [full walkthrough](https://docs.speedscale.com/tutorial/) of using this demo.
+This is a Java Spring Boot app that makes requests to a [Speedscale-owned static backend](https://demo-api.trafficreplay.com) serving archived SpaceX API data and the [US Treasury API](https://fiscaldata.treasury.gov/api-documentation/). The Speedscale documentation also includes a [full walkthrough](https://docs.speedscale.com/tutorial/) of using this demo.
 
 ### Tools used
 
@@ -34,6 +34,10 @@ Unauthenticated
 
 Authenticated with header `Authorization: Bearer {JWT}`
 
-- `/spacex/launches` - latest launches
+- `/spacex/launches` - latest launch in the archived snapshot
 - `/spacex/ship/{id}` - ship status
 - `/treasury/max_interest` - security with max interest this year
+
+The `/spacex/*` endpoints retain the original response shapes and ship IDs. The downstream defaults to `https://demo-api.trafficreplay.com/spacex`; it serves a frozen December 2023 snapshot. Set `DEMO_SPACEX_BASE_URL=https://demo-api-dev.trafficreplay.com/spacex` for development, or use a local compatibility server. `DEMO_SPACEX_TIMEOUT` defaults to `5s`. Requests remain real outbound HTTP calls for capture and mocking. Missing data returns 404, invalid or unavailable backend responses return 502, and timeouts return 504.
+
+Run `cd server && ./mvnw test` for the downstream contract and failure checks. The traffic client checks HTTP failures, applies request deadlines, refreshes tokens every five loops, and never prints token values.

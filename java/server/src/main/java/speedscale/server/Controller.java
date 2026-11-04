@@ -23,6 +23,8 @@ public class Controller {
 
   @Autowired TokenManager jwt;
 
+  @Autowired SpaceX spaceX;
+
   static final Logger log = LogManager.getLogger();
 
   @GetMapping("/healthz")
@@ -68,16 +70,9 @@ public class Controller {
 
   @GetMapping("/spacex/launches")
   public ResponseEntity<String> launches() {
-    try {
-      return ResponseEntity.ok()
-          .header("Content-Type", "application/json")
-          .body(SpaceX.launches());
-    } catch (Exception e) {
-      log.catching(e);
-    }
     return ResponseEntity.ok()
         .header("Content-Type", "application/json")
-        .body("{}");
+        .body(spaceX.launches());
   }
 
   @GetMapping("/spacex/ship")
@@ -89,16 +84,9 @@ public class Controller {
 
   @GetMapping("/spacex/ship/{id}")
   public ResponseEntity<String> ship(@PathVariable String id) {
-    try {
-      return ResponseEntity.ok()
-          .header("Content-Type", "application/json")
-          .body(SpaceX.ship(id));
-    } catch (Exception e) {
-      log.catching(e);
-    }
     return ResponseEntity.ok()
         .header("Content-Type", "application/json")
-        .body("{}");
+        .body(spaceX.ship(id));
   }
 
   @GetMapping("/treasury/max_interest")

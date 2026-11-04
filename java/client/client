@@ -14,28 +14,28 @@ NC='\033[0m'
 
 login() {
     echo -e "${RED}Getting login token ${NC}"
-    loginToken=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/login" | jq -r .access_token)
-    echo -e "${RED}Login token is ${loginToken}${NC}"
+    loginToken=$(curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/login" | jq -er ' .access_token | select(type == "string" and length > 0)')
+    echo "Login token received"
     echo
 }
 
 rsaToken() {
     echo -e "${RED}Getting RSA token ${NC}"
-    rsaToken=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/rsaToken" | jq -r .access_token)
-    echo -e "${RED}RSA token is ${rsaToken}${NC}"
+    rsaToken=$(curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/rsaToken" | jq -er ' .access_token | select(type == "string" and length > 0)')
+    echo "RSA token received"
     echo
 }
 
 launches() {
     echo -e "${BLUE}Getting launches ${NC}"
-    curl -s -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/spacex/launches"
+    curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/spacex/launches"
     echo
     echo
 }
 
 random-ship() {
     echo -e "${BLUE}Getting random ship ${NC}"
-    curl -s -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/spacex/ship"
+    curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/spacex/ship"
     echo
     echo
 }
@@ -45,14 +45,14 @@ ship() {
     id=${ships[ $RANDOM % ${#ships[@]} ]}
 
     echo -e "${BLUE}Getting ship ${id} ${NC}"
-    curl -s -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/spacex/ship/${id}"
+    curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/spacex/ship/${id}"
     echo
     echo
 }
 
 interest() {
     echo -e "${BLUE}Getting max interest rate security ${NC}"
-    curl -s -X GET -H "Authorization: Bearer ${rsaToken}" "${SERVER_URL}/treasury/max_interest"
+    curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X GET -H "Authorization: Bearer ${rsaToken}" "${SERVER_URL}/treasury/max_interest"
     echo
     echo
 }

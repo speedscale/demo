@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>speedscale</groupId>
 	<artifactId>server</artifactId>
-	<version>1.4.2</version>
+	<version>1.4.3</version>
 	<name>server</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
@@ -19,6 +19,11 @@
 		<gatling-maven-plugin.version>4.4.0</gatling-maven-plugin.version>
 	</properties>
 	<dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>

@@ -1,6 +1,6 @@
 ## Java Demo
 
-This is a Java Spring Boot app that makes makes requests to the [SpaceX API](https://github.com/r-spacex/SpaceX-API/tree/master) and the [US Treasury API](https://fiscaldata.treasury.gov/api-documentation/). The Speedscale documentation also includes a [full walkthrough](https://docs.speedscale.com/tutorial/) of using this demo.
+This is a Java Spring Boot app that makes requests to the existing [CNCF projects API](https://demo-api.trafficreplay.com) and the [US Treasury API](https://fiscaldata.treasury.gov/api-documentation/). The Speedscale documentation also includes a [full walkthrough](https://docs.speedscale.com/tutorial/) of using this demo.
 
 ### Tools used
 
@@ -34,6 +34,14 @@ Unauthenticated
 
 Authenticated with header `Authorization: Bearer {JWT}`
 
-- `/spacex/launches` - latest launches
-- `/spacex/ship/{id}` - ship status
+- `/api/projects` - CNCF projects
+- `/api/project` - random project ID in `project_id`
+- `/api/projects/{id}` - project details
+- `/api/categories` - project categories
 - `/treasury/max_interest` - security with max interest this year
+
+The downstream defaults to `https://demo-api.trafficreplay.com` and uses its existing `/v1/projects`, `/v1/project/{id}`, and `/v1/categories` routes. Set `DEMO_CNCF_BASE_URL=https://demo-api-dev.trafficreplay.com` for development, or point it at mock-lab's local reference server. `DEMO_CNCF_TIMEOUT` defaults to `5s`. No additional backend data or service is needed. Requests remain real outbound HTTP calls for capture and mocking. Missing projects return 404, invalid or unavailable backend responses return 502, and timeouts return 504.
+
+The legacy URLs remain aliases: `/spacex/launches` returns the CNCF project list, `/spacex/ship` returns a random project slug in `ship_id`, and `/spacex/ship/{id}` returns a project by slug. SpaceX-shaped response bodies and SpaceX ship IDs are replaced by CNCF data. The client and Postman collection use the CNCF URLs and project IDs such as `kubernetes`, `prometheus`, and `envoy`.
+
+Run `cd server && ./mvnw test` for the downstream contract and failure checks. The traffic client checks HTTP failures, applies request deadlines, refreshes tokens every five loops, and never prints token values.

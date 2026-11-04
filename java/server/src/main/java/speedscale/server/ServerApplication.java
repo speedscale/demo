@@ -3,7 +3,7 @@ package speedscale.server;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "speedscale")
 public class ServerApplication {
 
 	public static void main(String[] args) {

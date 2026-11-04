@@ -14,45 +14,51 @@ NC='\033[0m'
 
 login() {
     echo -e "${RED}Getting login token ${NC}"
-    loginToken=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/login" | jq -r .access_token)
-    echo -e "${RED}Login token is ${loginToken}${NC}"
+    loginToken=$(curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/login" | jq -er ' .access_token | select(type == "string" and length > 0)')
+    echo "Login token received"
     echo
 }
 
 rsaToken() {
     echo -e "${RED}Getting RSA token ${NC}"
-    rsaToken=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/rsaToken" | jq -r .access_token)
-    echo -e "${RED}RSA token is ${rsaToken}${NC}"
+    rsaToken=$(curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X POST -H "Content-Type: application/json" -d '{"username": "admin", "password": "pass" }' "${SERVER_URL}/rsaToken" | jq -er ' .access_token | select(type == "string" and length > 0)')
+    echo "RSA token received"
     echo
 }
 
-launches() {
-    echo -e "${BLUE}Getting launches ${NC}"
-    curl -s -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/spacex/launches"
-    echo
-    echo
-}
-
-random-ship() {
-    echo -e "${BLUE}Getting random ship ${NC}"
-    curl -s -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/spacex/ship"
+projects() {
+    echo -e "${BLUE}Getting projects ${NC}"
+    curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/api/projects"
     echo
     echo
 }
 
-ship() {
-    ships=("618fad7e563d69573ed8caa9" "614251b711a64135defb3654" "5ea6ed30080df4000697c916")
-    id=${ships[ $RANDOM % ${#ships[@]} ]}
-
-    echo -e "${BLUE}Getting ship ${id} ${NC}"
-    curl -s -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/spacex/ship/${id}"
+random-project() {
+    echo -e "${BLUE}Getting random project ${NC}"
+    curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/api/project"
     echo
+    echo
+}
+
+project() {
+    projects=("kubernetes" "prometheus" "envoy")
+    id=${projects[ $RANDOM % ${#projects[@]} ]}
+
+    echo -e "${BLUE}Getting project ${id} ${NC}"
+    curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X GET -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/api/projects/${id}"
+    echo
+    echo
+}
+
+categories() {
+    echo "Getting categories"
+    curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -H "Authorization: Bearer ${loginToken}" "${SERVER_URL}/api/categories"
     echo
 }
 
 interest() {
     echo -e "${BLUE}Getting max interest rate security ${NC}"
-    curl -s -X GET -H "Authorization: Bearer ${rsaToken}" "${SERVER_URL}/treasury/max_interest"
+    curl --fail-with-body --silent --show-error --connect-timeout 5 --max-time 15 -X GET -H "Authorization: Bearer ${rsaToken}" "${SERVER_URL}/treasury/max_interest"
     echo
     echo
 }
@@ -68,13 +74,16 @@ while true; do
         rsaToken
     fi
 
-    launches
+    projects
     random-sleep
 
-    random-ship
+    random-project
     random-sleep
 
-    ship
+    project
+    random-sleep
+
+    categories
     random-sleep
 
     interest

@@ -25,10 +25,16 @@ class JavaDemoHttpTest {
     static {
         try {
             backend = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-            backend.createContext("/spacex/", exchange -> {
+            backend.createContext("/v1/", exchange -> {
                 String path = exchange.getRequestURI().getPath();
-                String id = path.endsWith("/latest") ? "62dd70d5202306255024d139" : path.substring(path.lastIndexOf('/') + 1);
-                byte[] body = ("{\"id\":\"" + id + "\",\"name\":\"archived sample\"}").getBytes(StandardCharsets.UTF_8);
+                String id = path.substring(path.lastIndexOf('/') + 1);
+                String response = "{\"id\":\"" + id + "\",\"name\":\"project\"}";
+                if (path.equals("/v1/projects")) {
+                    response = "[{\"id\":\"kubernetes\",\"name\":\"Kubernetes\"}]";
+                } else if (path.equals("/v1/categories")) {
+                    response = "[{\"name\":\"Observability\",\"count\":8}]";
+                }
+                byte[] body = response.getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.sendResponseHeaders(200, body.length);
                 exchange.getResponseBody().write(body);
@@ -40,7 +46,7 @@ class JavaDemoHttpTest {
 
     @DynamicPropertySource
     static void downstream(DynamicPropertyRegistry properties) {
-        properties.add("demo.spacex-base-url", () -> "http://127.0.0.1:" + backend.getAddress().getPort() + "/spacex");
+        properties.add("demo.cncf-base-url", () -> "http://127.0.0.1:" + backend.getAddress().getPort());
     }
 
     @LocalServerPort int port;
@@ -64,14 +70,20 @@ class JavaDemoHttpTest {
         HttpResponse<String> loggedIn = client.send(login, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, loggedIn.statusCode());
         String token = json.readTree(loggedIn.body()).get("access_token").asText();
-        HttpResponse<String> launch = send("/spacex/launches", token);
-        assertEquals(200, launch.statusCode());
-        assertEquals("62dd70d5202306255024d139", json.readTree(launch.body()).get("id").asText());
-        for (String id : List.of("618fad7e563d69573ed8caa9", "614251b711a64135defb3654", "5ea6ed30080df4000697c916")) {
-            HttpResponse<String> ship = send("/spacex/ship/" + id, token);
-            assertEquals(200, ship.statusCode());
-            assertEquals(id, json.readTree(ship.body()).get("id").asText());
+        HttpResponse<String> projects = send("/api/projects", token);
+        assertEquals(200, projects.statusCode());
+        assertEquals("kubernetes", json.readTree(projects.body()).get(0).get("id").asText());
+        assertEquals(projects.body(), send("/spacex/launches", token).body());
+        for (String id : List.of("kubernetes", "prometheus", "envoy")) {
+            HttpResponse<String> project = send("/api/projects/" + id, token);
+            assertEquals(200, project.statusCode());
+            assertEquals(id, json.readTree(project.body()).get("id").asText());
+            assertEquals(project.body(), send("/spacex/ship/" + id, token).body());
         }
+        assertNotNull(json.readTree(send("/api/project", token).body()).get("project_id"));
         assertNotNull(json.readTree(send("/spacex/ship", token).body()).get("ship_id"));
+        HttpResponse<String> categories = send("/api/categories", token);
+        assertEquals(200, categories.statusCode());
+        assertEquals("Observability", json.readTree(categories.body()).get(0).get("name").asText());
     }
 }

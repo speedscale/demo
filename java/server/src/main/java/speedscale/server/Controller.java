@@ -23,7 +23,7 @@ public class Controller {
 
   @Autowired TokenManager jwt;
 
-  @Autowired SpaceX spaceX;
+  @Autowired CncfClient cncf;
 
   static final Logger log = LogManager.getLogger();
 
@@ -68,25 +68,35 @@ public class Controller {
     return m;
   }
 
-  @GetMapping("/spacex/launches")
-  public ResponseEntity<String> launches() {
+  @GetMapping({"/api/projects", "/spacex/launches"})
+  public ResponseEntity<String> projects() {
     return ResponseEntity.ok()
         .header("Content-Type", "application/json")
-        .body(spaceX.launches());
+        .body(cncf.projects());
+  }
+
+  @GetMapping("/api/project")
+  public Map<String, String> randomProject() {
+    return Map.of("project_id", CncfClient.randomProject());
   }
 
   @GetMapping("/spacex/ship")
-  public Map<String, String> randomShip() {
-    Map<String, String> m = new HashMap<String, String>();
-    m.put("ship_id", SpaceX.randomShip());
-    return m;
+  public Map<String, String> legacyRandomProject() {
+    return Map.of("ship_id", CncfClient.randomProject());
   }
 
-  @GetMapping("/spacex/ship/{id}")
-  public ResponseEntity<String> ship(@PathVariable String id) {
+  @GetMapping({"/api/projects/{id}", "/spacex/ship/{id}"})
+  public ResponseEntity<String> project(@PathVariable String id) {
     return ResponseEntity.ok()
         .header("Content-Type", "application/json")
-        .body(spaceX.ship(id));
+        .body(cncf.project(id));
+  }
+
+  @GetMapping("/api/categories")
+  public ResponseEntity<String> categories() {
+    return ResponseEntity.ok()
+        .header("Content-Type", "application/json")
+        .body(cncf.categories());
   }
 
   @GetMapping("/treasury/max_interest")

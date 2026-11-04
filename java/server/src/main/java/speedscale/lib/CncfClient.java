@@ -10,13 +10,14 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.Random;
+import java.util.function.Predicate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 @Component
-public class SpaceX {
+public class CncfClient {
 
     private final String baseURL;
     private final Duration timeout;
@@ -24,26 +25,43 @@ public class SpaceX {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static final Random r = new Random();
 
-    public SpaceX(
-            @Value("${demo.spacex-base-url:https://demo-api.trafficreplay.com/spacex}") String baseURL,
-            @Value("${demo.spacex-timeout:5s}") Duration timeout) {
+    public CncfClient(
+            @Value("${demo.cncf-base-url:https://demo-api.trafficreplay.com}") String baseURL,
+            @Value("${demo.cncf-timeout:5s}") Duration timeout) {
         this.baseURL = baseURL.replaceAll("/+$", "");
         this.timeout = timeout;
         this.httpTransport = HttpClient.newBuilder().connectTimeout(timeout).build();
     }
 
-    public String launches() {
-        return fetch("/v5/launches/latest");
+    public String projects() {
+        return fetch("/v1/projects", node -> validList(node, "id"));
     }
 
-    public String ship(String id) {
-        if (!id.matches("[0-9a-f]{24}")) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown ship");
+    public String project(String id) {
+        if (!id.matches("[a-z0-9]+(?:-[a-z0-9]+)*")) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown project");
         }
-        return fetch("/v4/ships/" + id);
+        return fetch("/v1/project/" + id,
+                node -> node != null && node.isObject() && id.equals(node.path("id").asText()));
     }
 
-    private String fetch(String path) {
+    public String categories() {
+        return fetch("/v1/categories", node -> validList(node, "name"));
+    }
+
+    private static boolean validList(JsonNode body, String field) {
+        if (body == null || !body.isArray() || body.isEmpty()) {
+            return false;
+        }
+        for (JsonNode item : body) {
+            if (!item.isObject() || !item.path(field).isTextual() || item.path(field).asText().isBlank()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String fetch(String path, Predicate<JsonNode> valid) {
         HttpRequest request = HttpRequest.newBuilder(URI.create(baseURL + path))
                 .timeout(timeout).GET().build();
         try {
@@ -55,8 +73,7 @@ public class SpaceX {
                 throw new IOException("Demo backend returned " + response.statusCode());
             }
             JsonNode body = objectMapper.readTree(response.body());
-            if (body == null || !body.isObject() || !body.path("id").isTextual()
-                    || body.path("id").asText().isBlank()) {
+            if (!valid.test(body)) {
                 throw new IOException("Demo backend returned invalid data");
             }
             return response.body();
@@ -70,17 +87,17 @@ public class SpaceX {
         }
     }
 
-    public static String randomShip() {
-        String[] ships = new String[] {
-                "618fad7e563d69573ed8caa9",
-                "614251b711a64135defb3654",
-                "5ea6ed30080df4000697c916"
+    public static String randomProject() {
+        String[] projects = new String[] {
+                "kubernetes",
+                "prometheus",
+                "envoy"
         };
         try {
             Thread.sleep(r.nextLong(50));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        return ships[r.nextInt(ships.length)];
+        return projects[r.nextInt(projects.length)];
     }
 }

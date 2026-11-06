@@ -14,6 +14,7 @@ check() {
 }
 
 check "healthz"          /healthz              '.status == "ok"'
+check "catalog"         /catalog              '.huggingface[0] and .openrouter[0]'
 check "models"           /models               '.[0].id'
 check "model detail"     /models/deepseek-ai/DeepSeek-R1  '.id'
 check "llm/models"       /llm/models           '.data[0].id'

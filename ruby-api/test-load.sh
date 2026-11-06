@@ -44,18 +44,30 @@ run_load_test() {
   echo "Running load test with ${LOAD_TEST_VU} virtual users for ${LOAD_TEST_DURATION}s..."
 
   # Run proxymock replay with VUs and duration to simulate load
-  # Redirect app output to /dev/null to avoid cluttering logs
   set +e  # Temporarily disable exit on error to capture exit code
+  proxymock mock \
+    --in "$PROXYMOCK_IN_DIR" \
+    --map 15432=postgres://postgres-service.default.svc.cluster.local:5432 \
+    --proxy-out-port "${MOCK_PROXY_PORT:-4140}" \
+    --log-to proxymock_load_mocks.log \
+    --no-out \
+    --no-passthrough \
+    --app-log-to app_load.log \
+    -- bash -c "exec $APP_COMMAND" > /dev/null 2>&1 &
+  MOCK_PID=$!
+  trap 'kill "$MOCK_PID" 2>/dev/null || true; wait "$MOCK_PID" 2>/dev/null || true' EXIT
+
   proxymock replay \
     --in "$PROXYMOCK_IN_DIR" \
     --test-against localhost:$APP_PORT \
+    --rewrite-host \
     --log-to $LOAD_LOG_FILE \
     --vus $LOAD_TEST_VU \
     --for ${LOAD_TEST_DURATION}s \
+    --fail-if "requests.failed != 0" \
     --fail-if "latency.p95 > 800" \
     --fail-if "latency.max > 1200" \
-    --no-out \
-    -- bash -c "$APP_COMMAND > /dev/null 2>&1"
+    --no-out
 
   PROXYMOCK_EXIT_CODE=$?
   set -e  # Re-enable exit on error

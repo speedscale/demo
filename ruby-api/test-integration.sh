@@ -42,14 +42,25 @@ run_integration_test() {
   echo "Running integration test with proxymock replay..."
 
   # Run proxymock replay with the app, validating that no requests fail
-  # Redirect app output to /dev/null to avoid cluttering logs
   set +e  # Temporarily disable exit on error to capture exit code
+  proxymock mock \
+    --in "$PROXYMOCK_IN_DIR" \
+    --map 15432=postgres://postgres-service.default.svc.cluster.local:5432 \
+    --proxy-out-port "${MOCK_PROXY_PORT:-4140}" \
+    --log-to proxymock_integration_mocks.log \
+    --no-out \
+    --no-passthrough \
+    --app-log-to app_integration.log \
+    -- bash -c "exec $APP_COMMAND" > /dev/null 2>&1 &
+  MOCK_PID=$!
+  trap 'kill "$MOCK_PID" 2>/dev/null || true; wait "$MOCK_PID" 2>/dev/null || true' EXIT
+
   proxymock replay \
     --in "$PROXYMOCK_IN_DIR" \
     --test-against localhost:$APP_PORT \
+    --rewrite-host \
     --log-to $INTEGRATION_LOG_FILE \
-    --fail-if "requests.failed != 0" \
-    -- bash -c "$APP_COMMAND > /dev/null 2>&1"
+    --fail-if "requests.failed != 0"
 
   PROXYMOCK_EXIT_CODE=$?
   set -e  # Re-enable exit on error

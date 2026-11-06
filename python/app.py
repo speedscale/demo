@@ -23,6 +23,25 @@ def get_models():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/catalog", methods=["GET"])
+def get_catalog():
+    try:
+        huggingface = http.get(
+            "https://huggingface.co/api/models",
+            params={"sort": "downloads", "direction": "-1", "limit": "5"},
+            timeout=10,
+        )
+        huggingface.raise_for_status()
+        openrouter = http.get("https://openrouter.ai/api/v1/models", timeout=10)
+        openrouter.raise_for_status()
+        return jsonify({
+            "huggingface": [model["id"] for model in huggingface.json()[:5]],
+            "openrouter": [model["id"] for model in openrouter.json()["data"][:5]],
+        })
+    except http.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/models/<path:model_id>", methods=["GET"])
 def get_model(model_id):
     try:

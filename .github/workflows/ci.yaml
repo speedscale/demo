@@ -27,7 +27,7 @@ jobs:
           --header "SS-API-Key: $SPEEDSCALE_API_KEY" \
           https://app.speedscale.com/v1/external/credentials/apikey/info \
           | jq --exit-status --raw-output \
-            '.tenant.name | strings | select(test("^[a-z0-9][a-z0-9-]{0,62}$"))')"
+            '.payload.tenant.name | strings | select(test("^[a-z0-9][a-z0-9-]{0,62}$"))')"
         printf 'API key tenant: %s\n' "$tenant"
 
   # Overall tests and validation

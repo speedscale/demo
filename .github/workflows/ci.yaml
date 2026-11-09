@@ -7,6 +7,29 @@ on:
     branches: [master, main]
 
 jobs:
+  api-key-tenant-audit:
+    name: Temporary API key tenant audit
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    steps:
+    - name: Identify existing API key tenant
+      env:
+        SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test -n "$SPEEDSCALE_API_KEY"
+        tenant="$(curl --fail --silent --show-error \
+          --connect-timeout 10 --max-time 30 \
+          --header "SS-API-Key: $SPEEDSCALE_API_KEY" \
+          https://app.speedscale.com/v1/external/credentials/apikey/info \
+          | jq --exit-status --raw-output \
+            '.tenant.name | strings | select(test("^[a-z0-9][a-z0-9-]{0,62}$"))')"
+        printf 'API key tenant: %s\n' "$tenant"
+
   # Overall tests and validation
   validate:
     runs-on: ubuntu-latest

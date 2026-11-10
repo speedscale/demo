@@ -289,3 +289,14 @@ class TestGeminiAdapterRun:
         with pytest.raises(ProviderError) as exc_info:
             await adapter.run(_make_request())
         assert exc_info.value.status_code == 503
+
+async def test_openai_compatible_endpoint_override(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "fixture-only")
+    monkeypatch.setenv("OPENAI_CHAT_URL", "http://127.0.0.1:8787/v1/chat/completions")
+    with patch("httpx.AsyncClient.post", new=AsyncMock(side_effect=[
+        _openai_response(TRIAGE_JSON), _openai_response(ANALYSIS_JSON), _openai_response(RESPONSE_JSON),
+    ])) as send:
+        result = await OpenAIAdapter().run(_make_request())
+    assert result.output.severity == "high"
+    assert send.call_count == 3
+    assert all(call.args[0] == "http://127.0.0.1:8787/v1/chat/completions" for call in send.call_args_list)

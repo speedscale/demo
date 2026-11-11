@@ -38,12 +38,13 @@ class OpenAIAdapter:
             raise ProviderError(f"{self._api_key_env} not configured", status_code=503)
 
         model = request.model or self.default_model
+        api_url = os.getenv(f"{self.name.upper()}_CHAT_URL", self._api_base_url)
 
         triage_raw, p1, c1, d1, m1 = await self._call(
             api_key, model,
             system=SYSTEM_PROMPT_TRIAGE,
             user=build_triage_message(request),
-            base_url=self._api_base_url,
+            base_url=api_url,
         )
         triage = _safe_json(triage_raw, {})
         yield StepEvent(name="triage", data=triage, prompt_tokens=p1, completion_tokens=c1,
@@ -53,7 +54,7 @@ class OpenAIAdapter:
             api_key, model,
             system=SYSTEM_PROMPT_ANALYSIS,
             user=build_analysis_message(request, triage, context),
-            base_url=self._api_base_url,
+            base_url=api_url,
         )
         analysis = _safe_json(analysis_raw, {})
         yield StepEvent(name="analysis", data=analysis, prompt_tokens=p2, completion_tokens=c2,
@@ -63,7 +64,7 @@ class OpenAIAdapter:
             api_key, model,
             system=SYSTEM_PROMPT_RESPONSE,
             user=build_response_message(request, triage, analysis),
-            base_url=self._api_base_url,
+            base_url=api_url,
         )
         response = _safe_json(response_raw, {})
         yield StepEvent(name="response", data=response, prompt_tokens=p3, completion_tokens=c3,

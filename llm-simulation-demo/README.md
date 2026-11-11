@@ -163,3 +163,7 @@ See [`k8s/README.md`](k8s/README.md) for Speedscale traffic capture setup.
 | `GET` | `/tools/order/{order_id}` | tools-service |
 | `GET` | `/tools/policy/{policy_id}` | tools-service |
 | `GET` | `/healthz` | |
+
+## AIPerf capture and offline test rehearsal
+
+[Run the AIPerf rehearsal](aiperf/README.md) to capture this app's inference traffic, benchmark the captured request bodies with AIPerf v0.13.0, then test the app with both dependencies stopped. The default uses a deterministic HTTP fixture and needs no GPU or provider credentials. It demonstrates workload exchange and captured-response testing, rather than model performance.

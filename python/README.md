@@ -11,6 +11,7 @@ Flask app that calls external APIs — useful for demonstrating proxymock record
 - `GET /llm/models` — LLM model catalog and pricing from [OpenRouter](https://openrouter.ai)
 - `GET /nasa` — NASA astronomy picture of the day
 - `GET /events` — recent GitHub events for the Speedscale org
+- `POST /tickets` — support-inbox webhook; parses the raw `From` header with `email.utils.parseaddr` and returns the parsed sender, routing queue and whether an auto-reply goes out
 
 ## Architecture
 
@@ -104,3 +105,22 @@ Run the focused tests without contacting either provider:
 ```sh
 .venv/bin/python -m unittest discover -s . -p 'test_*.py'
 ```
+
+## Security fast lane demo
+
+A base-image patch should not change what the service returns. This demo shows a patch that does.
+
+The image is pinned to `python:3.12.5-slim`. Python 3.12.6 fixes CVE-2023-27043 by making `email.utils.parseaddr` stricter. After the bump, four of the 11 recorded tickets get a different JSON response while the status stays 201. Two senders that used to be routed with an auto-reply (`alice@example.org, bob@example.org` and `ops@[192.0.2.10]`) land in `needs-review` with no auto-reply. Two senders that were already in `needs-review` get a different `sender.email`. The unit tests pass on both versions.
+
+`proxymock/recording/` holds 14 inbound requests and the Hugging Face and OpenRouter calls they made, recorded against the 3.12.5 image with `./traffic.sh`. The traffic is generated for the demo, not captured from production.
+
+Check an image locally (needs Docker, `jq` and proxymock):
+
+```bash
+docker build -t fast-lane-demo:candidate .
+./fast-lane-check.sh fast-lane-demo:candidate
+```
+
+The script mocks every outbound call from the recording, starts the image and replays the recorded inbound requests with the `security-patch` test config (`proxymock/testconfigs/security-patch.json`). The test config gates the run: `httpResponseBody` compares every field of each response with the recording, `httpOutput` checks that the outbound calls still match, and the run fails unless 100% of assertions pass. The built-in `regression` config checks only the response schema, so it passes the 3.12.6 image. After the replay, `proxymock files compare -vv` prints the response body lines that changed for each request.
+
+`.github/workflows/security-fast-lane.yml` runs the same check, after a Trivy scan, on pull requests that change the Dockerfile or requirements. To see it fail, change the base image to `python:3.12.6-slim`.

@@ -21,5 +21,10 @@ check "llm/models"       /llm/models           '.data[0].id'
 check "nasa"             /nasa                 '.title'
 check "events"           /events               '.[0].type'
 
+resp=$(curl -sf -X POST "http://${HOST}/tickets" -H 'Content-Type: application/json' \
+  -d '{"from": "Ada Lovelace <ada@example.edu>", "subject": "Login"}') || fail "tickets — no response"
+echo "$resp" | jq -e '.queue == "education" and .auto_reply == true' >/dev/null 2>&1 || fail "tickets — bad payload"
+pass "tickets"
+
 echo ""
 echo "All endpoints OK"

@@ -14,3 +14,9 @@ GET http://{{host}}/llm/models
 
 ### GitHub events
 GET http://{{host}}/events
+
+### Support ticket from an inbound-email webhook
+POST http://{{host}}/tickets
+Content-Type: application/json
+
+{"from": "Ada Lovelace <ada@example.edu>", "subject": "Cannot log in"}

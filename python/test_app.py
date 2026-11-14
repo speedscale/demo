@@ -59,5 +59,29 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(get.call_count, 2)
 
 
+class TicketTests(unittest.TestCase):
+    def setUp(self):
+        self.client = app.test_client()
+
+    def test_routes_named_sender_by_domain(self):
+        result = self.client.post("/tickets", json={"from": "Ada Lovelace <Ada@Example.edu>", "subject": "Login"})
+
+        self.assertEqual(result.status_code, 201)
+        body = result.get_json()
+        self.assertEqual(body["sender"]["email"], "ada@example.edu")
+        self.assertEqual(body["queue"], "education")
+        self.assertTrue(body["auto_reply"])
+
+    def test_unparseable_sender_needs_review(self):
+        result = self.client.post("/tickets", json={"from": "not an address", "subject": "Login"})
+
+        self.assertEqual(result.status_code, 201)
+        self.assertEqual(result.get_json()["queue"], "needs-review")
+
+    def test_rejects_missing_sender(self):
+        result = self.client.post("/tickets", json={"subject": "Login"})
+
+        self.assertEqual(result.status_code, 400)
+
 if __name__ == "__main__":
     unittest.main()

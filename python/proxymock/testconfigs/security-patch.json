@@ -1,0 +1,63 @@
+{
+  "assertionGroups": [
+    {
+      "configs": [
+        {
+          "type": "httpStatusCode"
+        },
+        {
+          "config": {
+            "headers": "Content-Type"
+          },
+          "type": "httpHeaders"
+        },
+        {
+          "type": "httpResponseContentType"
+        },
+        {
+          "type": "httpResponseBody",
+          "config": {
+            "allowNew": "false"
+          }
+        },
+        {
+          "type": "httpOutput",
+          "config": {
+            "mockRequired": "huggingface.co,openrouter.ai"
+          }
+        }
+      ]
+    }
+  ],
+  "cluster": {
+    "cleanup": "inventory",
+    "logLevel": "info",
+    "logsCollected": true,
+    "replayMode": "full-replay",
+    "sidecar_tls_out": true
+  },
+  "generator": {
+    "stages": [
+      {
+        "virtualUsers": {
+          "requestDelay": {},
+          "virtualUsers": "1"
+        }
+      }
+    ]
+  },
+  "id": "security-patch",
+  "responder": {
+    "numReplicas": 1,
+    "passthrough_mode": true
+  },
+  "rules": [
+    {
+      "action": "ALERT",
+      "metricName": "passAssertPct",
+      "type": "TOO_LOW",
+      "value": 100
+    }
+  ],
+  "version": 3
+}

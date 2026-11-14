@@ -1,0 +1,57 @@
+name: Security fast lane
+
+# A base-image or runtime patch should not change behavior. Build the patched
+# image, rescan it, then replay recorded traffic against it with every
+# dependency mocked and fail on any changed response.
+
+on:
+  pull_request:
+    branches: [master, main]
+    paths:
+      - python/Dockerfile
+      - python/requirements.txt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build patched image
+        run: docker build -t fast-lane-demo:candidate .
+
+      - name: Rescan image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: fast-lane-demo:candidate
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Install proxymock
+        env:
+          SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+        run: |
+          sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
+          echo "$HOME/.speedscale" >> "$GITHUB_PATH"
+
+      - name: Replay recorded traffic against patched image
+        env:
+          SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+        run: ./fast-lane-check.sh fast-lane-demo:candidate
+
+      - name: Upload replay results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fast-lane-replay
+          path: |
+            python/proxymock/results/

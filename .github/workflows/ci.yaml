@@ -6,13 +6,36 @@ on:
   pull_request:
     branches: [master, main]
 
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Overall tests and validation
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      unit: ${{ steps.plan.outputs.unit }}
+      integration: ${{ steps.plan.outputs.integration }}
+      load: ${{ steps.plan.outputs.load }}
+      build: ${{ steps.plan.outputs.build }}
+      docker: ${{ steps.plan.outputs.docker }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Test CI planning and image retries
+      run: python3 -m unittest discover -s scripts -p 'test_ci_*.py'
+
+    - name: Select affected services
+      id: plan
+      run: python3 scripts/ci_plan.py
 
     - name: Test version validation
       run: python3 scripts/test_validate_version.py
@@ -24,42 +47,11 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     needs: [validate]
+    if: ${{ needs.validate.outputs.unit != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - name: java
-            path: java/server
-            setup: java
-            test_cmd: mvn test
-          - name: java-auth-server
-            path: java-auth/server
-            setup: java
-            test_cmd: mvn test
-          - name: java-auth-client
-            path: java-auth/client
-            setup: java
-            test_cmd: mvn test
-          - name: ruby-api
-            path: ruby-api
-            setup: ruby
-            test_cmd: ./test-unit.sh
-          - name: csharp
-            path: csharp
-            setup: dotnet
-            test_cmd: dotnet test
-          - name: llm-simulation-tools
-            path: llm-simulation-demo/tools-service
-            setup: python
-            test_cmd: make test
-          - name: llm-simulation-backend
-            path: llm-simulation-demo/backend
-            setup: python
-            test_cmd: make test
-          - name: llm-simulation-frontend
-            path: llm-simulation-demo/frontend
-            setup: node
-            test_cmd: make test
+        service: ${{ fromJSON(needs.validate.outputs.unit) }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -132,14 +124,11 @@ jobs:
   integration-tests:
     runs-on: ubuntu-latest
     needs: [validate]
+    if: ${{ needs.validate.outputs.integration != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - name: ruby-api
-            path: ruby-api
-            setup: ruby
-            test_cmd: ./test-integration.sh
+        service: ${{ fromJSON(needs.validate.outputs.integration) }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -163,7 +152,7 @@ jobs:
         DB_PASSWORD: postgres
         JWT_SECRET: test-secret-for-ci
         USE_MOCK_SERVER: 'true'
-      run: ${{ matrix.service.test_cmd }}
+      run: ./test-integration.sh
 
     - name: Upload Results
       if: always()
@@ -179,14 +168,11 @@ jobs:
   load-tests:
     runs-on: ubuntu-latest
     needs: [validate]
+    if: ${{ needs.validate.outputs.load != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - name: ruby-api
-            path: ruby-api
-            setup: ruby
-            test_cmd: ./test-load.sh
+        service: ${{ fromJSON(needs.validate.outputs.load) }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -210,7 +196,7 @@ jobs:
         DB_PASSWORD: postgres
         JWT_SECRET: test-secret-for-ci
         USE_MOCK_SERVER: 'true'
-      run: ${{ matrix.service.test_cmd }}
+      run: ./test-load.sh
 
     - name: Upload Results
       if: always()
@@ -225,41 +211,12 @@ jobs:
   # Build matrix for different services
   build:
     runs-on: ubuntu-latest
-    needs: [unit-tests, integration-tests, load-tests]
+    needs: [validate, unit-tests, integration-tests, load-tests]
+    if: ${{ !cancelled() && !failure() && needs.validate.outputs.build != '[]' }}
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - name: java
-            path: java
-            build_cmd: make build
-          - name: java-auth
-            path: java-auth
-            build_cmd: make build
-          - name: node
-            path: node
-            build_cmd: make build
-          - name: smart-replace-demo
-            path: smart-replace-demo
-            build_cmd: make build
-          - name: ruby-api
-            path: ruby-api
-            build_cmd: make build
-          - name: ruby-client
-            path: ruby-api
-            build_cmd: make build-client
-          - name: csharp
-            path: csharp
-            build_cmd: make build
-          - name: llm-simulation-frontend
-            path: llm-simulation-demo/frontend
-            build_cmd: make build
-          - name: go-mysql
-            path: go-mysql
-            build_cmd: make build test
-          - name: go-postgres
-            path: go-postgres
-            build_cmd: make build test
+        service: ${{ fromJSON(needs.validate.outputs.build) }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -318,54 +275,17 @@ jobs:
           ${{ matrix.service.path }}/**/target/*.jar
         retention-days: 30
 
-  # Docker build and push (only on master branch)
+  # PRs validate the same platforms and Dockerfiles used for publication.
   docker:
     runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/master'
+    timeout-minutes: 45
+    needs: [validate, unit-tests, integration-tests, load-tests, build]
+    if: ${{ !cancelled() && !failure() && needs.validate.outputs.docker != '[]' }}
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
-        include:
-          - service: java
-            path: java
-            target: docker-multi
-          - service: node
-            path: node
-            target: docker-multi
-          - service: java-auth
-            path: java-auth
-            target: docker-multi
-          - service: smart-replace-demo
-            path: smart-replace-demo
-            target: docker-multi
-          - service: ruby-api
-            path: ruby-api
-            target: docker-multi
-          - service: ruby-client
-            path: ruby-api
-            target: docker-client
-          - service: csharp
-            path: csharp
-            target: docker-multi
-          - service: csharp-client
-            path: csharp
-            target: docker-client-multi
-          - service: php
-            path: php
-            target: docker-multi
-          - service: gateway
-            path: scenarios/microservices/gateway
-            target: docker-multi
-          - service: llm-simulation-tools
-            path: llm-simulation-demo/tools-service
-            target: docker-multi
-          - service: llm-simulation-backend
-            path: llm-simulation-demo/backend
-            target: docker-multi
-          - service: llm-simulation-frontend
-            path: llm-simulation-demo/frontend
-            target: docker-multi
+        image: ${{ fromJSON(needs.validate.outputs.docker) }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -376,21 +296,61 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
+    - name: Expose GitHub cache runtime
+      uses: crazy-max/ghaction-github-runtime@3cb05d89e1f492524af3d41a1c98c83bc3025124 # v3
+
     - name: Authenticate to Google Cloud
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: google-github-actions/auth@v2
       with:
         credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
 
     - name: Set up Cloud SDK
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       uses: google-github-actions/setup-gcloud@v2
 
     - name: Configure Docker for GCR
-      run: gcloud auth configure-docker
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: gcloud auth configure-docker --quiet
 
-    - name: Get version
-      id: version
-      run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+    - name: Validate or publish Docker image
+      env:
+        IMAGE_NAME: ${{ matrix.image.name }}
+        PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        args=("$IMAGE_NAME" --cache)
+        if [ "$PUBLISH" = true ]; then
+          args+=(--push)
+        fi
+        python3 scripts/ci_build_image.py "${args[@]}"
 
-    - name: Build and push Docker image
-      working-directory: ${{ matrix.path }}
-      run: make ${{ matrix.target }} VERSION=${{ steps.version.outputs.version }}
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [validate, unit-tests, integration-tests, load-tests, build, docker]
+    steps:
+    - name: Check selected jobs
+      env:
+        RESULTS: ${{ toJSON(needs) }}
+      run: |
+        python3 - <<'PYTHON'
+        import json
+        import os
+        import sys
+
+        results = json.loads(os.environ['RESULTS'])
+        plan = results['validate']
+        failed = plan['result'] != 'success'
+        for job, key in [('unit-tests', 'unit'), ('integration-tests', 'integration'),
+                         ('load-tests', 'load'), ('build', 'build'), ('docker', 'docker')]:
+            selected = json.loads(plan.get('outputs', {}).get(key, '[]'))
+            status = results[job]['result']
+            print(f'{job}: {status} ({len(selected)} selected)')
+            if selected and status != 'success':
+                failed = True
+            elif status not in ('success', 'skipped'):
+                failed = True
+        sys.exit(1 if failed else 0)
+        PYTHON

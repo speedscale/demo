@@ -2,7 +2,7 @@ module github.com/speedscale/demo/go-mongo
 
 go 1.26.0
 
-toolchain go1.26.10
+toolchain go1.26.11
 
 require go.mongodb.org/mongo-driver/v2 v2.5.0
 

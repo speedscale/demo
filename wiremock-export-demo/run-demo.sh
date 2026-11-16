@@ -65,8 +65,16 @@ done
 # 3. Import the exported mappings via WireMock's admin API.
 # ---------------------------------------------------------------------------
 bold "==> Importing mappings into WireMock"
-curl -s -X POST "$BASE/__admin/mappings/import" --data @"$MAPPINGS" \
-  -o /dev/null -w "    import HTTP %{http_code}\n"
+# --data-binary sends the file as-is. --data would post it as form data, which
+# WireMock tries to URL-decode and rejects when a body contains a '%'.
+import_code=$(curl -s -X POST "$BASE/__admin/mappings/import" \
+  -H 'Content-Type: application/json' --data-binary @"$MAPPINGS" \
+  -o /dev/null -w "%{http_code}")
+echo "    import HTTP $import_code"
+if [ "$import_code" != "200" ]; then
+  echo "FAIL: WireMock rejected the mappings import" >&2
+  exit 1
+fi
 total=$(curl -s "$BASE/__admin/mappings" \
   | python3 -c "import sys,json;print(json.load(sys.stdin)['meta']['total'])")
 echo "    loaded $total stub(s)"

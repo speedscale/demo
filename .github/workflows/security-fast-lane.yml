@@ -43,6 +43,7 @@ jobs:
         run: |
           sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
           echo "$HOME/.speedscale" >> "$GITHUB_PATH"
+          "$HOME/.speedscale/proxymock" init --api-key "$SPEEDSCALE_API_KEY"
 
       - name: Replay recorded traffic against patched image
         env:

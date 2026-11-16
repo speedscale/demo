@@ -1,8 +1,9 @@
-FROM maven:3.9.12-amazoncorretto-25 AS build
-COPY ./server /usr/src/server
+FROM --platform=$BUILDPLATFORM maven:3.9.12-amazoncorretto-25 AS build
 WORKDIR /usr/src/server
-RUN mvn -q clean \
-    && mvn -q -DskipTests package \
+COPY ./server/pom.xml ./
+RUN mvn -B -q dependency:go-offline
+COPY ./server/src ./src
+RUN mvn -B -q -DskipTests package \
     && cp target/server-*.jar /app.jar
 
 FROM amazoncorretto:25

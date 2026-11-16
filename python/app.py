@@ -1,3 +1,7 @@
+import hashlib
+import os
+from email.utils import parseaddr
+
 from flask import Flask, jsonify, request
 import requests as http
 
@@ -92,5 +96,31 @@ def get_events():
         return jsonify({"error": str(e)}), 500
 
 
+QUEUES = {"edu": "education", "uk": "emea", "de": "emea"}
+
+
+@app.route("/tickets", methods=["POST"])
+def create_ticket():
+    # Inbound-email webhook: "from" is the raw From header.
+    body = request.get_json(silent=True) or {}
+    raw_from = body.get("from")
+    if not raw_from:
+        return jsonify({"error": "missing from"}), 400
+
+    name, address = parseaddr(raw_from)
+    address = address.lower()
+    valid = "@" in address
+    domain = address.rsplit("@", 1)[1] if valid else None
+    queue = QUEUES.get(domain.rsplit(".", 1)[-1], "general") if valid else "needs-review"
+
+    return jsonify({
+        "ticket": hashlib.sha256(f"{raw_from}|{body.get('subject', '')}".encode()).hexdigest()[:12],
+        "subject": body.get("subject", ""),
+        "sender": {"raw": raw_from, "name": name, "email": address, "domain": domain},
+        "valid_sender": valid,
+        "queue": queue,
+        "auto_reply": valid,
+    }), 201
+
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5001)
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1", host="0.0.0.0", port=5001)

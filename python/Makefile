@@ -3,20 +3,20 @@ VENV ?= .venv
 PIP := $(VENV)/bin/pip
 PY := $(VENV)/bin/python
 
-.PHONY: install local test capture mock replay clean
+.PHONY: install local test capture mock replay fast-lane clean
 
 install:
 	$(PYTHON) -m venv $(VENV)
 	$(PIP) install -r requirements.txt
 
 local:
-	$(PY) app.py
+	FLASK_DEBUG=1 $(PY) app.py
 
 test:
 	@./test-all.sh
 
 capture:
-	proxymock record --out proxymock/demo -- $(PY) app.py
+	proxymock record --app-port 5001 --out proxymock/demo -- $(PY) app.py
 
 mock:
 	proxymock mock --in proxymock/demo -- $(PY) app.py
@@ -24,5 +24,9 @@ mock:
 replay:
 	proxymock replay --in proxymock/demo --test-against http://localhost:5001
 
+fast-lane:
+	docker build -t fast-lane-demo:candidate .
+	./fast-lane-check.sh fast-lane-demo:candidate
+
 clean:
-	rm -rf $(VENV) proxymock
+	rm -rf $(VENV) proxymock/demo proxymock/results

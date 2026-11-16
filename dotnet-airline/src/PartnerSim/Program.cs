@@ -42,7 +42,7 @@ var baseFare = new Dictionary<string, decimal> { ["Y"] = 89.00m, ["M"] = 149.00m
 app.MapPost("/pricing/v1/quote", async (QuoteRequest q) =>
 {
     await Lag(150, 300);
-    if (!baseFare.TryGetValue(q.FareClass, out var fare))
+    if (q.FareClass is null || q.FlightNumber is null || !baseFare.TryGetValue(q.FareClass, out var fare))
         return Results.Json(new { error = "unknown fare class" }, statusCode: 422);
     var perPax = fare + (q.FlightNumber.EndsWith('5') ? 20m : 0m);
     var taxes = Math.Round(perPax * 0.075m + 5.60m, 2);

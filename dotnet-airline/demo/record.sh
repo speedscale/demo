@@ -2,10 +2,13 @@
 # Record: real partners + real Redis, app wrapped by proxymock, journeys driven through the inbound proxy.
 source "$(dirname "$0")/common.sh"
 OUT="${1:-proxymock/recording-$(date +%Y%m%d-%H%M%S)}"
+if [ -e "$OUT" ]; then echo "$OUT already exists; choose a new directory" >&2; exit 1; fi
 build
 stop_backends
-start_backends
+assert_ports_free
+assert_backends_down
 trap stop_backends EXIT
+start_backends
 
 $PROXYMOCK record --app-port 8090 --out "$OUT" "${MAPS[@]}" -- dotnet "$API_DLL" >"$RUN_DIR/record.log" 2>&1 &
 PM_PID=$!

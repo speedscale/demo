@@ -6,7 +6,8 @@ VUS="${VUS:-10}" FOR="${FOR:-30s}"
 build
 stop_backends
 assert_backends_down
-$PROXYMOCK mock --in proxymock/recording --out "proxymock/results/mock-load" "${MAPS[@]}" \
+assert_ports_free
+$PROXYMOCK mock --in proxymock/recording --out "proxymock/results/mock-load-$(run_tag)" "${MAPS[@]}" \
   -- dotnet "$API_DLL" >"$RUN_DIR/mock.log" 2>&1 &
 PM_PID=$!
 trap 'kill -INT $PM_PID 2>/dev/null; wait $PM_PID 2>/dev/null || true' EXIT

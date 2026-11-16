@@ -16,6 +16,7 @@ field() { python3 -c "import sys,json; print(json.load(sys.stdin)[sys.argv[1]])"
 book() { # origin destination date passengers flight fareClass card
   call GET "/api/offers?origin=$1&destination=$2&date=$3" >/dev/null
   local cart; cart=$(call POST /api/carts "{\"passengers\":$4}" | field cartId)
+  CARTS+=("$cart")
   call POST "/api/carts/$cart/items" "{\"flightNumber\":\"$5\",\"fareClass\":\"$6\"}" >/dev/null
   call GET "/api/carts/$cart" >/dev/null
   local order; order=$(call POST "/api/carts/$cart/checkout" "{\"cardToken\":\"$7\"}")
@@ -24,10 +25,11 @@ book() { # origin destination date passengers flight fareClass card
   fi
 }
 
+CARTS=()
 book SLC LAX 2026-12-18 1 DM1201 Y tok_visa_4242
 book SLC LAX 2026-12-18 2 DM1205 M tok_amex_0005
 book SLC DEN 2026-12-19 3 DM2407 J tok_mc_4444
 book LAX SLC 2026-12-21 1 DM1302 Y tok_decline
 call POST /api/carts '{"passengers":12}' >/dev/null
 call GET /api/orders/ZZZZZZ >/dev/null
-call POST /api/carts/C000001/checkout '{"cardToken":"tok_visa_4242"}' >/dev/null   # retry after ticketing: 409
+call POST "/api/carts/${CARTS[0]}/checkout" '{"cardToken":"tok_visa_4242"}' >/dev/null   # retry after ticketing: 409

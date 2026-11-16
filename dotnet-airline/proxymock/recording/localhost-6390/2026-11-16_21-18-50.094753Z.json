@@ -1,0 +1,81 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-16T21:18:50.094753Z",
+  "l7protocol": "redis",
+  "duration": 151,
+  "elapsed": "0.151197s",
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1386-4-gf124e1841",
+    "sequence": "109",
+    "source": "goproxy"
+  },
+  "uuid": "k8Mxun8rQPaMyAoGOjsmgA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "SETEX",
+  "location": "offers:SLC:DEN:2026-12-19",
+  "status": "OK",
+  "redis": {
+    "request": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "U0VURVg="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "b2ZmZXJzOlNMQzpERU46MjAyNi0xMi0xOQ=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "MzAw"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "eyJmbGlnaHRzIjpbeyJmbGlnaHROdW1iZXIiOiJETTI0MDUiLCJvcmlnaW4iOiJTTEMiLCJkZXN0aW5hdGlvbiI6IkRFTiIsImRhdGUiOiIyMDI2LTEyLTE5IiwiZGVwYXJ0dXJlIjoiMDY6MzAiLCJkdXJhdGlvbk1pbnV0ZXMiOjY1LCJmYXJlQ2xhc3NlcyI6WyJZIiwiTSIsIkoiXSwic2VhdHNMZWZ0Ijo5fSx7ImZsaWdodE51bWJlciI6IkRNMjQwNyIsIm9yaWdpbiI6IlNMQyIsImRlc3RpbmF0aW9uIjoiREVOIiwiZGF0ZSI6IjIwMjYtMTItMTkiLCJkZXBhcnR1cmUiOiIxMDozMCIsImR1cmF0aW9uTWludXRlcyI6NjUsImZhcmVDbGFzc2VzIjpbIlkiLCJNIiwiSiJdLCJzZWF0c0xlZnQiOjZ9LHsiZmxpZ2h0TnVtYmVyIjoiRE0yNDA5Iiwib3JpZ2luIjoiU0xDIiwiZGVzdGluYXRpb24iOiJERU4iLCJkYXRlIjoiMjAyNi0xMi0xOSIsImRlcGFydHVyZSI6IjE0OjMwIiwiZHVyYXRpb25NaW51dGVzIjo2NSwiZmFyZUNsYXNzZXMiOlsiWSIsIk0iLCJKIl0sInNlYXRzTGVmdCI6M31dfQ=="
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "status": {
+        "message": "OK"
+      }
+    }
+  },
+  "signature": {
+    "redis:command": "U0VURVg=",
+    "redis:request": "eyJhcnJheSI6eyJ2YWx1ZXMiOlt7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6ImIyWm1aWEp6T2xOTVF6cEVSVTQ2TWpBeU5pMHhNaTB4T1E9PSJ9fSx7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6Ik16QXcifX0seyJidWxrU3RyaW5nIjp7InJhd01lc3NhZ2UiOiJleUptYkdsbmFIUnpJanBiZXlKbWJHbG5hSFJPZFcxaVpYSWlPaUpFVFRJME1EVWlMQ0p2Y21sbmFXNGlPaUpUVEVNaUxDSmtaWE4wYVc1aGRHbHZiaUk2SWtSRlRpSXNJbVJoZEdVaU9pSXlNREkyTFRFeUxURTVJaXdpWkdWd1lYSjBkWEpsSWpvaU1EWTZNekFpTENKa2RYSmhkR2x2YmsxcGJuVjBaWE1pT2pZMUxDSm1ZWEpsUTJ4aGMzTmxjeUk2V3lKWklpd2lUU0lzSWtvaVhTd2ljMlZoZEhOTVpXWjBJam81ZlN4N0ltWnNhV2RvZEU1MWJXSmxjaUk2SWtSTk1qUXdOeUlzSW05eWFXZHBiaUk2SWxOTVF5SXNJbVJsYzNScGJtRjBhVzl1SWpvaVJFVk9JaXdpWkdGMFpTSTZJakl3TWpZdE1USXRNVGtpTENKa1pYQmhjblIxY21VaU9pSXhNRG96TUNJc0ltUjFjbUYwYVc5dVRXbHVkWFJsY3lJNk5qVXNJbVpoY21WRGJHRnpjMlZ6SWpwYklsa2lMQ0pOSWl3aVNpSmRMQ0p6WldGMGMweGxablFpT2paOUxIc2labXhwWjJoMFRuVnRZbVZ5SWpvaVJFMHlOREE1SWl3aWIzSnBaMmx1SWpvaVUweERJaXdpWkdWemRHbHVZWFJwYjI0aU9pSkVSVTRpTENKa1lYUmxJam9pTWpBeU5pMHhNaTB4T1NJc0ltUmxjR0Z5ZEhWeVpTSTZJakUwT2pNd0lpd2laSFZ5WVhScGIyNU5hVzUxZEdWeklqbzJOU3dpWm1GeVpVTnNZWE56WlhNaU9sc2lXU0lzSWswaUxDSktJbDBzSW5ObFlYUnpUR1ZtZENJNk0zMWRmUT09In19XX19"
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-11-16T21:18:48.516300Z",
+    "downstream": {
+      "established": "2026-11-16T21:18:48.503632Z",
+      "ipAddress": "127.0.0.1",
+      "port": 65509,
+      "bytesSent": "3833"
+    },
+    "upstream": {
+      "established": "2026-11-16T21:18:48.504084Z",
+      "ipAddress": "127.0.0.1",
+      "port": 6390,
+      "hostname": "localhost",
+      "bytesSent": "4064"
+    },
+    "direction": "EGRESS"
+  }
+}

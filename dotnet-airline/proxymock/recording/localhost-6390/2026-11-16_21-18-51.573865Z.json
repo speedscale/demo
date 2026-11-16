@@ -1,0 +1,71 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-16T21:18:51.573865Z",
+  "l7protocol": "redis",
+  "duration": 18,
+  "elapsed": "0.018105s",
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1386-4-gf124e1841",
+    "sequence": "195",
+    "source": "goproxy"
+  },
+  "uuid": "Zj/A3jRkTG2yvt6PuOFpEA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "GET",
+  "location": "order:ZZZZZZ",
+  "status": "OK",
+  "redis": {
+    "request": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "R0VU"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "b3JkZXI6WlpaWlpa"
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "bulkString": {
+        "isNil": true
+      }
+    }
+  },
+  "signature": {
+    "redis:command": "R0VU",
+    "redis:request": "eyJhcnJheSI6eyJ2YWx1ZXMiOlt7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6ImIzSmtaWEk2V2xwYVdscGEifX1dfX0="
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-11-16T21:18:48.516300Z",
+    "downstream": {
+      "established": "2026-11-16T21:18:48.503632Z",
+      "ipAddress": "127.0.0.1",
+      "port": 65509,
+      "bytesSent": "6532"
+    },
+    "upstream": {
+      "established": "2026-11-16T21:18:48.504084Z",
+      "ipAddress": "127.0.0.1",
+      "port": 6390,
+      "hostname": "localhost",
+      "bytesSent": "5873"
+    },
+    "direction": "EGRESS"
+  }
+}

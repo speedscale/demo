@@ -69,7 +69,6 @@ open(gatling_path, "w").write("".join(blocks))
 # k6: keep IDs in a per-iteration map filled from responses.
 src = open(k6_path).read()
 blocks = re.split(r"(?<=\})(?=\{\n\t\tlet params)", src)
-start = 1 if not blocks[0].rstrip().endswith("}") or "let params" not in blocks[0] else 0
 reqs, idx = [], []
 for i, b in enumerate(blocks):
     m = re.search(r"let method = '(\w+)';\s*let body = '(.*)';\s*let url = new URL\('http://[^/']+([^'?]*)", b, re.S)

@@ -3,11 +3,12 @@
 # then replays the recorded inbound journeys at the app and scores every response.
 source "$(dirname "$0")/common.sh"
 IN="${1:-proxymock/recording}"
-TAG="${TAG:-$(date +%H%M%S)}"
+TAG="${TAG:-$(run_tag)}"
 shift || true
 build
 stop_backends
 assert_backends_down
+assert_ports_free
 
 $PROXYMOCK mock --in "$IN" --no-passthrough --out "proxymock/results/mock-$TAG" "${MAPS[@]}" "$@" \
   -- dotnet "$API_DLL" >"$RUN_DIR/mock.log" 2>&1 &

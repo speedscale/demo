@@ -36,6 +36,16 @@ stop_backends() {
   sleep 1
 }
 
+# Ports the demo binds itself; anything already listening would answer in place of the demo.
+assert_ports_free() {
+  local up
+  up=$(lsof -nP -iTCP:8090 -iTCP:4140 -iTCP:4143 -iTCP:15051 -iTCP:15052 -iTCP:15053 -iTCP:16390 -sTCP:LISTEN 2>/dev/null | tail -n +2 || true)
+  if [ -n "$up" ]; then echo "demo ports already in use:"; echo "$up"; exit 1; fi
+}
+
+# Unique per run so repeated runs never write into the same results directory.
+run_tag() { echo "$(date +%H%M%S)-$$"; }
+
 assert_backends_down() {
   local up
   up=$(lsof -nP -iTCP:5051 -iTCP:5052 -iTCP:5053 -iTCP:6390 -sTCP:LISTEN 2>/dev/null | tail -n +2 || true)

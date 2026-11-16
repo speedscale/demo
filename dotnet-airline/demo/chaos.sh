@@ -10,5 +10,5 @@ case "${1:-outage}" in
   garbage) EFFECT='body=corrupt' ;;
   *) echo "usage: $0 outage|slow|garbage" >&2; exit 2 ;;
 esac
-TAG="chaos-${1:-outage}" exec "$(dirname "$0")/mock-and-replay.sh" proxymock/recording \
+TAG="chaos-${1:-outage}-$(run_tag)" exec "$(dirname "$0")/mock-and-replay.sh" proxymock/recording \
   --chaos "(location REGEX \"^/payments/\"): $EFFECT"

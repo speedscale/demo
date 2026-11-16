@@ -1,0 +1,112 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-16T21:18:50.557754Z",
+  "l7protocol": "redis",
+  "duration": 1,
+  "elapsed": "0.000268s",
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1386-4-gf124e1841",
+    "sequence": "137",
+    "source": "goproxy"
+  },
+  "uuid": "lyrTAabbTnKXInsvzZhJdQ==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "HGETALL",
+  "location": "cart:C000003",
+  "status": "OK",
+  "redis": {
+    "request": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "SEdFVEFMTA=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "Y2FydDpDMDAwMDAz"
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "Y2hlY2tvdXQ="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "UEVORElORw=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "aXRlbTpETTI0MDc="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "eyJmbGlnaHROdW1iZXIiOiJETTI0MDciLCJmYXJlQ2xhc3MiOiJKIiwicGFzc2VuZ2VycyI6MywiY3VycmVuY3kiOiJVU0QiLCJiYXNlRmFyZVBlclBhc3NlbmdlciI6Mzg5LjAwLCJ0YXhlc1BlclBhc3NlbmdlciI6MzQuNzgsImZhcmVCYXNpcyI6IkoxNE5SIn0="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "c3RhdHVz"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "T1BFTg=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "cGFzc2VuZ2Vycw=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "Mw=="
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "redis:command": "SEdFVEFMTA==",
+    "redis:request": "eyJhcnJheSI6eyJ2YWx1ZXMiOlt7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6IlkyRnlkRHBETURBd01EQXoifX1dfX0="
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-11-16T21:18:48.516300Z",
+    "downstream": {
+      "established": "2026-11-16T21:18:48.503632Z",
+      "ipAddress": "127.0.0.1",
+      "port": 65509,
+      "bytesSent": "4608"
+    },
+    "upstream": {
+      "established": "2026-11-16T21:18:48.504084Z",
+      "ipAddress": "127.0.0.1",
+      "port": 6390,
+      "hostname": "localhost",
+      "bytesSent": "4814"
+    },
+    "direction": "EGRESS"
+  }
+}

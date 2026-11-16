@@ -27,6 +27,8 @@ IDatabase Db() => redis.GetDatabase();
 
 var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
+const string Currency = "USD";
+
 const string AddItemScript = """
     if redis.call('HGET', KEYS[1], 'status') ~= 'OPEN' or redis.call('HEXISTS', KEYS[1], 'checkout') == 1 then return 0 end
     redis.call('HSET', KEYS[1], ARGV[1], ARGV[2])
@@ -50,7 +52,7 @@ app.MapGet("/api/offers", async (string origin, string destination, string date)
     string body;
     try
     {
-        body = await http.GetStringAsync($"{scheduleUrl}/schedule/v1/flights?origin={origin}&destination={destination}&date={date}");
+        body = await http.GetStringAsync($"{scheduleUrl}/schedule/v1/flights?origin={Uri.EscapeDataString(origin)}&destination={Uri.EscapeDataString(destination)}&date={Uri.EscapeDataString(date)}");
     }
     catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
     {
@@ -79,6 +81,8 @@ app.MapPost("/api/carts", async (NewCart req) =>
 
 app.MapPost("/api/carts/{cartId}/items", async (string cartId, NewItem item) =>
 {
+    if (string.IsNullOrWhiteSpace(item.FlightNumber) || string.IsNullOrWhiteSpace(item.FareClass))
+        return Results.Json(new { error = "flightNumber and fareClass are required" }, statusCode: 400);
     var cartKey = $"cart:{cartId}";
     var state = await Db().HashGetAsync(cartKey, new RedisValue[] { "passengers", "status", "checkout" });
     var pax = state[0];
@@ -110,9 +114,9 @@ app.MapPost("/api/carts/{cartId}/items", async (string cartId, NewItem item) =>
     {
         quote = null;
     }
-    // A quote is stored and later charged, so it must be for this flight and passenger count.
-    if (quote is null || quote.FlightNumber != item.FlightNumber || quote.Passengers != (int)pax
-        || quote.FareClass is null || quote.Currency is null || quote.FareBasis is null
+    // A quote is stored and later charged, so it must be for this flight, fare class, passenger count and currency.
+    if (quote is null || quote.FlightNumber != item.FlightNumber || quote.FareClass != item.FareClass
+        || quote.Passengers != (int)pax || quote.Currency != Currency || quote.FareBasis is null
         || quote.BaseFarePerPassenger < 0 || quote.TaxesPerPassenger < 0)
         return Results.Json(new { error = "pricing provider returned an unreadable response", retryable = true }, statusCode: 502);
 
@@ -132,6 +136,8 @@ app.MapGet("/api/carts/{cartId}", async (string cartId) =>
 
 app.MapPost("/api/carts/{cartId}/checkout", async (string cartId, Checkout req) =>
 {
+    if (string.IsNullOrWhiteSpace(req.CardToken))
+        return Results.Json(new { error = "cardToken is required" }, statusCode: 400);
     var cart = await LoadCart(cartId);
     if (cart is null)
         return Results.Json(new { error = "cart not found" }, statusCode: 404);
@@ -151,11 +157,16 @@ app.MapPost("/api/carts/{cartId}/checkout", async (string cartId, Checkout req) 
         return result;
     }
 
+    // Charge what the cart holds now that item writes are frozen, not the snapshot read before the claim.
+    cart = (await LoadCart(cartId))!;
+    if (cart.Lines.Count == 0)
+        return await Release(Results.Json(new { error = "cart is empty" }, statusCode: 400));
+
     HttpResponseMessage pay;
     try
     {
         pay = await http.PostAsJsonAsync($"{paymentsUrl}/payments/v1/authorize",
-            new { amount = cart.Total, currency = "USD", cardToken = req.CardToken, reference = cartId });
+            new { amount = cart.Total, currency = Currency, cardToken = req.CardToken, reference = cartId });
     }
     catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
     {
@@ -186,12 +197,20 @@ app.MapPost("/api/carts/{cartId}/checkout", async (string cartId, Checkout req) 
     if (status is null || authorizationId is null)
         return await Release(Unreadable());
 
-    var seq = await Db().StringIncrementAsync("seq:order");
-    var recordLocator = RecordLocator(seq);
-    var order = new Order(recordLocator, cartId, "TICKETED", cart.Passengers, cart.Lines, cart.Total, "USD", authorizationId);
-    await Db().StringSetAsync($"order:{recordLocator}", JsonSerializer.Serialize(order, json));
-    await Db().HashSetAsync(cartKey, new[] { new HashEntry("status", "ORDERED"), new HashEntry("order", recordLocator) });
-    return Results.Json(order, statusCode: 201);
+    try
+    {
+        var seq = await Db().StringIncrementAsync("seq:order");
+        var recordLocator = RecordLocator(seq);
+        var order = new Order(recordLocator, cartId, "TICKETED", cart.Passengers, cart.Lines, cart.Total, Currency, authorizationId);
+        await Db().StringSetAsync($"order:{recordLocator}", JsonSerializer.Serialize(order, json));
+        await Db().HashSetAsync(cartKey, new[] { new HashEntry("status", "ORDERED"), new HashEntry("order", recordLocator) });
+        return Results.Json(order, statusCode: 201);
+    }
+    catch (RedisException)
+    {
+        // Payment is authorized, so keep the claim: a retry must not charge again. The authorization ID lets support reconcile.
+        return Results.Json(new { error = "payment authorized but ticketing failed", cartId, authorizationId }, statusCode: 500);
+    }
 });
 
 app.MapGet("/api/orders/{recordLocator}", async (string recordLocator) =>

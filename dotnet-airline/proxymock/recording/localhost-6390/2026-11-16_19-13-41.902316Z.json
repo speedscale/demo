@@ -1,0 +1,102 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-16T19:13:41.902316Z",
+  "l7protocol": "redis",
+  "duration": 10,
+  "elapsed": "0.010717s",
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1386-4-gf124e1841",
+    "sequence": "123",
+    "source": "goproxy"
+  },
+  "uuid": "ra3SfYDQQaW62SO+PvZp8g==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "HGETALL",
+  "location": "cart:C000003",
+  "status": "OK",
+  "redis": {
+    "request": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "SEdFVEFMTA=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "Y2FydDpDMDAwMDAz"
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "aXRlbTpETTI0MDc="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "eyJmbGlnaHROdW1iZXIiOiJETTI0MDciLCJmYXJlQ2xhc3MiOiJKIiwicGFzc2VuZ2VycyI6MywiY3VycmVuY3kiOiJVU0QiLCJiYXNlRmFyZVBlclBhc3NlbmdlciI6Mzg5LjAwLCJ0YXhlc1BlclBhc3NlbmdlciI6MzQuNzgsImZhcmVCYXNpcyI6IkoxNE5SIn0="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "c3RhdHVz"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "T1BFTg=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "cGFzc2VuZ2Vycw=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "Mw=="
+            }
+          }
+        ]
+      }
+    }
+  },
+  "signature": {
+    "redis:command": "SEdFVEFMTA==",
+    "redis:request": "eyJhcnJheSI6eyJ2YWx1ZXMiOlt7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6IlkyRnlkRHBETURBd01EQXoifX1dfX0="
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-11-16T19:13:39.426346Z",
+    "downstream": {
+      "established": "2026-11-16T19:13:39.412989Z",
+      "ipAddress": "127.0.0.1",
+      "port": 64800,
+      "bytesSent": "3721"
+    },
+    "upstream": {
+      "established": "2026-11-16T19:13:39.413508Z",
+      "ipAddress": "127.0.0.1",
+      "port": 6390,
+      "hostname": "localhost",
+      "bytesSent": "3983"
+    },
+    "direction": "EGRESS"
+  }
+}

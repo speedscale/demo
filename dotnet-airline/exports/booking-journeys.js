@@ -4,7 +4,7 @@ import { URL } from 'https://jslib.k6.io/url/1.0.0/index.js';
 export default function () {
 {
 		let params = {
-			headers: { 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Host':'localhost:8090' },
+			headers: { 'Accept':'*/*', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
 		};
 		let method = 'GET';
 		let body = '';
@@ -14,20 +14,20 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Host':'localhost:8090' },
+			headers: { 'Accept':'*/*', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
 		};
 		let method = 'GET';
 		let body = '';
 		let url = new URL('http://localhost:8090/api/offers');
 
-		url.searchParams.append('origin','SLC');
 		url.searchParams.append('date','2026-12-18');
 		url.searchParams.append('destination','LAX');
+		url.searchParams.append('origin','SLC');
 		
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'POST';
 		let body = '{\"passengers\":1}';
@@ -47,7 +47,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Host':'localhost:8090' },
 		};
 		let method = 'GET';
 		let body = '';
@@ -57,7 +57,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090' },
 		};
 		let method = 'POST';
 		let body = '{\"cardToken\":\"tok_visa_4242\"}';
@@ -77,20 +77,20 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'GET';
 		let body = '';
 		let url = new URL('http://localhost:8090/api/offers');
 
-		url.searchParams.append('origin','SLC');
 		url.searchParams.append('date','2026-12-18');
 		url.searchParams.append('destination','LAX');
+		url.searchParams.append('origin','SLC');
 		
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Content-Type':'application/json' },
+			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'POST';
 		let body = '{\"passengers\":2}';
@@ -100,7 +100,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
+			headers: { 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Content-Type':'application/json' },
 		};
 		let method = 'POST';
 		let body = '{\"flightNumber\":\"DM1205\",\"fareClass\":\"M\"}';
@@ -110,7 +110,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'GET';
 		let body = '';
@@ -120,7 +120,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'POST';
 		let body = '{\"cardToken\":\"tok_amex_0005\"}';
@@ -130,7 +130,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'GET';
 		let body = '';
@@ -140,20 +140,20 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'GET';
 		let body = '';
 		let url = new URL('http://localhost:8090/api/offers');
 
+		url.searchParams.append('destination','DEN');
 		url.searchParams.append('origin','SLC');
 		url.searchParams.append('date','2026-12-19');
-		url.searchParams.append('destination','DEN');
 		
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090' },
+			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'POST';
 		let body = '{\"passengers\":3}';
@@ -163,7 +163,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'POST';
 		let body = '{\"flightNumber\":\"DM2407\",\"fareClass\":\"J\"}';
@@ -183,7 +183,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
+			headers: { 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Content-Type':'application/json' },
 		};
 		let method = 'POST';
 		let body = '{\"cardToken\":\"tok_mc_4444\"}';
@@ -216,7 +216,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'POST';
 		let body = '{\"passengers\":1}';
@@ -236,7 +236,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Host':'localhost:8090' },
+			headers: { 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'GET';
 		let body = '';
@@ -246,7 +246,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
+			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'POST';
 		let body = '{\"cardToken\":\"tok_decline\"}';
@@ -256,7 +256,7 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
+			headers: { 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1' },
 		};
 		let method = 'POST';
 		let body = '{\"passengers\":12}';
@@ -266,11 +266,21 @@ export default function () {
 		http.request(method, url.toString(), body, params);
 	}{
 		let params = {
-			headers: { 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Host':'localhost:8090' },
+			headers: { 'Host':'localhost:8090', 'User-Agent':'curl/8.7.1', 'Accept':'*/*' },
 		};
 		let method = 'GET';
 		let body = '';
 		let url = new URL('http://localhost:8090/api/orders/ZZZZZZ');
+
+		
+		http.request(method, url.toString(), body, params);
+	}{
+		let params = {
+			headers: { 'User-Agent':'curl/8.7.1', 'Accept':'*/*', 'Content-Type':'application/json', 'Host':'localhost:8090' },
+		};
+		let method = 'POST';
+		let body = '{\"cardToken\":\"tok_visa_4242\"}';
+		let url = new URL('http://localhost:8090/api/carts/C000001/checkout');
 
 		
 		http.request(method, url.toString(), body, params);

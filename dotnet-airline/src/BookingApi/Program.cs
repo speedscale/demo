@@ -96,6 +96,19 @@ app.MapPost("/api/carts/{cartId}/checkout", async (string cartId, Checkout req) 
         return Results.Json(new { error = "cart not found" }, statusCode: 404);
     if (cart.Lines.Count == 0)
         return Results.Json(new { error = "cart is empty" }, statusCode: 400);
+    if (cart.Status == "ORDERED")
+        return Results.Json(new { error = "cart already ordered", cartId, recordLocator = cart.RecordLocator }, statusCode: 409);
+
+    // One checkout per cart: HSETNX claims it, and any failure before ticketing releases the claim for a retry.
+    var cartKey = $"cart:{cartId}";
+    if (!await Db().HashSetAsync(cartKey, "checkout", "PENDING", When.NotExists))
+        return Results.Json(new { error = "checkout already in progress", cartId }, statusCode: 409);
+    async Task<IResult> Release(IResult result)
+    {
+        // Best effort: the payment outcome is the answer the caller needs, even if the release fails.
+        try { await Db().HashDeleteAsync(cartKey, "checkout"); } catch (RedisException) { }
+        return result;
+    }
 
     HttpResponseMessage pay;
     try
@@ -105,13 +118,13 @@ app.MapPost("/api/carts/{cartId}/checkout", async (string cartId, Checkout req) 
     }
     catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
     {
-        return Results.Json(new { error = "payment provider unavailable", cartId, retryable = true }, statusCode: 503);
+        return await Release(Results.Json(new { error = "payment provider unavailable", cartId, retryable = true }, statusCode: 503));
     }
 
     if ((int)pay.StatusCode >= 500)
-        return Results.Json(new { error = "payment provider unavailable", cartId, retryable = true }, statusCode: 503);
+        return await Release(Results.Json(new { error = "payment provider unavailable", cartId, retryable = true }, statusCode: 503));
     if (pay.StatusCode != System.Net.HttpStatusCode.PaymentRequired && !pay.IsSuccessStatusCode)
-        return Results.Json(new { error = "payment provider rejected the request", cartId, providerStatus = (int)pay.StatusCode }, statusCode: 502);
+        return await Release(Results.Json(new { error = "payment provider rejected the request", cartId, providerStatus = (int)pay.StatusCode }, statusCode: 502));
 
     JsonElement auth;
     try
@@ -120,17 +133,17 @@ app.MapPost("/api/carts/{cartId}/checkout", async (string cartId, Checkout req) 
     }
     catch (JsonException)
     {
-        return Results.Json(new { error = "payment provider returned an unreadable response", cartId, retryable = true }, statusCode: 502);
+        return await Release(Results.Json(new { error = "payment provider returned an unreadable response", cartId, retryable = true }, statusCode: 502));
     }
 
     if (!pay.IsSuccessStatusCode || auth.GetProperty("status").GetString() != "APPROVED")
-        return Results.Json(new { error = "payment declined", cartId, reason = auth.TryGetProperty("reason", out var r) ? r.GetString() : null }, statusCode: 402);
+        return await Release(Results.Json(new { error = "payment declined", cartId, reason = auth.TryGetProperty("reason", out var r) ? r.GetString() : null }, statusCode: 402));
 
     var seq = await Db().StringIncrementAsync("seq:order");
     var recordLocator = RecordLocator(seq);
     var order = new Order(recordLocator, cartId, "TICKETED", cart.Passengers, cart.Lines, cart.Total, "USD", auth.GetProperty("authorizationId").GetString()!);
     await Db().StringSetAsync($"order:{recordLocator}", JsonSerializer.Serialize(order, json));
-    await Db().HashSetAsync($"cart:{cartId}", "status", "ORDERED");
+    await Db().HashSetAsync(cartKey, new[] { new HashEntry("status", "ORDERED"), new HashEntry("order", recordLocator) });
     return Results.Json(order, statusCode: 201);
 });
 
@@ -151,7 +164,7 @@ async Task<CartView?> LoadCart(string cartId)
     var fields = entries.ToDictionary(e => (string)e.Name!, e => (string)e.Value!);
     var lines = fields.Where(f => f.Key.StartsWith("item:")).OrderBy(f => f.Key)
         .Select(f => ToLine(JsonSerializer.Deserialize<Quote>(f.Value, json)!)).ToList();
-    return new CartView(cartId, int.Parse(fields["passengers"]), fields["status"], lines, lines.Sum(l => l.Total));
+    return new CartView(cartId, int.Parse(fields["passengers"]), fields["status"], lines, lines.Sum(l => l.Total), fields.GetValueOrDefault("order"));
 }
 
 static CartLine ToLine(Quote q) => new(q.FlightNumber, q.FareClass, q.Passengers, q.FareBasis, q.Currency, Pricing.LineTotal(q));
@@ -170,5 +183,5 @@ record NewCart(int Passengers);
 record NewItem(string FlightNumber, string FareClass);
 record Checkout(string CardToken);
 record CartLine(string FlightNumber, string FareClass, int Passengers, string FareBasis, string Currency, decimal Total);
-record CartView(string CartId, int Passengers, string Status, List<CartLine> Lines, decimal Total);
+record CartView(string CartId, int Passengers, string Status, List<CartLine> Lines, decimal Total, string? RecordLocator);
 record Order(string RecordLocator, string CartId, string Status, int Passengers, List<CartLine> Lines, decimal Total, string Currency, string AuthorizationId);

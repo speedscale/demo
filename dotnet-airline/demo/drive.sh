@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Drives the booking journeys: search, cart, price, checkout, order lookup, plus two error paths.
+# Drives the booking journeys: search, cart, price, checkout, order lookup, plus three error paths.
 # Usage: demo/drive.sh [base-url]   (default http://localhost:4143, the proxymock inbound proxy)
 set -euo pipefail
 BASE="${1:-http://localhost:4143}"
@@ -30,3 +30,4 @@ book SLC DEN 2026-12-19 3 DM2407 J tok_mc_4444
 book LAX SLC 2026-12-21 1 DM1302 Y tok_decline
 call POST /api/carts '{"passengers":12}' >/dev/null
 call GET /api/orders/ZZZZZZ >/dev/null
+call POST /api/carts/C000001/checkout '{"cardToken":"tok_visa_4242"}' >/dev/null   # retry after ticketing: 409

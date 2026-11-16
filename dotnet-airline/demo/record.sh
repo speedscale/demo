@@ -9,9 +9,15 @@ trap stop_backends EXIT
 
 $PROXYMOCK record --app-port 8090 --out "$OUT" "${MAPS[@]}" -- dotnet "$API_DLL" >"$RUN_DIR/record.log" 2>&1 &
 PM_PID=$!
+cleanup() {
+  kill -INT "$PM_PID" 2>/dev/null && wait "$PM_PID" 2>/dev/null || true
+  stop_backends
+}
+trap cleanup EXIT
 wait_for http://localhost:4143/healthz
 demo/drive.sh http://localhost:4143
 sleep 2
-kill -INT $PM_PID; wait $PM_PID || true
+cleanup
+trap - EXIT
 echo "recorded into $OUT"
 find "$OUT" -type f -name '*.md' -o -type f -name '*.json' | sed "s|^$OUT/||; s|/[^/]*$||" | sort | uniq -c

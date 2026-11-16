@@ -31,7 +31,7 @@ Set `PROXYMOCK` to pin a binary or add `--config`/`--context`, for example `PROX
 
 | Script | What it shows |
 | --- | --- |
-| `demo/record.sh [dir]` | Starts Redis and the partners, wraps the API with `proxymock record`, drives four bookings (one declined) and two error cases through port 4143. Prints the RRPair count per host. |
+| `demo/record.sh [dir]` | Starts Redis and the partners, wraps the API with `proxymock record`, drives four bookings (one declined), two error cases and a repeated checkout through port 4143. Prints the RRPair count per host. |
 | `demo/mock-and-replay.sh [dir]` | Checks that partners and Redis are down, starts the API under `proxymock mock --no-passthrough`, replays the inbound journeys with the `regression` test config, prints the native score. Exit 1 on any regression. |
 | `demo/explain.sh [replay-dir]` | Lists each response that changed, field by field, and each outbound call production never made. |
 | `demo/chaos.sh outage\|slow\|garbage` | Same replay with the mocked payment gateway returning 503, taking 6 s, or returning corrupt JSON. |
@@ -46,4 +46,4 @@ Results land in `proxymock/results/` (ignored by git). Exports generated from th
 - IDs come from Redis `INCR`, so a replay against mocked Redis gets the same cart IDs and record locators as the recording, with no transforms.
 - Totals are computed on read from stored partner quotes. A pricing change therefore shows up as a changed `total` on the cart responses and as a changed `amount` on the outbound payment call, which the mock rejects.
 - The StackExchange.Redis client is configured with a reduced command map (no `CONFIG`, `CLUSTER`, pub/sub, `CLIENT`) so recorded Redis traffic is the app's own commands plus the startup `INFO` and `PING`.
-- Payment failures map to distinct responses: 402 declined, 503 unavailable or timed out, 502 unreadable or rejected.
+- Payment failures map to distinct responses: 402 declined, 503 unavailable or timed out, 502 unreadable or rejected. Checkout claims the cart with `HSETNX` first, so a repeated or concurrent checkout gets 409 instead of a second authorization.

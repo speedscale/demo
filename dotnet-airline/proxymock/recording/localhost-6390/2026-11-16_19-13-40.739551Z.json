@@ -1,0 +1,81 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-16T19:13:40.739551Z",
+  "l7protocol": "redis",
+  "duration": 303,
+  "elapsed": "0.303736s",
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1386-4-gf124e1841",
+    "sequence": "71",
+    "source": "goproxy"
+  },
+  "uuid": "Cu0Mg47wSJqZdJi/8wgDgA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "HSET",
+  "location": "cart:C000002",
+  "status": "OK",
+  "redis": {
+    "request": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "SFNFVA=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "Y2FydDpDMDAwMDAy"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "aXRlbTpETTEyMDU="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "eyJmbGlnaHROdW1iZXIiOiJETTEyMDUiLCJmYXJlQ2xhc3MiOiJNIiwicGFzc2VuZ2VycyI6MiwiY3VycmVuY3kiOiJVU0QiLCJiYXNlRmFyZVBlclBhc3NlbmdlciI6MTY5LjAwLCJ0YXhlc1BlclBhc3NlbmdlciI6MTguMjgsImZhcmVCYXNpcyI6Ik0xNE5SIn0="
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "int": {
+        "value": "1"
+      }
+    }
+  },
+  "signature": {
+    "redis:command": "SFNFVA==",
+    "redis:request": "eyJhcnJheSI6eyJ2YWx1ZXMiOlt7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6IlkyRnlkRHBETURBd01EQXkifX0seyJidWxrU3RyaW5nIjp7InJhd01lc3NhZ2UiOiJhWFJsYlRwRVRURXlNRFU9In19LHsiYnVsa1N0cmluZyI6eyJyYXdNZXNzYWdlIjoiZXlKbWJHbG5hSFJPZFcxaVpYSWlPaUpFVFRFeU1EVWlMQ0ptWVhKbFEyeGhjM01pT2lKTklpd2ljR0Z6YzJWdVoyVnljeUk2TWl3aVkzVnljbVZ1WTNraU9pSlZVMFFpTENKaVlYTmxSbUZ5WlZCbGNsQmhjM05sYm1kbGNpSTZNVFk1TGpBd0xDSjBZWGhsYzFCbGNsQmhjM05sYm1kbGNpSTZNVGd1TWpnc0ltWmhjbVZDWVhOcGN5STZJazB4TkU1U0luMD0ifX1dfX0="
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-11-16T19:13:39.426346Z",
+    "downstream": {
+      "established": "2026-11-16T19:13:39.412989Z",
+      "ipAddress": "127.0.0.1",
+      "port": 64800,
+      "bytesSent": "2083"
+    },
+    "upstream": {
+      "established": "2026-11-16T19:13:39.413508Z",
+      "ipAddress": "127.0.0.1",
+      "port": 6390,
+      "hostname": "localhost",
+      "bytesSent": "2758"
+    },
+    "direction": "EGRESS"
+  }
+}

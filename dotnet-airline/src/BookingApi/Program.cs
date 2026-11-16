@@ -96,7 +96,11 @@ app.MapPost("/api/carts/{cartId}/items", async (string cartId, NewItem item) =>
             return Results.Json(new { error = "pricing provider unavailable", retryable = true }, statusCode: 503);
         if (!resp.IsSuccessStatusCode)
             return Results.Json(new { error = "fare not available" }, statusCode: 422);
-        quote = await resp.Content.ReadFromJsonAsync<Quote>(json);
+        // Missing money fields would deserialize as 0 and understate the charge, so require them explicitly.
+        var raw = await resp.Content.ReadFromJsonAsync<JsonElement>();
+        quote = NumberField(raw, "baseFarePerPassenger") && NumberField(raw, "taxesPerPassenger") && NumberField(raw, "passengers")
+            ? raw.Deserialize<Quote>(json)
+            : null;
     }
     catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException)
     {
@@ -219,6 +223,9 @@ static JsonElement? Flights(string body)
     }
     catch (JsonException) { return null; }
 }
+
+static bool NumberField(JsonElement e, string name) =>
+    e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number;
 
 static string? StringField(JsonElement e, string name) =>
     e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;

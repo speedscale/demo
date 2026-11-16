@@ -14,7 +14,7 @@ replay: ## Mock partners and Redis, replay the committed recording, print the sc
 
 regression: ## Apply the pricing bug, replay, explain the diff, then restore Pricing.cs
 	patch -p1 --forward < demo/regression.patch
-	trap 'patch -p1 -R < demo/regression.patch' EXIT; demo/mock-and-replay.sh; demo/explain.sh
+	trap 'patch -p1 -R < demo/regression.patch' EXIT; demo/mock-and-replay.sh; rc=$$?; demo/explain.sh; exit $$rc
 
 chaos: ## Replay with the payment gateway returning 503 (MODE=outage|slow|garbage)
 	-demo/chaos.sh $(or $(MODE),outage)

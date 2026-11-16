@@ -30,7 +30,7 @@ jobs:
         run: docker build -t fast-lane-demo:candidate .
 
       - name: Rescan image
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: fast-lane-demo:candidate
           severity: CRITICAL,HIGH

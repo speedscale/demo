@@ -1,0 +1,5 @@
+.demo-run/
+bin/
+obj/
+proxymock/results/
+proxymock/recording-*/

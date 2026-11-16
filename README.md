@@ -57,6 +57,10 @@ A Node.js/Express IP distance API similar to the Go version, featuring ipstack i
 
 A .NET 8.0 minimal API weather service that integrates with OpenWeather API. Features health checks, Swagger/OpenAPI documentation, Docker support, Kubernetes manifests with client traffic generator, and comprehensive test suite. Demonstrates modern C# patterns and external service integration.
 
+### [.NET Airline Booking](dotnet-airline/)
+
+A .NET 8 booking API (offers, cart, fare pricing, checkout, record locators) backed by three partner HTTP services and Redis. Scripts record its traffic, replay it with every dependency mocked, catch a one-line pricing regression field by field, inject payment gateway faults, and run a load test. Includes a committed recording, so mock and replay need no Redis or partner services.
+
 ### [NGINX](nginx/)
 
 A Kubernetes-based demo featuring multiple nginx services (gateway, payment, user) that simulate a microservices architecture. Perfect for demonstrating service mesh traffic patterns.

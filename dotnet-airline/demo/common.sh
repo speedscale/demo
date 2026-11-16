@@ -29,11 +29,21 @@ start_backends() {
   wait_for "http://127.0.0.1:5051/schedule/v1/flights?origin=SLC&destination=LAX&date=x"
 }
 
+# Stops only the processes this demo started (tracked by pid file); anything else on the ports is left alone.
+stop_owned() { # pidfile process-pattern
+  local pid
+  [ -f "$1" ] || return 0
+  pid=$(cat "$1")
+  if ps -p "$pid" -o command= 2>/dev/null | grep -q "$2"; then
+    kill "$pid" 2>/dev/null || true
+    for _ in $(seq 1 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
+  fi
+  rm -f "$1"
+}
+
 stop_backends() {
-  [ -f "$RUN_DIR/partner.pid" ] && kill "$(cat "$RUN_DIR/partner.pid")" 2>/dev/null || true
-  redis-cli -p 6390 shutdown nosave >/dev/null 2>&1 || true
-  rm -f "$RUN_DIR/partner.pid"
-  sleep 1
+  stop_owned "$RUN_DIR/partner.pid" PartnerSim.dll
+  stop_owned "$RUN_DIR/redis.pid" "redis-server .*:6390"
 }
 
 # Ports the demo binds itself; anything already listening would answer in place of the demo.

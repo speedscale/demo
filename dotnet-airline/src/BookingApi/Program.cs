@@ -147,6 +147,8 @@ app.MapPost("/api/carts/{cartId}/checkout", async (string cartId, Checkout req) 
         return Results.Json(new { error = "cart already ordered", cartId, recordLocator = cart.RecordLocator }, statusCode: 409);
 
     // One checkout per cart: HSETNX claims it, and any failure before ticketing releases the claim for a retry.
+    // Releasing is safe after an uncertain payment outcome because the gateway is idempotent on reference (the cart ID):
+    // a retry returns the original authorization instead of a second one.
     var cartKey = $"cart:{cartId}";
     if (!await Db().HashSetAsync(cartKey, "checkout", "PENDING", When.NotExists))
         return Results.Json(new { error = "checkout already in progress", cartId }, statusCode: 409);

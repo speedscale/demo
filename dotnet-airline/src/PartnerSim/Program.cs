@@ -1,5 +1,6 @@
 // Stand-in for the airline's partner systems: schedule/inventory (:5051), fare pricing (:5052)
 // and payment gateway (:5053). Each call sleeps to resemble a real network dependency.
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,14 +59,25 @@ app.MapPost("/pricing/v1/quote", async (QuoteRequest q) =>
     });
 });
 
+// Idempotent on reference, like real gateways: a retry after a lost response gets the original approval, not a second one.
+var approvals = new ConcurrentDictionary<string, AuthRequest>();
+var approvalIds = new ConcurrentDictionary<string, string>();
+
 app.MapPost("/payments/v1/authorize", async (AuthRequest a) =>
 {
     await Lag(200, 400);
-    var authId = "auth_" + Convert.ToHexString(RandomNumberGenerator.GetBytes(6)).ToLowerInvariant();
+    if (string.IsNullOrEmpty(a.Reference) || string.IsNullOrEmpty(a.CardToken))
+        return Results.Json(new { error = "reference and cardToken are required" }, statusCode: 400);
     if (a.CardToken == "tok_decline")
-        return Results.Json(new { authorizationId = authId, status = "DECLINED", reason = "insufficient_funds" }, statusCode: 402);
+        return Results.Json(new { authorizationId = NewAuthId(), status = "DECLINED", reason = "insufficient_funds" }, statusCode: 402);
+    var first = approvals.GetOrAdd(a.Reference, a);
+    if (first.Amount != a.Amount || first.Currency != a.Currency)
+        return Results.Json(new { error = "reference already authorized for a different amount" }, statusCode: 409);
+    var authId = approvalIds.GetOrAdd(a.Reference, _ => NewAuthId());
     return Results.Json(new { authorizationId = authId, status = "APPROVED", amount = a.Amount, currency = a.Currency });
 });
+
+static string NewAuthId() => "auth_" + Convert.ToHexString(RandomNumberGenerator.GetBytes(6)).ToLowerInvariant();
 
 app.Run();
 

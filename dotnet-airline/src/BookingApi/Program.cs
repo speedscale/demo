@@ -44,18 +44,23 @@ app.MapGet("/api/offers", async (string origin, string destination, string date)
 {
     var key = $"offers:{origin.ToUpperInvariant()}:{destination.ToUpperInvariant()}:{date}";
     var cached = await Db().StringGetAsync(key);
+    if (cached.HasValue && Flights(cached!) is { } hit)
+        return Results.Json(new { origin, destination, date, cached = true, offers = hit });
+
     string body;
-    if (cached.HasValue)
-    {
-        body = cached!;
-    }
-    else
+    try
     {
         body = await http.GetStringAsync($"{scheduleUrl}/schedule/v1/flights?origin={origin}&destination={destination}&date={date}");
-        await Db().StringSetAsync(key, body, TimeSpan.FromMinutes(5));
     }
-    var flights = JsonDocument.Parse(body).RootElement.GetProperty("flights");
-    return Results.Json(new { origin, destination, date, cached = cached.HasValue, offers = flights });
+    catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
+    {
+        return Results.Json(new { error = "schedule provider unavailable", retryable = true }, statusCode: 503);
+    }
+    // Cache only a usable schedule, so one bad partner response is not served for the cache lifetime.
+    if (Flights(body) is not { } flights)
+        return Results.Json(new { error = "schedule provider returned an unreadable response", retryable = true }, statusCode: 502);
+    await Db().StringSetAsync(key, body, TimeSpan.FromMinutes(5));
+    return Results.Json(new { origin, destination, date, cached = false, offers = flights });
 });
 
 app.MapPost("/api/carts", async (NewCart req) =>
@@ -82,11 +87,30 @@ app.MapPost("/api/carts/{cartId}/items", async (string cartId, NewItem item) =>
     if (state[1] != "OPEN" || state[2].HasValue)
         return CartClosed(cartId);
 
-    var resp = await http.PostAsJsonAsync($"{pricingUrl}/pricing/v1/quote",
-        new { flightNumber = item.FlightNumber, fareClass = item.FareClass, passengers = (int)pax });
-    if (!resp.IsSuccessStatusCode)
-        return Results.Json(new { error = "fare not available" }, statusCode: 422);
-    var quote = (await resp.Content.ReadFromJsonAsync<Quote>(json))!;
+    Quote? quote;
+    try
+    {
+        var resp = await http.PostAsJsonAsync($"{pricingUrl}/pricing/v1/quote",
+            new { flightNumber = item.FlightNumber, fareClass = item.FareClass, passengers = (int)pax });
+        if ((int)resp.StatusCode >= 500)
+            return Results.Json(new { error = "pricing provider unavailable", retryable = true }, statusCode: 503);
+        if (!resp.IsSuccessStatusCode)
+            return Results.Json(new { error = "fare not available" }, statusCode: 422);
+        quote = await resp.Content.ReadFromJsonAsync<Quote>(json);
+    }
+    catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException)
+    {
+        return Results.Json(new { error = "pricing provider unavailable", retryable = true }, statusCode: 503);
+    }
+    catch (JsonException)
+    {
+        quote = null;
+    }
+    // A quote is stored and later charged, so it must be for this flight and passenger count.
+    if (quote is null || quote.FlightNumber != item.FlightNumber || quote.Passengers != (int)pax
+        || quote.FareClass is null || quote.Currency is null || quote.FareBasis is null
+        || quote.BaseFarePerPassenger < 0 || quote.TaxesPerPassenger < 0)
+        return Results.Json(new { error = "pricing provider returned an unreadable response", retryable = true }, statusCode: 502);
 
     // Store the partner quote as returned; totals are computed on read so pricing rules apply consistently.
     // Write only while the cart is still open and unclaimed, so checkout freezes what was paid for.
@@ -139,22 +163,28 @@ app.MapPost("/api/carts/{cartId}/checkout", async (string cartId, Checkout req) 
     if (pay.StatusCode != System.Net.HttpStatusCode.PaymentRequired && !pay.IsSuccessStatusCode)
         return await Release(Results.Json(new { error = "payment provider rejected the request", cartId, providerStatus = (int)pay.StatusCode }, statusCode: 502));
 
+    IResult Unreadable() => Results.Json(new { error = "payment provider returned an unreadable response", cartId, retryable = true }, statusCode: 502);
     JsonElement auth;
     try
     {
-        auth = (await pay.Content.ReadFromJsonAsync<JsonElement>())!;
+        auth = await pay.Content.ReadFromJsonAsync<JsonElement>();
     }
-    catch (JsonException)
+    catch (Exception e) when (e is JsonException or HttpRequestException or IOException or TaskCanceledException)
     {
-        return await Release(Results.Json(new { error = "payment provider returned an unreadable response", cartId, retryable = true }, statusCode: 502));
+        return await Release(Unreadable());
     }
 
-    if (!pay.IsSuccessStatusCode || auth.GetProperty("status").GetString() != "APPROVED")
-        return await Release(Results.Json(new { error = "payment declined", cartId, reason = auth.TryGetProperty("reason", out var r) ? r.GetString() : null }, statusCode: 402));
+    // Any response shape the app can't act on goes through the same release path as an unreadable body.
+    var status = StringField(auth, "status");
+    if (pay.StatusCode == System.Net.HttpStatusCode.PaymentRequired || (status is not null && status != "APPROVED"))
+        return await Release(Results.Json(new { error = "payment declined", cartId, reason = StringField(auth, "reason") }, statusCode: 402));
+    var authorizationId = StringField(auth, "authorizationId");
+    if (status is null || authorizationId is null)
+        return await Release(Unreadable());
 
     var seq = await Db().StringIncrementAsync("seq:order");
     var recordLocator = RecordLocator(seq);
-    var order = new Order(recordLocator, cartId, "TICKETED", cart.Passengers, cart.Lines, cart.Total, "USD", auth.GetProperty("authorizationId").GetString()!);
+    var order = new Order(recordLocator, cartId, "TICKETED", cart.Passengers, cart.Lines, cart.Total, "USD", authorizationId);
     await Db().StringSetAsync($"order:{recordLocator}", JsonSerializer.Serialize(order, json));
     await Db().HashSetAsync(cartKey, new[] { new HashEntry("status", "ORDERED"), new HashEntry("order", recordLocator) });
     return Results.Json(order, statusCode: 201);
@@ -179,6 +209,19 @@ async Task<CartView?> LoadCart(string cartId)
         .Select(f => ToLine(JsonSerializer.Deserialize<Quote>(f.Value, json)!)).ToList();
     return new CartView(cartId, int.Parse(fields["passengers"]), fields["status"], lines, lines.Sum(l => l.Total), fields.GetValueOrDefault("order"));
 }
+
+static JsonElement? Flights(string body)
+{
+    try
+    {
+        var root = JsonDocument.Parse(body).RootElement;
+        return root.ValueKind == JsonValueKind.Object && root.TryGetProperty("flights", out var f) && f.ValueKind == JsonValueKind.Array ? f : null;
+    }
+    catch (JsonException) { return null; }
+}
+
+static string? StringField(JsonElement e, string name) =>
+    e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
 static IResult CartClosed(string cartId) =>
     Results.Json(new { error = "cart is no longer open", cartId }, statusCode: 409);

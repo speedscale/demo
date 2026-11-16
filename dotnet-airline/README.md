@@ -38,8 +38,9 @@ Set `PROXYMOCK` to pin a binary or add `--config`/`--context`, for example `PROX
 | `demo/load.sh` | 10 virtual users for 30 s against the mocked API (`VUS`, `FOR` override). |
 | `demo/regression.patch` | A one-line pricing change for the regression exercise: `patch -p1 < demo/regression.patch`, run `mock-and-replay.sh`, then `patch -p1 -R < demo/regression.patch`. |
 | `demo/drive.sh [base-url]` | The journeys used for recording. |
+| `demo/export.sh [dir]` | Regenerates the Gatling and k6 exports from a recording and rewires them to use the cart IDs and record locators each run creates. |
 
-Results land in `proxymock/results/` (ignored by git). Exports generated from the recording are in `exports/` (`BookingJourneys.java` for Gatling, `booking-journeys.js` for k6).
+Results land in `proxymock/results/` (ignored by git). Exports generated from the recording are in `exports/` (`BookingJourneys.java` for Gatling, `booking-journeys.js` for k6). They capture each new cart ID and record locator from the API's responses, so they can run repeatedly and with several virtual users against a real Redis.
 
 ## Things the demo is built to show
 

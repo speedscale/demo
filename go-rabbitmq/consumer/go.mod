@@ -2,6 +2,6 @@ module github.com/speedscale/docs/demos/rabbitmq/consumer
 
 go 1.23
 
-toolchain go1.26.10
+toolchain go1.26.11
 
 require github.com/rabbitmq/amqp091-go v1.14.0

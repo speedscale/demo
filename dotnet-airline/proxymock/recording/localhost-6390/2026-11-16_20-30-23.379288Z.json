@@ -1,0 +1,71 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-16T20:30:23.379288Z",
+  "l7protocol": "redis",
+  "duration": 1,
+  "elapsed": "0.000362s",
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1386-4-gf124e1841",
+    "sequence": "3",
+    "source": "goproxy"
+  },
+  "uuid": "8hpL68bYS06ZIaBmPZ84bA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "INFO",
+  "location": "replication",
+  "status": "OK",
+  "redis": {
+    "request": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "SU5GTw=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "cmVwbGljYXRpb24="
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "bulkString": {
+        "rawMessage": "IyBSZXBsaWNhdGlvbg0Kcm9sZTptYXN0ZXINCmNvbm5lY3RlZF9zbGF2ZXM6MA0KbWFzdGVyX2ZhaWxvdmVyX3N0YXRlOm5vLWZhaWxvdmVyDQptYXN0ZXJfcmVwbGlkOjRhODVhODFjMDBlNmYyNGI0NjAzNTQwZGJjYzEyYWExOTM4YjI5M2QNCm1hc3Rlcl9yZXBsaWQyOjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDANCm1hc3Rlcl9yZXBsX29mZnNldDowDQpzZWNvbmRfcmVwbF9vZmZzZXQ6LTENCnJlcGxfYmFja2xvZ19hY3RpdmU6MA0KcmVwbF9iYWNrbG9nX3NpemU6MTA0ODU3Ng0KcmVwbF9iYWNrbG9nX2ZpcnN0X2J5dGVfb2Zmc2V0OjANCnJlcGxfYmFja2xvZ19oaXN0bGVuOjANCg=="
+      }
+    }
+  },
+  "signature": {
+    "redis:command": "SU5GTw==",
+    "redis:request": "eyJhcnJheSI6eyJ2YWx1ZXMiOlt7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6ImNtVndiR2xqWVhScGIyND0ifX1dfX0="
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-11-16T20:30:23.379259Z",
+    "downstream": {
+      "established": "2026-11-16T20:30:23.365785Z",
+      "ipAddress": "127.0.0.1",
+      "port": 56993,
+      "bytesSent": "72"
+    },
+    "upstream": {
+      "established": "2026-11-16T20:30:23.366265Z",
+      "ipAddress": "127.0.0.1",
+      "port": 6390,
+      "hostname": "localhost",
+      "bytesSent": "1092"
+    },
+    "direction": "EGRESS"
+  }
+}

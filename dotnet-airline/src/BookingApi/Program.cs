@@ -27,6 +27,12 @@ IDatabase Db() => redis.GetDatabase();
 
 var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
+const string AddItemScript = """
+    if redis.call('HGET', KEYS[1], 'status') ~= 'OPEN' or redis.call('HEXISTS', KEYS[1], 'checkout') == 1 then return 0 end
+    redis.call('HSET', KEYS[1], ARGV[1], ARGV[2])
+    return 1
+    """;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
 builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
@@ -68,9 +74,13 @@ app.MapPost("/api/carts", async (NewCart req) =>
 
 app.MapPost("/api/carts/{cartId}/items", async (string cartId, NewItem item) =>
 {
-    var pax = await Db().HashGetAsync($"cart:{cartId}", "passengers");
+    var cartKey = $"cart:{cartId}";
+    var state = await Db().HashGetAsync(cartKey, new RedisValue[] { "passengers", "status", "checkout" });
+    var pax = state[0];
     if (!pax.HasValue)
         return Results.Json(new { error = "cart not found" }, statusCode: 404);
+    if (state[1] != "OPEN" || state[2].HasValue)
+        return CartClosed(cartId);
 
     var resp = await http.PostAsJsonAsync($"{pricingUrl}/pricing/v1/quote",
         new { flightNumber = item.FlightNumber, fareClass = item.FareClass, passengers = (int)pax });
@@ -79,7 +89,10 @@ app.MapPost("/api/carts/{cartId}/items", async (string cartId, NewItem item) =>
     var quote = (await resp.Content.ReadFromJsonAsync<Quote>(json))!;
 
     // Store the partner quote as returned; totals are computed on read so pricing rules apply consistently.
-    await Db().HashSetAsync($"cart:{cartId}", $"item:{item.FlightNumber}", JsonSerializer.Serialize(quote, json));
+    // Write only while the cart is still open and unclaimed, so checkout freezes what was paid for.
+    var written = (long)await Db().ExecuteAsync("EVAL", AddItemScript, 1, cartKey, $"item:{item.FlightNumber}", JsonSerializer.Serialize(quote, json));
+    if (written == 0)
+        return CartClosed(cartId);
     return Results.Json(ToLine(quote), statusCode: 201);
 });
 
@@ -166,6 +179,9 @@ async Task<CartView?> LoadCart(string cartId)
         .Select(f => ToLine(JsonSerializer.Deserialize<Quote>(f.Value, json)!)).ToList();
     return new CartView(cartId, int.Parse(fields["passengers"]), fields["status"], lines, lines.Sum(l => l.Total), fields.GetValueOrDefault("order"));
 }
+
+static IResult CartClosed(string cartId) =>
+    Results.Json(new { error = "cart is no longer open", cartId }, statusCode: 409);
 
 static CartLine ToLine(Quote q) => new(q.FlightNumber, q.FareClass, q.Passengers, q.FareBasis, q.Currency, Pricing.LineTotal(q));
 

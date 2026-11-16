@@ -1,0 +1,71 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-16T20:30:31.041342Z",
+  "l7protocol": "redis",
+  "duration": 45,
+  "elapsed": "0.045221s",
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1386-4-gf124e1841",
+    "sequence": "143",
+    "source": "goproxy"
+  },
+  "uuid": "8SP9hLzjQpyc58ZRp2jfcA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "GET",
+  "location": "order:AAD7RG",
+  "status": "OK",
+  "redis": {
+    "request": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "R0VU"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "b3JkZXI6QUFEN1JH"
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "bulkString": {
+        "rawMessage": "eyJyZWNvcmRMb2NhdG9yIjoiQUFEN1JHIiwiY2FydElkIjoiQzAwMDAwMyIsInN0YXR1cyI6IlRJQ0tFVEVEIiwicGFzc2VuZ2VycyI6MywibGluZXMiOlt7ImZsaWdodE51bWJlciI6IkRNMjQwNyIsImZhcmVDbGFzcyI6IkoiLCJwYXNzZW5nZXJzIjozLCJmYXJlQmFzaXMiOiJKMTROUiIsImN1cnJlbmN5IjoiVVNEIiwidG90YWwiOjEyODQuODR9XSwidG90YWwiOjEyODQuODQsImN1cnJlbmN5IjoiVVNEIiwiYXV0aG9yaXphdGlvbklkIjoiYXV0aF9jYjBlNjhlYmI4NDEifQ=="
+      }
+    }
+  },
+  "signature": {
+    "redis:command": "R0VU",
+    "redis:request": "eyJhcnJheSI6eyJ2YWx1ZXMiOlt7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6ImIzSmtaWEk2UVVGRU4xSkgifX1dfX0="
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-11-16T20:30:23.379259Z",
+    "downstream": {
+      "established": "2026-11-16T20:30:23.365785Z",
+      "ipAddress": "127.0.0.1",
+      "port": 56993,
+      "bytesSent": "4954"
+    },
+    "upstream": {
+      "established": "2026-11-16T20:30:23.366265Z",
+      "ipAddress": "127.0.0.1",
+      "port": 6390,
+      "hostname": "localhost",
+      "bytesSent": "4352"
+    },
+    "direction": "EGRESS"
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-16T20:30:29.326179Z",
+  "l7protocol": "redis",
+  "duration": 1,
+  "elapsed": "0.000478s",
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1386-4-gf124e1841",
+    "sequence": "51",
+    "source": "goproxy"
+  },
+  "uuid": "O7y20l4hT4mnYE6zPVEqeg==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "HMSET",
+  "location": "cart:C000001",
+  "status": "OK",
+  "redis": {
+    "request": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "SE1TRVQ="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "Y2FydDpDMDAwMDAx"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "c3RhdHVz"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "T1JERVJFRA=="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "b3JkZXI="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "QUFEUUFK"
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "status": {
+        "message": "OK"
+      }
+    }
+  },
+  "signature": {
+    "redis:command": "SE1TRVQ=",
+    "redis:request": "eyJhcnJheSI6eyJ2YWx1ZXMiOlt7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6IlkyRnlkRHBETURBd01EQXgifX0seyJidWxrU3RyaW5nIjp7InJhd01lc3NhZ2UiOiJjM1JoZEhWeiJ9fSx7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6IlQxSkVSVkpGUkE9PSJ9fSx7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6ImIzSmtaWEk9In19LHsiYnVsa1N0cmluZyI6eyJyYXdNZXNzYWdlIjoiUVVGRVVVRksifX1dfX0="
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-11-16T20:30:23.379259Z",
+    "downstream": {
+      "established": "2026-11-16T20:30:23.365785Z",
+      "ipAddress": "127.0.0.1",
+      "port": 56993,
+      "bytesSent": "1879"
+    },
+    "upstream": {
+      "established": "2026-11-16T20:30:23.366265Z",
+      "ipAddress": "127.0.0.1",
+      "port": 6390,
+      "hostname": "localhost",
+      "bytesSent": "1969"
+    },
+    "direction": "EGRESS"
+  }
+}

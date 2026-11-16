@@ -1,0 +1,81 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-16T20:30:30.659338Z",
+  "l7protocol": "redis",
+  "duration": 1,
+  "elapsed": "0.000321s",
+  "tags": {
+    "captureMode": "proxy",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1386-4-gf124e1841",
+    "sequence": "131",
+    "source": "goproxy"
+  },
+  "uuid": "vL5phPpdQbGioleqaH5uWQ==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "HSETNX",
+  "location": "cart:C000003",
+  "status": "OK",
+  "redis": {
+    "request": {
+      "array": {
+        "values": [
+          {
+            "bulkString": {
+              "rawMessage": "SFNFVE5Y"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "Y2FydDpDMDAwMDAz"
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "Y2hlY2tvdXQ="
+            }
+          },
+          {
+            "bulkString": {
+              "rawMessage": "UEVORElORw=="
+            }
+          }
+        ]
+      }
+    },
+    "response": {
+      "int": {
+        "value": "1"
+      }
+    }
+  },
+  "signature": {
+    "redis:command": "SFNFVE5Y",
+    "redis:request": "eyJhcnJheSI6eyJ2YWx1ZXMiOlt7ImJ1bGtTdHJpbmciOnsicmF3TWVzc2FnZSI6IlkyRnlkRHBETURBd01EQXoifX0seyJidWxrU3RyaW5nIjp7InJhd01lc3NhZ2UiOiJZMmhsWTJ0dmRYUT0ifX0seyJidWxrU3RyaW5nIjp7InJhd01lc3NhZ2UiOiJVRVZPUkVsT1J3PT0ifX1dfX0="
+  },
+  "netinfo": {
+    "id": "1",
+    "startTime": "2026-11-16T20:30:23.379259Z",
+    "downstream": {
+      "established": "2026-11-16T20:30:23.365785Z",
+      "ipAddress": "127.0.0.1",
+      "port": 56993,
+      "bytesSent": "4500"
+    },
+    "upstream": {
+      "established": "2026-11-16T20:30:23.366265Z",
+      "ipAddress": "127.0.0.1",
+      "port": 6390,
+      "hostname": "localhost",
+      "bytesSent": "4059"
+    },
+    "direction": "EGRESS"
+  }
+}

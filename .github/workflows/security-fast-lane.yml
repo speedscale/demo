@@ -8,6 +8,7 @@ on:
   pull_request:
     branches: [master, main]
     paths:
+      - .github/workflows/security-fast-lane.yml
       - python/Dockerfile
       - python/requirements.txt
   workflow_dispatch:
@@ -29,7 +30,7 @@ jobs:
         run: docker build -t fast-lane-demo:candidate .
 
       - name: Rescan image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: fast-lane-demo:candidate
           severity: CRITICAL,HIGH

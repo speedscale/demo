@@ -1,0 +1,15 @@
+diff --git a/src/BookingApi/Pricing.cs b/src/BookingApi/Pricing.cs
+index 56a124b..04cf407 100644
+--- a/src/BookingApi/Pricing.cs
++++ b/src/BookingApi/Pricing.cs
+@@ -5,8 +5,8 @@ public static class Pricing
+ 
+     public static decimal LineTotal(Quote q)
+     {
+-        var perPassenger = q.BaseFarePerPassenger + q.TaxesPerPassenger + BookingFeePerPassenger;
+-        return decimal.Round(perPassenger * q.Passengers, 2, MidpointRounding.AwayFromZero);
++        var perPassenger = q.BaseFarePerPassenger + q.TaxesPerPassenger;
++        return decimal.Round(perPassenger * q.Passengers + BookingFeePerPassenger, 2, MidpointRounding.AwayFromZero);
+     }
+ }
+ 

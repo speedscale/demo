@@ -1,0 +1,6 @@
+2026-11-16 16:18:48 INFO  started user application  ( command:dotnet src/BookingApi/bin/Release/net8.0/BookingApi.dll pid:70953 )
+2026-11-16 16:18:53 INFO  gracefully stopping your app
+2026-11-16 16:18:53 INFO  stopping user application  ( pid:70953 )
+2026-11-16 16:18:53 INFO  sent termination signal to user application process group
+2026-11-16 16:18:53 INFO  user application stopped gracefully
+2026-11-16 16:18:53 INFO  user application exited successfully

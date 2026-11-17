@@ -11,6 +11,7 @@ var pricingUrl = Env("PRICING_URL", "http://127.0.0.1:5052");
 var paymentsUrl = Env("PAYMENTS_URL", "http://127.0.0.1:5053");
 var redisAddr = Env("REDIS_ADDR", "127.0.0.1:6390");
 var port = Env("PORT", "8090");
+var listenHost = Env("LISTEN_HOST", "127.0.0.1");
 
 // Partner URLs are explicit endpoints (local or port-mapped), so skip any ambient proxy settings.
 var http = new HttpClient(new SocketsHttpHandler { UseProxy = false }) { Timeout = TimeSpan.FromSeconds(5) };
@@ -37,7 +38,7 @@ const string AddItemScript = """
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
-builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
+builder.WebHost.UseUrls($"http://{listenHost}:{port}");
 var app = builder.Build();
 
 app.MapGet("/healthz", () => Results.Json(new { status = "ok" }));

@@ -1,0 +1,5 @@
+**/bin
+**/obj
+.demo-run
+proxymock
+exports

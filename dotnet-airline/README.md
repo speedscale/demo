@@ -4,6 +4,10 @@ A small .NET 8 booking API that shops flights, builds a cart, prices it with a p
 
 The repo includes a committed recording in `proxymock/recording`, so the mock and replay steps work without Redis or the partner simulator. Only `record.sh` needs them.
 
+## Hands-on workshop
+
+Follow the [45-minute training workbook](TRAINING.md) to inspect a booking, replay with mocked dependencies, catch a pricing regression, exercise payment failures and run a short load test. Fresh recording and Gatling/k6 exports are optional extensions. The workbook includes setup, expected results, learner questions and Windows validation limits.
+
 ## What runs where
 
 | Process | Port | Role |

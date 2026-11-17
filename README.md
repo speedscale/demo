@@ -59,7 +59,7 @@ A .NET 8.0 minimal API weather service that integrates with OpenWeather API. Fea
 
 ### [.NET Airline Booking](dotnet-airline/)
 
-A .NET 8 booking API (offers, cart, fare pricing, checkout, record locators) backed by three partner HTTP services and Redis. Scripts record its traffic, replay it with every dependency mocked, catch a one-line pricing regression field by field, inject payment gateway faults, and run a load test. Includes a committed recording, so mock and replay need no Redis or partner services.
+A .NET 8 booking API (offers, cart, fare pricing, checkout, record locators) backed by three partner HTTP services and Redis. Scripts record its traffic, replay it with every dependency mocked, catch a one-line pricing regression field by field, inject payment gateway faults, and run a load test. Includes a committed recording, so mock and replay need no Redis or partner services. Start with the [hands-on training workbook](dotnet-airline/TRAINING.md).
 
 ### [NGINX](nginx/)
 

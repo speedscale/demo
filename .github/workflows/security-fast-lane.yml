@@ -11,6 +11,9 @@ on:
       - .github/workflows/security-fast-lane.yml
       - python/Dockerfile
       - python/requirements.txt
+      - python/fast-lane-check.sh
+      - python/openapi.yaml
+      - python/proxymock/**
   workflow_dispatch:
 
 permissions:

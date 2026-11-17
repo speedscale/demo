@@ -15,7 +15,6 @@ the same file also loads into any WireMock-compatible runner, e.g.
 | --- | --- |
 | `proxymock/recording/banking-gateway/` | A small Speedscale recording (4 endpoints from the banking demo's API gateway). |
 | `mappings.json` | The recording exported to WireMock format. Committed so the demo runs without proxymock. |
-| `run-demo.sh` | The steps below as one script, with checks. |
 
 The recorded endpoints:
 
@@ -100,10 +99,6 @@ the recording.
 ```bash
 docker stop wiremock-export-demo
 ```
-
-`./run-demo.sh` does steps 1 to 4 in one go and checks each result. If
-proxymock is installed, it regenerates `mappings.json` from the recording
-first.
 
 ## How the export maps to WireMock
 

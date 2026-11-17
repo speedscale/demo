@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: airline-traffic
+  namespace: airline-demo
+spec:
+  schedule: "*/2 * * * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 60
+  suspend: false
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 90
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: airline-traffic
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+          containers:
+            - name: traffic
+              image: python:3.12-alpine
+              command: ["python3", "/traffic/drive-cluster.py", "http://airline-booking-api:8090"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: driver
+                  mountPath: /traffic
+                  readOnly: true
+          volumes:
+            - name: driver
+              configMap:
+                name: airline-traffic-driver
+                defaultMode: 0444

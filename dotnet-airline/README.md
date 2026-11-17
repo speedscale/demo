@@ -47,7 +47,17 @@ The container images set `LISTEN_HOST=0.0.0.0`; local execution still defaults t
 kubectl --context minikube -n airline-demo port-forward svc/airline-booking-api 18090:8090
 ```
 
-This deployment does not install or retarget Speedscale. Choose an approved Speedscale installation and configuration before enabling capture. The API's `operator.speedscale.com/ignore` annotation keeps an existing admission webhook from replacing a sidecar injected directly by the CLI. For capture, use the [Speedscale documentation](https://docs.speedscale.com/proxymock/): inject a sidecar into `airline-booking-api`, supplying the installation's namespace and kube context, then run `demo/minikube.sh traffic` again. Verify the intended Cloud tenant and destination before inspecting the capture.
+To keep generating traffic while you work, enable the CronJob:
+
+```bash
+demo/minikube.sh traffic-on
+```
+
+It runs the same 26-request flow every two minutes through the Service. Runs cannot overlap, failed runs are not retried, and each run has a 90-second limit. The last successful Job and two failed Jobs are retained. The driver is mounted from a ConfigMap, so rerun `traffic-on` after changing `demo/drive-cluster.py`. Repeated offers use the five-minute Redis cache; schedule calls return after the cache expires.
+
+Pause future runs with `demo/minikube.sh traffic-off`; an active run can finish. Enable them again with `traffic-on`. The CronJob keeps running while minikube is up until you pause it.
+
+This deployment does not install or retarget Speedscale. Choose an approved eBPF-enabled Speedscale installation and configuration before enabling capture. The API's `operator.speedscale.com/ignore` annotation keeps an existing admission webhook from adding an application sidecar. Enable eBPF capture for `airline-booking-api` in namespace `airline-demo` using the [eBPF capture documentation](https://docs.speedscale.com/reference/ebpf-traffic-collection/), then run `demo/minikube.sh traffic` again. Verify the intended Cloud tenant and destination before inspecting the capture.
 
 ## Scripts
 

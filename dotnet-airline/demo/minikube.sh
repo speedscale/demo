@@ -24,8 +24,16 @@ case "${1:-status}" in
       --env="TRAVEL_DATE=${TRAVEL_DATE:-2026-12-18}" \
       --command -- python3 - http://airline-booking-api:8090 < demo/drive-cluster.py
     ;;
-  status)
-    "${K[@]}" get deployments,pods,services
+  traffic-on)
+    "${K[@]}" create configmap airline-traffic-driver \
+      --from-file=drive-cluster.py=demo/drive-cluster.py --dry-run=client -o yaml | "${K[@]}" apply -f -
+    "${K[@]}" apply -f k8s/traffic-cronjob.yaml
     ;;
-  *) echo "usage: $0 build|deploy|traffic|status" >&2; exit 2 ;;
+  traffic-off)
+    "${K[@]}" patch cronjob airline-traffic --type=merge -p '{"spec":{"suspend":true}}'
+    ;;
+  status)
+    "${K[@]}" get deployments,pods,services,cronjobs
+    ;;
+  *) echo "usage: $0 build|deploy|traffic|traffic-on|traffic-off|status" >&2; exit 2 ;;
 esac

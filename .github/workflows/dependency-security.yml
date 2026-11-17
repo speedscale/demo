@@ -51,6 +51,7 @@ jobs:
             - '.github/workflows/dependency-security.yml'
           node:
             - *workflow
+            - 'scripts/test-picomatch-security.cjs'
             - '**/package.json'
             - '**/package-lock.json'
           python:
@@ -108,6 +109,9 @@ jobs:
           echo "::endgroup::"
         done
         exit $status
+
+    - name: Check picomatch security regression
+      run: node --test scripts/test-picomatch-security.cjs
 
     - name: Retain audit evidence
       if: always()

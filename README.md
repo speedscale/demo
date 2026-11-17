@@ -169,3 +169,9 @@ Or use root commands for CI/automation:
 make build-java-auth     # Build from root
 make docker-java-auth    # Build and push images from root
 ```
+
+## Dependency security
+
+The LLM frontend and microservices gateway override transitive `picomatch` with the exact npm alias `npm:@ryotsu/picomatch@4.0.7-a`. All upstream releases through 4.0.7 are affected by [CVE-2026-112366](https://github.com/advisories/GHSA-fc5q-39xc-vjpf), with no patched upstream release as of November 17, 2026. The [fork](https://github.com/ryotsu-kankichi/secured-picomatch) adds a safeguard against single-branch repeated wildcard extglobs. Its published JavaScript was compared against upstream 4.0.7, and the lockfiles pin its integrity hash. This introduces a third-party fork and changes some glob matching behavior; it is an interim dependency until an upstream release addresses the advisory.
+
+The Node security job audits every listed demo and runs `node --test scripts/test-picomatch-security.cjs`. After installing both affected projects with `npm ci`, run that command from the repository root to check each installed matcher against bounded denial-of-service probes and ordinary glob matches. The frontend Jest suite and production build exercise the build tooling; gateway routing requires a separate smoke check.

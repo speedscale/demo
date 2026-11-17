@@ -1,0 +1,200 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: airline-demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airline-redis
+  namespace: airline-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airline-redis
+  template:
+    metadata:
+      labels:
+        app: airline-redis
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          args: ["--save", "", "--appendonly", "no"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airline-redis
+  namespace: airline-demo
+spec:
+  selector:
+    app: airline-redis
+  ports:
+    - name: redis
+      port: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airline-partners
+  namespace: airline-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airline-partners
+  template:
+    metadata:
+      labels:
+        app: airline-partners
+    spec:
+      containers:
+        - name: partners
+          image: dotnet-airline-partners:local
+          imagePullPolicy: Never
+          ports:
+            - name: schedule
+              containerPort: 5051
+            - name: pricing
+              containerPort: 5052
+            - name: payments
+              containerPort: 5053
+          readinessProbe:
+            tcpSocket:
+              port: schedule
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airline-partners
+  namespace: airline-demo
+spec:
+  selector:
+    app: airline-partners
+  ports:
+    - name: schedule
+      port: 5051
+    - name: pricing
+      port: 5052
+    - name: payments
+      port: 5053
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airline-booking-api
+  namespace: airline-demo
+  annotations:
+    operator.speedscale.com/ignore: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airline-booking-api
+  template:
+    metadata:
+      labels:
+        app: airline-booking-api
+    spec:
+      containers:
+        - name: booking-api
+          image: dotnet-airline-api:local
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8090
+          env:
+            - name: SCHEDULE_URL
+              value: http://airline-partners:5051
+            - name: PRICING_URL
+              value: http://airline-partners:5052
+            - name: PAYMENTS_URL
+              value: http://airline-partners:5053
+            - name: REDIS_ADDR
+              value: airline-redis:6379
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airline-booking-api
+  namespace: airline-demo
+spec:
+  selector:
+    app: airline-booking-api
+  ports:
+    - name: http
+      port: 8090
+      targetPort: http

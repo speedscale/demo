@@ -5,7 +5,8 @@ using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
-builder.WebHost.UseUrls("http://127.0.0.1:5051", "http://127.0.0.1:5052", "http://127.0.0.1:5053");
+var listenHost = Environment.GetEnvironmentVariable("LISTEN_HOST") ?? "127.0.0.1";
+builder.WebHost.UseUrls($"http://{listenHost}:5051", $"http://{listenHost}:5052", $"http://{listenHost}:5053");
 var app = builder.Build();
 
 static Task Lag(int min, int max) => Task.Delay(Random.Shared.Next(min, max));

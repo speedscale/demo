@@ -59,5 +59,40 @@
       "value": 100
     }
   ],
-  "version": 3
+  "version": 3,
+  "readiness": {
+    "families": [
+      {
+        "family": "READINESS_FAMILY_REGRESSION",
+        "role": "READINESS_ROLE_BLOCKS_BELOW",
+        "floor": "READINESS_LETTER_A"
+      },
+      {
+        "family": "READINESS_FAMILY_MOCK_FIDELITY",
+        "role": "READINESS_ROLE_BLOCKS_BELOW",
+        "floor": "READINESS_LETTER_A"
+      },
+      {
+        "family": "READINESS_FAMILY_SPEC_ADHERENCE",
+        "role": "READINESS_ROLE_BLOCKS_BELOW",
+        "floor": "READINESS_LETTER_B"
+      },
+      {
+        "family": "READINESS_FAMILY_PERFORMANCE",
+        "role": "READINESS_ROLE_ADVISES"
+      },
+      {
+        "family": "READINESS_FAMILY_SECURITY",
+        "role": "READINESS_ROLE_ADVISES"
+      },
+      {
+        "family": "READINESS_FAMILY_DATA_LAYER",
+        "role": "READINESS_ROLE_ADVISES"
+      },
+      {
+        "family": "READINESS_FAMILY_RESILIENCE",
+        "role": "READINESS_ROLE_OFF"
+      }
+    ]
+  }
 }

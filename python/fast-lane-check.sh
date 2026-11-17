@@ -8,6 +8,8 @@ RECORDING="${RECORDING:-proxymock/recording}"
 PROXYMOCK="${PROXYMOCK:-proxymock}"
 CA_CERT="${CA_CERT:-$HOME/.speedscale/certs/tls.crt}"
 NAME=fast-lane-check
+# Host port for the app on Docker Desktop; Linux runners use the host network on 5001.
+APP_PORT="${APP_PORT:-5001}"
 
 cleanup() {
   docker rm -f "$NAME" >/dev/null 2>&1 || true
@@ -22,9 +24,10 @@ MOCK_PID=$!
 # Linux runners share the host network; Docker Desktop reaches the host by name.
 if [ "$(uname)" = "Linux" ]; then
   NET=(--network host)
+  APP_PORT=5001
   PROXY=http://localhost:4140
 else
-  NET=(-p 5001:5001)
+  NET=(-p "$APP_PORT":5001)
   PROXY=http://host.docker.internal:4140
 fi
 
@@ -36,15 +39,15 @@ docker run -d --name "$NAME" "${NET[@]}" \
   "$IMAGE" >/dev/null
 
 for _ in $(seq 1 30); do
-  curl -sf localhost:5001/healthz >/dev/null 2>&1 && nc -z localhost 4140 2>/dev/null && break
+  curl -sf "localhost:$APP_PORT/healthz" >/dev/null 2>&1 && nc -z localhost 4140 2>/dev/null && break
   sleep 1
 done
 
 # The security-patch test config compares every response field and every
 # outbound call with the recording; any difference fails the replay.
 STATUS=0
-"$PROXYMOCK" replay --in "$RECORDING" --test-against http://localhost:5001 \
-  --test-config security-patch --mocks-out "$RUN/mocked" --out "$RUN/replayed" \
+"$PROXYMOCK" replay --in "$RECORDING" --test-against "http://localhost:$APP_PORT" \
+  --test-config security-patch --spec openapi.yaml --mocks-out "$RUN/mocked" --out "$RUN/replayed" \
   --output pretty "${@:2}" >"$RUN/replay.log" 2>&1 || STATUS=$?
 sed -n '/TEST CONFIG GOALS/,/Goal verdict/p' "$RUN/replay.log"
 

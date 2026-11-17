@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: Python demo API
+  version: 1.0.0
+paths:
+  /healthz:
+    get:
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+  /catalog:
+    get:
+      responses:
+        "200":
+          description: Top models from Hugging Face and OpenRouter
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [huggingface, openrouter]
+                properties:
+                  huggingface:
+                    type: array
+                    items:
+                      type: string
+                  openrouter:
+                    type: array
+                    items:
+                      type: string
+        "500":
+          $ref: "#/components/responses/Error"
+  /tickets:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  description: Raw From header of the inbound email
+                subject:
+                  type: string
+      responses:
+        "201":
+          description: Ticket created and routed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ticket, subject, sender, valid_sender, queue, auto_reply]
+                properties:
+                  ticket:
+                    type: string
+                  subject:
+                    type: string
+                  sender:
+                    type: object
+                    required: [raw, name, email, domain]
+                    properties:
+                      raw:
+                        type: string
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      domain:
+                        type: string
+                        nullable: true
+                  valid_sender:
+                    type: boolean
+                  queue:
+                    type: string
+                    enum: [education, emea, general, needs-review]
+                  auto_reply:
+                    type: boolean
+        "400":
+          $ref: "#/components/responses/Error"
+components:
+  responses:
+    Error:
+      description: Request failed
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error:
+                type: string

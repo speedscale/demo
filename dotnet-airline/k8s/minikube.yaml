@@ -130,8 +130,6 @@ kind: Deployment
 metadata:
   name: airline-booking-api
   namespace: airline-demo
-  annotations:
-    operator.speedscale.com/ignore: "true"
 spec:
   replicas: 1
   selector:

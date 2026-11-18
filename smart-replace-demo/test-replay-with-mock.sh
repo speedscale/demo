@@ -2,7 +2,7 @@
 # Test Replay with Mock
 #
 # This script demonstrates the complete record → replay → validate workflow
-# that simulates the real Myntra app logic where dynamically generated IDs
+# for a cart service where dynamically generated IDs
 # (cartId) cause signature mismatches during replay.
 #
 # Expected behavior WITHOUT transforms:

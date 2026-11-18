@@ -104,7 +104,7 @@ Run: `./test-recorded-scenario.sh`
 
 ### Cart Scenarios (Dual-Mode Identification Pattern)
 
-These scenarios demonstrate the **dual-mode identification pattern** inspired by real-world e-commerce systems like Myntra's cart service. They intentionally create signature mismatches during replay to test Smart Replace transform auto-detection.
+These scenarios demonstrate the **dual-mode identification pattern** common in e-commerce cart services. They intentionally create signature mismatches during replay to test Smart Replace transform auto-detection.
 
 #### 3. Session-Based Cart Flow
 Run: `./test-cart-session-scenario.sh`
@@ -179,7 +179,6 @@ Server: "Let me look up your cartId... here's your cart"
 - Client doesn't send cartId
 - Server maintains userId → cartId mapping (in-memory Map)
 - Reduces client complexity and payload size
-- Similar to Myntra's `uidx` → `cartId` pattern
 
 ### Explicit ID-Based (Direct Access)
 ```
@@ -189,7 +188,6 @@ Server: "Here's that specific cart"
 - cartId embedded in URL path
 - No session state lookup required
 - Enables cart sharing, cross-session access
-- Similar to Myntra's `/securedcart/v2/id/{cartId}` endpoint
 
 ### Why This Matters for Smart Replace
 

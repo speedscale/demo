@@ -1,0 +1,144 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-18T12:45:55.478886Z",
+  "l7protocol": "mysql",
+  "duration": 1,
+  "elapsed": "0.000331s",
+  "tags": {
+    "captureMode": "proxy",
+    "dbBackendPid": "10",
+    "dbName": "auth_db",
+    "dbTransaction": "idle",
+    "dbUser": "auth_user",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1413",
+    "sequence": "790",
+    "source": "goproxy"
+  },
+  "uuid": "AndjRDYoSZiYW0zDm0WmtQ==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "INSERT",
+  "location": "INSERT INTO audit_logs (user_id, username, event_type, event_status, details, ip_address, user_agent, created_at) VALUES (null, 'janedoe', 'TOKEN_VALIDATED', 'SUCCESS', '{\"valid\":true,\"action\":\"token_validation\"}', '192.168.65.1', 'curl/8.7.1', NOW())",
+  "status": "OK",
+  "mysql": {
+    "request": {
+      "query": {
+        "query": "INSERT INTO audit_logs (user_id, username, event_type, event_status, details, ip_address, user_agent, created_at) VALUES (null, 'janedoe', 'TOKEN_VALIDATED', 'SUCCESS', '{\"valid\":true,\"action\":\"token_validation\"}', '192.168.65.1', 'curl/8.7.1', NOW())"
+      }
+    },
+    "response": {
+      "ok": {
+        "affectedRows": "1",
+        "lastInsertID": "15",
+        "serverStatus": [
+          "MYSQL_SERVER_STATUS_IN_TRANS"
+        ]
+      }
+    },
+    "handshake": {
+      "request": {
+        "serverVersion": "8.0.46",
+        "threadID": 10,
+        "capabilities": [
+          "MYSQL_CAPABILITY_LONG_PASSWORD",
+          "MYSQL_CAPABILITY_ODBC",
+          "MYSQL_CAPABILITY_LOCAL_FILES",
+          "MYSQL_CAPABILITY_OPTIONAL_RESULTSET_METADATA",
+          "MYSQL_CAPABILITY_FOUND_ROWS",
+          "MYSQL_CAPABILITY_NO_SCHEMA",
+          "MYSQL_CAPABILITY_RESERVED",
+          "MYSQL_CAPABILITY_RESERVED2",
+          "MYSQL_CAPABILITY_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_CONNECT_ATTRS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH_LENENC_CLIENT_DATA",
+          "MYSQL_CAPABILITY_CONNECT_WITH_DB",
+          "MYSQL_CAPABILITY_IGNORE_SPACE",
+          "MYSQL_CAPABILITY_ZSTD_COMPRESSION_ALGORITHM",
+          "MYSQL_CAPABILITY_SSL",
+          "MYSQL_CAPABILITY_IGNORE_SIGPIPE",
+          "MYSQL_CAPABILITY_CAN_HANDLE_EXPIRED_PASSWORDS",
+          "MYSQL_CAPABILITY_LONG_FLAG",
+          "MYSQL_CAPABILITY_PS_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_MULTI_FACTOR_AUTHENTICATION",
+          "MYSQL_CAPABILITY_COMPRESS",
+          "MYSQL_CAPABILITY_INTERACTIVE",
+          "MYSQL_CAPABILITY_TRANSACTIONS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH",
+          "MYSQL_CAPABILITY_SESSION_TRACK",
+          "MYSQL_CAPABILITY_SSL_VERIFY_SERVER_CERT",
+          "MYSQL_CAPABILITY_REMEMBER_OPTIONS",
+          "MYSQL_CAPABILITY_PROTOCOL_41",
+          "MYSQL_CAPABILITY_DEPRECATE_EOF",
+          "MYSQL_CAPABILITY_QUERY_ATTRIBUTES",
+          "MYSQL_CAPABILITY_MULTI_STATEMENTS"
+        ],
+        "serverStatus": [
+          "MYSQL_SERVER_STATUS_AUTOCOMMIT"
+        ],
+        "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+        "authPlugin": "caching_sha2_password"
+      },
+      "response": {
+        "capabilities": [
+          "MYSQL_CAPABILITY_CONNECT_ATTRS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH_LENENC_CLIENT_DATA",
+          "MYSQL_CAPABILITY_CONNECT_WITH_DB",
+          "MYSQL_CAPABILITY_LONG_FLAG",
+          "MYSQL_CAPABILITY_PS_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_MULTI_FACTOR_AUTHENTICATION",
+          "MYSQL_CAPABILITY_TRANSACTIONS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH",
+          "MYSQL_CAPABILITY_PROTOCOL_41",
+          "MYSQL_CAPABILITY_DEPRECATE_EOF",
+          "MYSQL_CAPABILITY_QUERY_ATTRIBUTES",
+          "MYSQL_CAPABILITY_LONG_PASSWORD",
+          "MYSQL_CAPABILITY_FOUND_ROWS",
+          "MYSQL_CAPABILITY_RESERVED2",
+          "MYSQL_CAPABILITY_MULTI_RESULTS"
+        ],
+        "maxPacketSize": 16777215,
+        "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+        "username": "auth_user",
+        "database": "auth_db",
+        "authPlugin": "caching_sha2_password",
+        "connectAttrs": {
+          "_client_license": "GPL",
+          "_client_name": "MySQL Connector/J",
+          "_client_version": "8.2.0",
+          "_runtime_vendor": "Amazon.com Inc.",
+          "_runtime_version": "21.0.12.1"
+        }
+      }
+    }
+  },
+  "signature": {
+    "mysql:command": "UXVlcnk=",
+    "mysql:phase": "TVlTUUxfUEhBU0VfQ09NTUFORA==",
+    "mysql:query": "SU5TRVJUIElOVE8gYXVkaXRfbG9ncyAodXNlcl9pZCwgdXNlcm5hbWUsIGV2ZW50X3R5cGUsIGV2ZW50X3N0YXR1cywgZGV0YWlscywgaXBfYWRkcmVzcywgdXNlcl9hZ2VudCwgY3JlYXRlZF9hdCkgVkFMVUVTIChudWxsLCAnamFuZWRvZScsICdUT0tFTl9WQUxJREFURUQnLCAnU1VDQ0VTUycsICd7InZhbGlkIjp0cnVlLCJhY3Rpb24iOiJ0b2tlbl92YWxpZGF0aW9uIn0nLCAnMTkyLjE2OC42NS4xJywgJ2N1cmwvOC43LjEnLCBOT1coKSk="
+  },
+  "netinfo": {
+    "id": "2",
+    "startTime": "2026-11-18T12:45:52.379258Z",
+    "downstream": {
+      "established": "2026-11-18T12:45:52.378032Z",
+      "ipAddress": "127.0.0.1",
+      "port": 57307,
+      "bytesSent": "34240"
+    },
+    "upstream": {
+      "established": "2026-11-18T12:45:52.378501Z",
+      "ipAddress": "127.0.0.1",
+      "port": 3317,
+      "hostname": "localhost",
+      "bytesSent": "40021"
+    },
+    "direction": "EGRESS"
+  }
+}

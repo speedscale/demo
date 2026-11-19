@@ -14,6 +14,15 @@ on:
       - python/fast-lane-check.sh
       - python/openapi.yaml
       - python/proxymock/**
+      - java-auth/server/Dockerfile
+      - java-auth/server/pom.xml
+      - java-auth/fast-lane-check.sh
+      - java-auth/proxymock/**
+      - graphql-demo/java/Dockerfile
+      - graphql-demo/java/pom.xml
+      - graphql-demo/java/src/**
+      - graphql-demo/java/fast-lane-check.sh
+      - graphql-demo/java/proxymock/**
   workflow_dispatch:
 
 permissions:
@@ -60,3 +69,90 @@ jobs:
           name: fast-lane-replay
           path: |
             python/proxymock/results/
+
+  java-readiness:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: java-auth
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build patched image
+        run: docker build -t java-auth-fast-lane:candidate ./server
+
+      # A real lane pulls the image running in production; the demo builds it.
+      - name: Build deployed image
+        run: docker build --build-arg CORRETTO_TAG=21.0.12 -t java-auth-fast-lane:deployed ./server
+
+      - name: Rescan image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: java-auth-fast-lane:candidate
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Install proxymock
+        env:
+          SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+        run: |
+          sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
+          echo "$HOME/.speedscale" >> "$GITHUB_PATH"
+          "$HOME/.speedscale/proxymock" init --api-key "$SPEEDSCALE_API_KEY"
+
+      - name: Replay recorded traffic against patched image
+        env:
+          SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+        run: ./fast-lane-check.sh java-auth-fast-lane:candidate java-auth-fast-lane:deployed
+
+      - name: Upload replay results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-fast-lane-replay
+          path: |
+            java-auth/proxymock/results/
+
+  graphql-java-readiness:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: graphql-demo/java
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build patched image
+        run: docker build -t graphql-fast-lane:candidate .
+
+      - name: Rescan image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: graphql-fast-lane:candidate
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Install proxymock
+        env:
+          SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+        run: |
+          sh -c "$(curl -Lfs https://downloads.speedscale.com/proxymock/install-proxymock)"
+          echo "$HOME/.speedscale" >> "$GITHUB_PATH"
+          "$HOME/.speedscale/proxymock" init --api-key "$SPEEDSCALE_API_KEY"
+
+      - name: Replay recorded traffic against patched image
+        env:
+          SPEEDSCALE_API_KEY: ${{ secrets.SPEEDSCALE_API_KEY }}
+          WARMUP: '400'
+        run: ./fast-lane-check.sh graphql-fast-lane:candidate
+
+      - name: Upload replay results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphql-java-fast-lane-replay
+          path: |
+            graphql-demo/java/proxymock/results/

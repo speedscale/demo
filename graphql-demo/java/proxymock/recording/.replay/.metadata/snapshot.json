@@ -1,0 +1,7 @@
+{
+  "id": "replay-blueprints",
+  "tokenizerConfig": {
+    "name": "standard",
+    "id": "standard"
+  }
+}

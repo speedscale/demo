@@ -13,4 +13,6 @@ python/.venv/
 java/target/
 node/proxymock/
 python/proxymock/
-java/proxymock/
+java/proxymock/*
+!java/proxymock/recording/
+!java/proxymock/testconfigs/

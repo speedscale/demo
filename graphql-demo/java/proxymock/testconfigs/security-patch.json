@@ -1,0 +1,87 @@
+{
+  "assertionGroups": [
+    {
+      "configs": [
+        {
+          "type": "httpStatusCode"
+        },
+        {
+          "config": {
+            "headers": "Content-Type"
+          },
+          "type": "httpHeaders"
+        },
+        {
+          "type": "httpResponseContentType"
+        },
+        {
+          "type": "httpResponseBody",
+          "config": {
+            "allowNew": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "cluster": {
+    "cleanup": "inventory",
+    "logLevel": "info",
+    "logsCollected": true,
+    "replayMode": "full-replay",
+    "sidecar_tls_out": true
+  },
+  "generator": {
+    "stages": [
+      {
+        "virtualUsers": {
+          "requestDelay": {},
+          "virtualUsers": "1"
+        }
+      }
+    ]
+  },
+  "id": "security-patch",
+  "responder": {
+    "numReplicas": 1,
+    "passthrough_mode": true
+  },
+  "rules": [
+    {
+      "action": "ALERT",
+      "metricName": "passAssertPct",
+      "type": "TOO_LOW",
+      "value": 100
+    }
+  ],
+  "version": 3,
+  "readiness": {
+    "families": [
+      {
+        "family": "READINESS_FAMILY_REGRESSION",
+        "role": "READINESS_ROLE_BLOCKS_BELOW",
+        "floor": "READINESS_LETTER_A"
+      },
+      {
+        "family": "READINESS_FAMILY_MOCK_FIDELITY",
+        "role": "READINESS_ROLE_BLOCKS_BELOW",
+        "floor": "READINESS_LETTER_A"
+      },
+      {
+        "family": "READINESS_FAMILY_PERFORMANCE",
+        "role": "READINESS_ROLE_ADVISES"
+      },
+      {
+        "family": "READINESS_FAMILY_SECURITY",
+        "role": "READINESS_ROLE_ADVISES"
+      },
+      {
+        "family": "READINESS_FAMILY_DATA_LAYER",
+        "role": "READINESS_ROLE_ADVISES"
+      },
+      {
+        "family": "READINESS_FAMILY_RESILIENCE",
+        "role": "READINESS_ROLE_OFF"
+      }
+    ]
+  }
+}

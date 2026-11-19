@@ -1,0 +1,348 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-18T12:45:52.626678Z",
+  "l7protocol": "mysql",
+  "duration": 1,
+  "elapsed": "0.000258s",
+  "tags": {
+    "captureMode": "proxy",
+    "dbBackendPid": "10",
+    "dbName": "auth_db",
+    "dbTransaction": "idle",
+    "dbUser": "auth_user",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1413",
+    "sequence": "318",
+    "source": "goproxy"
+  },
+  "uuid": "IJPbJwc0SCqSlJ0xEqYcUQ==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "SELECT",
+  "location": "SELECT installed_rank, version, description, type, script, checksum, installed_on, installed_by, execution_time, success FROM auth_db.flyway_schema_history WHERE installed_rank > 2 ORDER BY installed_rank",
+  "status": "OK",
+  "mysql": {
+    "request": {
+      "query": {
+        "query": "SELECT `installed_rank`,`version`,`description`,`type`,`script`,`checksum`,`installed_on`,`installed_by`,`execution_time`,`success` FROM `auth_db`.`flyway_schema_history` WHERE `installed_rank` > 2 ORDER BY `installed_rank`"
+      }
+    },
+    "response": {
+      "textResultsets": {
+        "resultsets": [
+          {
+            "columns": [
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "installed_rank",
+                "physicalName": "installed_rank",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 11,
+                "type": "MYSQL_FIELD_TYPE_LONG",
+                "flags": [
+                  "FLAG_PRI_KEY",
+                  "FLAG_NO_DEFAULT_VALUE",
+                  "FLAG_PART_KEY",
+                  "FLAG_NOT_NULL",
+                  "FLAG_GROUP",
+                  "FLAG_FIELD_FLAGS_STORAGE_MEDIA"
+                ]
+              },
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "version",
+                "physicalName": "version",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 200,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING"
+              },
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "description",
+                "physicalName": "description",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 800,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "flags": [
+                  "FLAG_NO_DEFAULT_VALUE",
+                  "FLAG_NOT_NULL",
+                  "FLAG_GROUP"
+                ]
+              },
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "type",
+                "physicalName": "type",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 80,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "flags": [
+                  "FLAG_NOT_NULL",
+                  "FLAG_GROUP",
+                  "FLAG_NO_DEFAULT_VALUE"
+                ]
+              },
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "script",
+                "physicalName": "script",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 4000,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "flags": [
+                  "FLAG_NOT_NULL",
+                  "FLAG_GROUP",
+                  "FLAG_NO_DEFAULT_VALUE"
+                ]
+              },
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "checksum",
+                "physicalName": "checksum",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 11,
+                "type": "MYSQL_FIELD_TYPE_LONG"
+              },
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "installed_on",
+                "physicalName": "installed_on",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 19,
+                "type": "MYSQL_FIELD_TYPE_TIMESTAMP",
+                "flags": [
+                  "FLAG_NOT_NULL",
+                  "FLAG_BINARY",
+                  "FLAG_GROUP",
+                  "FLAG_TIMESTAMP"
+                ]
+              },
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "installed_by",
+                "physicalName": "installed_by",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 400,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "flags": [
+                  "FLAG_NO_DEFAULT_VALUE",
+                  "FLAG_NOT_NULL",
+                  "FLAG_GROUP"
+                ]
+              },
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "execution_time",
+                "physicalName": "execution_time",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 11,
+                "type": "MYSQL_FIELD_TYPE_LONG",
+                "flags": [
+                  "FLAG_NO_DEFAULT_VALUE",
+                  "FLAG_NOT_NULL",
+                  "FLAG_GROUP"
+                ]
+              },
+              {
+                "catalog": "def",
+                "schema": "auth_db",
+                "table": "flyway_schema_history",
+                "physicalTable": "flyway_schema_history",
+                "name": "success",
+                "physicalName": "success",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 1,
+                "type": "MYSQL_FIELD_TYPE_TINY",
+                "flags": [
+                  "FLAG_NO_DEFAULT_VALUE",
+                  "FLAG_PART_KEY",
+                  "FLAG_MULTIPLE_KEY",
+                  "FLAG_NOT_NULL",
+                  "FLAG_GROUP",
+                  "FLAG_FIELD_FLAGS_COLUMN_FORMAT"
+                ]
+              }
+            ],
+            "rows": [
+              {
+                "fields": [
+                  {
+                    "asString": "3"
+                  },
+                  {
+                    "asString": "3"
+                  },
+                  {
+                    "asString": "create audit logs table"
+                  },
+                  {
+                    "asString": "SQL"
+                  },
+                  {
+                    "asString": "V3__create_audit_logs_table.sql"
+                  },
+                  {
+                    "asString": "1328805531"
+                  },
+                  {
+                    "asString": "2026-11-18 12:45:52"
+                  },
+                  {
+                    "asString": "auth_user"
+                  },
+                  {
+                    "asString": "33"
+                  },
+                  {
+                    "asString": "1"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "handshake": {
+      "request": {
+        "serverVersion": "8.0.46",
+        "threadID": 10,
+        "capabilities": [
+          "MYSQL_CAPABILITY_LONG_PASSWORD",
+          "MYSQL_CAPABILITY_ODBC",
+          "MYSQL_CAPABILITY_LOCAL_FILES",
+          "MYSQL_CAPABILITY_OPTIONAL_RESULTSET_METADATA",
+          "MYSQL_CAPABILITY_FOUND_ROWS",
+          "MYSQL_CAPABILITY_NO_SCHEMA",
+          "MYSQL_CAPABILITY_RESERVED",
+          "MYSQL_CAPABILITY_RESERVED2",
+          "MYSQL_CAPABILITY_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_CONNECT_ATTRS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH_LENENC_CLIENT_DATA",
+          "MYSQL_CAPABILITY_CONNECT_WITH_DB",
+          "MYSQL_CAPABILITY_IGNORE_SPACE",
+          "MYSQL_CAPABILITY_ZSTD_COMPRESSION_ALGORITHM",
+          "MYSQL_CAPABILITY_SSL",
+          "MYSQL_CAPABILITY_IGNORE_SIGPIPE",
+          "MYSQL_CAPABILITY_CAN_HANDLE_EXPIRED_PASSWORDS",
+          "MYSQL_CAPABILITY_LONG_FLAG",
+          "MYSQL_CAPABILITY_PS_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_MULTI_FACTOR_AUTHENTICATION",
+          "MYSQL_CAPABILITY_COMPRESS",
+          "MYSQL_CAPABILITY_INTERACTIVE",
+          "MYSQL_CAPABILITY_TRANSACTIONS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH",
+          "MYSQL_CAPABILITY_SESSION_TRACK",
+          "MYSQL_CAPABILITY_SSL_VERIFY_SERVER_CERT",
+          "MYSQL_CAPABILITY_REMEMBER_OPTIONS",
+          "MYSQL_CAPABILITY_PROTOCOL_41",
+          "MYSQL_CAPABILITY_DEPRECATE_EOF",
+          "MYSQL_CAPABILITY_QUERY_ATTRIBUTES",
+          "MYSQL_CAPABILITY_MULTI_STATEMENTS"
+        ],
+        "serverStatus": [
+          "MYSQL_SERVER_STATUS_AUTOCOMMIT"
+        ],
+        "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+        "authPlugin": "caching_sha2_password"
+      },
+      "response": {
+        "capabilities": [
+          "MYSQL_CAPABILITY_CONNECT_ATTRS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH_LENENC_CLIENT_DATA",
+          "MYSQL_CAPABILITY_CONNECT_WITH_DB",
+          "MYSQL_CAPABILITY_LONG_FLAG",
+          "MYSQL_CAPABILITY_PS_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_MULTI_FACTOR_AUTHENTICATION",
+          "MYSQL_CAPABILITY_TRANSACTIONS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH",
+          "MYSQL_CAPABILITY_PROTOCOL_41",
+          "MYSQL_CAPABILITY_DEPRECATE_EOF",
+          "MYSQL_CAPABILITY_QUERY_ATTRIBUTES",
+          "MYSQL_CAPABILITY_LONG_PASSWORD",
+          "MYSQL_CAPABILITY_FOUND_ROWS",
+          "MYSQL_CAPABILITY_RESERVED2",
+          "MYSQL_CAPABILITY_MULTI_RESULTS"
+        ],
+        "maxPacketSize": 16777215,
+        "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+        "username": "auth_user",
+        "database": "auth_db",
+        "authPlugin": "caching_sha2_password",
+        "connectAttrs": {
+          "_client_license": "GPL",
+          "_client_name": "MySQL Connector/J",
+          "_client_version": "8.2.0",
+          "_runtime_vendor": "Amazon.com Inc.",
+          "_runtime_version": "21.0.12.1"
+        }
+      }
+    }
+  },
+  "signature": {
+    "mysql:command": "UXVlcnk=",
+    "mysql:phase": "TVlTUUxfUEhBU0VfQ09NTUFORA==",
+    "mysql:query": "U0VMRUNUIGluc3RhbGxlZF9yYW5rLCB2ZXJzaW9uLCBkZXNjcmlwdGlvbiwgdHlwZSwgc2NyaXB0LCBjaGVja3N1bSwgaW5zdGFsbGVkX29uLCBpbnN0YWxsZWRfYnksIGV4ZWN1dGlvbl90aW1lLCBzdWNjZXNzIEZST00gYXV0aF9kYi5mbHl3YXlfc2NoZW1hX2hpc3RvcnkgV0hFUkUgaW5zdGFsbGVkX3JhbmsgPiAyIE9SREVSIEJZIGluc3RhbGxlZF9yYW5r"
+  },
+  "netinfo": {
+    "id": "2",
+    "startTime": "2026-11-18T12:45:52.379258Z",
+    "downstream": {
+      "established": "2026-11-18T12:45:52.378032Z",
+      "ipAddress": "127.0.0.1",
+      "port": 57307,
+      "bytesSent": "20574"
+    },
+    "upstream": {
+      "established": "2026-11-18T12:45:52.378501Z",
+      "ipAddress": "127.0.0.1",
+      "port": 3317,
+      "hostname": "localhost",
+      "bytesSent": "25296"
+    },
+    "direction": "EGRESS"
+  }
+}

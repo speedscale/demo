@@ -1,0 +1,399 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-18T12:45:52.552657Z",
+  "l7protocol": "mysql",
+  "duration": 1,
+  "elapsed": "0.000269s",
+  "tags": {
+    "captureMode": "proxy",
+    "dbBackendPid": "12",
+    "dbName": "auth_db",
+    "dbTransaction": "idle",
+    "dbUser": "auth_user",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1413",
+    "sequence": "187",
+    "source": "goproxy"
+  },
+  "uuid": "JBp/bCe8SSCSblddLLm0qA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "SELECT",
+  "location": "SELECT @@session . auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout",
+  "status": "OK",
+  "mysql": {
+    "request": {
+      "query": {
+        "query": "/* mysql-connector-j-8.2.0 (Revision: 06a1f724497fd81c6a659131fda822c9e5085b6c) */SELECT  @@session.auto_increment_increment AS auto_increment_increment, @@character_set_client AS character_set_client, @@character_set_connection AS character_set_connection, @@character_set_results AS character_set_results, @@character_set_server AS character_set_server, @@collation_server AS collation_server, @@collation_connection AS collation_connection, @@init_connect AS init_connect, @@interactive_timeout AS interactive_timeout, @@license AS license, @@lower_case_table_names AS lower_case_table_names, @@max_allowed_packet AS max_allowed_packet, @@net_write_timeout AS net_write_timeout, @@performance_schema AS performance_schema, @@sql_mode AS sql_mode, @@system_time_zone AS system_time_zone, @@time_zone AS time_zone, @@transaction_isolation AS transaction_isolation, @@wait_timeout AS wait_timeout"
+      }
+    },
+    "response": {
+      "textResultsets": {
+        "resultsets": [
+          {
+            "columns": [
+              {
+                "catalog": "def",
+                "name": "auto_increment_increment",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 21,
+                "type": "MYSQL_FIELD_TYPE_LONGLONG",
+                "flags": [
+                  "FLAG_UNSIGNED",
+                  "FLAG_BINARY"
+                ]
+              },
+              {
+                "catalog": "def",
+                "name": "character_set_client",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "character_set_connection",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "character_set_results",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "character_set_server",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "collation_server",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "collation_connection",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "init_connect",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "interactive_timeout",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 21,
+                "type": "MYSQL_FIELD_TYPE_LONGLONG",
+                "flags": [
+                  "FLAG_BINARY",
+                  "FLAG_UNSIGNED"
+                ]
+              },
+              {
+                "catalog": "def",
+                "name": "license",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "lower_case_table_names",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 21,
+                "type": "MYSQL_FIELD_TYPE_LONGLONG",
+                "flags": [
+                  "FLAG_BINARY",
+                  "FLAG_UNSIGNED"
+                ]
+              },
+              {
+                "catalog": "def",
+                "name": "max_allowed_packet",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 21,
+                "type": "MYSQL_FIELD_TYPE_LONGLONG",
+                "flags": [
+                  "FLAG_BINARY",
+                  "FLAG_UNSIGNED"
+                ]
+              },
+              {
+                "catalog": "def",
+                "name": "net_write_timeout",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 21,
+                "type": "MYSQL_FIELD_TYPE_LONGLONG",
+                "flags": [
+                  "FLAG_BINARY",
+                  "FLAG_UNSIGNED"
+                ]
+              },
+              {
+                "catalog": "def",
+                "name": "performance_schema",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 1,
+                "type": "MYSQL_FIELD_TYPE_LONGLONG",
+                "flags": [
+                  "FLAG_BINARY"
+                ]
+              },
+              {
+                "catalog": "def",
+                "name": "sql_mode",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "system_time_zone",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "time_zone",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "transaction_isolation",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+                "maxColumnLength": 87380,
+                "type": "MYSQL_FIELD_TYPE_VAR_STRING",
+                "maxDecimals": 31
+              },
+              {
+                "catalog": "def",
+                "name": "wait_timeout",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 21,
+                "type": "MYSQL_FIELD_TYPE_LONGLONG",
+                "flags": [
+                  "FLAG_UNSIGNED",
+                  "FLAG_BINARY"
+                ]
+              }
+            ],
+            "rows": [
+              {
+                "fields": [
+                  {
+                    "asString": "1"
+                  },
+                  {
+                    "asString": "utf8mb4"
+                  },
+                  {
+                    "asString": "utf8mb4"
+                  },
+                  {
+                    "asString": "utf8mb4"
+                  },
+                  {
+                    "asString": "utf8mb4"
+                  },
+                  {
+                    "asString": "utf8mb4_0900_ai_ci"
+                  },
+                  {
+                    "asString": "utf8mb4_0900_ai_ci"
+                  },
+                  {
+                    "asString": ""
+                  },
+                  {
+                    "asString": "28800"
+                  },
+                  {
+                    "asString": "GPL"
+                  },
+                  {
+                    "asString": "0"
+                  },
+                  {
+                    "asString": "67108864"
+                  },
+                  {
+                    "asString": "60"
+                  },
+                  {
+                    "asString": "1"
+                  },
+                  {
+                    "asString": "ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
+                  },
+                  {
+                    "asString": "UTC"
+                  },
+                  {
+                    "asString": "SYSTEM"
+                  },
+                  {
+                    "asString": "REPEATABLE-READ"
+                  },
+                  {
+                    "asString": "28800"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "handshake": {
+      "request": {
+        "serverVersion": "8.0.46",
+        "threadID": 12,
+        "capabilities": [
+          "MYSQL_CAPABILITY_PROTOCOL_41",
+          "MYSQL_CAPABILITY_DEPRECATE_EOF",
+          "MYSQL_CAPABILITY_QUERY_ATTRIBUTES",
+          "MYSQL_CAPABILITY_MULTI_STATEMENTS",
+          "MYSQL_CAPABILITY_LONG_PASSWORD",
+          "MYSQL_CAPABILITY_ODBC",
+          "MYSQL_CAPABILITY_LOCAL_FILES",
+          "MYSQL_CAPABILITY_OPTIONAL_RESULTSET_METADATA",
+          "MYSQL_CAPABILITY_FOUND_ROWS",
+          "MYSQL_CAPABILITY_NO_SCHEMA",
+          "MYSQL_CAPABILITY_RESERVED",
+          "MYSQL_CAPABILITY_RESERVED2",
+          "MYSQL_CAPABILITY_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_CONNECT_ATTRS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH_LENENC_CLIENT_DATA",
+          "MYSQL_CAPABILITY_CONNECT_WITH_DB",
+          "MYSQL_CAPABILITY_IGNORE_SPACE",
+          "MYSQL_CAPABILITY_ZSTD_COMPRESSION_ALGORITHM",
+          "MYSQL_CAPABILITY_SSL",
+          "MYSQL_CAPABILITY_IGNORE_SIGPIPE",
+          "MYSQL_CAPABILITY_CAN_HANDLE_EXPIRED_PASSWORDS",
+          "MYSQL_CAPABILITY_LONG_FLAG",
+          "MYSQL_CAPABILITY_PS_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_MULTI_FACTOR_AUTHENTICATION",
+          "MYSQL_CAPABILITY_COMPRESS",
+          "MYSQL_CAPABILITY_INTERACTIVE",
+          "MYSQL_CAPABILITY_TRANSACTIONS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH",
+          "MYSQL_CAPABILITY_SESSION_TRACK",
+          "MYSQL_CAPABILITY_SSL_VERIFY_SERVER_CERT",
+          "MYSQL_CAPABILITY_REMEMBER_OPTIONS"
+        ],
+        "serverStatus": [
+          "MYSQL_SERVER_STATUS_AUTOCOMMIT"
+        ],
+        "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+        "authPlugin": "caching_sha2_password"
+      },
+      "response": {
+        "capabilities": [
+          "MYSQL_CAPABILITY_LONG_PASSWORD",
+          "MYSQL_CAPABILITY_FOUND_ROWS",
+          "MYSQL_CAPABILITY_RESERVED2",
+          "MYSQL_CAPABILITY_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_CONNECT_ATTRS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH_LENENC_CLIENT_DATA",
+          "MYSQL_CAPABILITY_CONNECT_WITH_DB",
+          "MYSQL_CAPABILITY_LONG_FLAG",
+          "MYSQL_CAPABILITY_PS_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_MULTI_FACTOR_AUTHENTICATION",
+          "MYSQL_CAPABILITY_TRANSACTIONS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH",
+          "MYSQL_CAPABILITY_PROTOCOL_41",
+          "MYSQL_CAPABILITY_DEPRECATE_EOF",
+          "MYSQL_CAPABILITY_QUERY_ATTRIBUTES"
+        ],
+        "maxPacketSize": 16777215,
+        "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+        "username": "auth_user",
+        "database": "auth_db",
+        "authPlugin": "caching_sha2_password",
+        "connectAttrs": {
+          "_client_license": "GPL",
+          "_client_name": "MySQL Connector/J",
+          "_client_version": "8.2.0",
+          "_runtime_vendor": "Amazon.com Inc.",
+          "_runtime_version": "21.0.12.1"
+        }
+      }
+    }
+  },
+  "signature": {
+    "mysql:command": "UXVlcnk=",
+    "mysql:phase": "TVlTUUxfUEhBU0VfQ09NTUFORA==",
+    "mysql:query": "U0VMRUNUIEBAc2Vzc2lvbiAuIGF1dG9faW5jcmVtZW50X2luY3JlbWVudCBBUyBhdXRvX2luY3JlbWVudF9pbmNyZW1lbnQsIEBAY2hhcmFjdGVyX3NldF9jbGllbnQgQVMgY2hhcmFjdGVyX3NldF9jbGllbnQsIEBAY2hhcmFjdGVyX3NldF9jb25uZWN0aW9uIEFTIGNoYXJhY3Rlcl9zZXRfY29ubmVjdGlvbiwgQEBjaGFyYWN0ZXJfc2V0X3Jlc3VsdHMgQVMgY2hhcmFjdGVyX3NldF9yZXN1bHRzLCBAQGNoYXJhY3Rlcl9zZXRfc2VydmVyIEFTIGNoYXJhY3Rlcl9zZXRfc2VydmVyLCBAQGNvbGxhdGlvbl9zZXJ2ZXIgQVMgY29sbGF0aW9uX3NlcnZlciwgQEBjb2xsYXRpb25fY29ubmVjdGlvbiBBUyBjb2xsYXRpb25fY29ubmVjdGlvbiwgQEBpbml0X2Nvbm5lY3QgQVMgaW5pdF9jb25uZWN0LCBAQGludGVyYWN0aXZlX3RpbWVvdXQgQVMgaW50ZXJhY3RpdmVfdGltZW91dCwgQEBsaWNlbnNlIEFTIGxpY2Vuc2UsIEBAbG93ZXJfY2FzZV90YWJsZV9uYW1lcyBBUyBsb3dlcl9jYXNlX3RhYmxlX25hbWVzLCBAQG1heF9hbGxvd2VkX3BhY2tldCBBUyBtYXhfYWxsb3dlZF9wYWNrZXQsIEBAbmV0X3dyaXRlX3RpbWVvdXQgQVMgbmV0X3dyaXRlX3RpbWVvdXQsIEBAcGVyZm9ybWFuY2Vfc2NoZW1hIEFTIHBlcmZvcm1hbmNlX3NjaGVtYSwgQEBzcWxfbW9kZSBBUyBzcWxfbW9kZSwgQEBzeXN0ZW1fdGltZV96b25lIEFTIHN5c3RlbV90aW1lX3pvbmUsIEBAdGltZV96b25lIEFTIHRpbWVfem9uZSwgQEB0cmFuc2FjdGlvbl9pc29sYXRpb24gQVMgdHJhbnNhY3Rpb25faXNvbGF0aW9uLCBAQHdhaXRfdGltZW91dCBBUyB3YWl0X3RpbWVvdXQ="
+  },
+  "netinfo": {
+    "id": "4",
+    "startTime": "2026-11-18T12:45:52.551919Z",
+    "downstream": {
+      "established": "2026-11-18T12:45:52.551056Z",
+      "ipAddress": "127.0.0.1",
+      "port": 57316,
+      "bytesSent": "1145"
+    },
+    "upstream": {
+      "established": "2026-11-18T12:45:52.551341Z",
+      "ipAddress": "127.0.0.1",
+      "port": 3317,
+      "hostname": "localhost",
+      "bytesSent": "1183"
+    },
+    "direction": "EGRESS"
+  }
+}

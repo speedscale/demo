@@ -194,6 +194,98 @@ Health check endpoint: `GET /actuator/health`
 5. Implement rate limiting for login attempts
 6. Regular security audits of dependencies
 
+## Security fast lane demo
+
+A JDK or library upgrade should not change how the service behaves. This demo replays recorded traffic against the upgraded build, with MySQL mocked, and answers four questions before the upgrade ships:
+
+1. Did functionality break?
+2. Did performance regress?
+3. Are there new security issues?
+4. Does the build pass the readiness gate?
+
+The case that prompted it is CVE-2026-114938, a memory-corruption bug in the HotSpot Base64 decoder (the AVX-512 VBMI intrinsic). It affects Java 17.0.6 and later, 21, 25 and 27. Corretto 21.0.13.1.2 fixes it. Until a service is patched, `-XX:-UseBASE64Intrinsics` turns the vulnerable code off.
+
+The runtime image takes its JDK from the `CORRETTO_TAG` build argument, so the same app can be built on the deployed `21.0.12` and the patched `21.0.13`.
+
+`proxymock/recording/` holds 35 inbound requests and the 480 MySQL calls behind them (startup migrations included), recorded against the 21.0.12 image with `./traffic.sh`. The traffic covers logins, token checks, refresh, registration and eight malformed or forged tokens. It is generated for the demo, not captured from production.
+
+### Check one upgrade
+
+Needs Docker, `jq` and proxymock.
+
+```bash
+make fast-lane
+```
+
+This builds the deployed and patched images and runs `./fast-lane-check.sh <candidate image> <deployed image>`:
+
+```
+Did functionality break?   PASS  2660 of 2660 assertions match the recording
+Did performance regress?   PASS  p95 9 ms deployed, 8.7 ms candidate (-3.3%, budget +50%)
+Any new security issues?   PASS  0 new findings, 16 unchanged; auth probe: 0 endpoints answered without a credential
+Readiness gate             PASS  Regression A, Security D, Mock fidelity A, Data layer A
+
+VERDICT: READY for production
+```
+
+The script exits 0 when the verdict is ready and non-zero when it is not. A run takes about 30 seconds and no database runs during it.
+
+How each answer is produced:
+
+- **Functionality.** The recording is replayed 20 times against the candidate with the `security-patch` test config (`proxymock/testconfigs/security-patch.json`). Each response is compared with the recorded one on status, content type and every body field except `accessToken`, `refreshToken` and the error `timestamp`, which are new on every run. All assertions have to pass.
+- **Performance.** The deployed image is replayed in the same run, the same way. Each image gets 20 warm-up passes that are not scored. The candidate's p95 may not sit more than `PERF_BUDGET_PCT` (default 50) percent above the deployed image's.
+- **Security.** `proxymock report --baseline` compares the two replays and lists each security finding as new, unchanged or resolved. Any new finding fails the check, apart from tentative ones. The replay also sends a request with the `Authorization` header removed and fails if the service answers 2xx. The 16 unchanged findings are properties of the demo app, such as credentials sent over plain HTTP.
+- **Readiness gate.** The test config's `readiness` section sets which grades block: Regression, Mock fidelity and Data layer below A, Security below D. Performance is advisory here because the comparison above covers it.
+
+Speedscale does not scan the image. Rescan the rebuilt image with your own scanner; this check covers behavior.
+
+### Check a set of upgrades
+
+```bash
+make fast-lane-matrix
+```
+
+Each row is the one-line change a dependency bot would open: a different `CORRETTO_TAG` or one version in `pom.xml`. Results from 2026-11-18 on Docker Desktop for Mac with proxymock v2.5.1413:
+
+| Upgrade | Functionality | p95, deployed to candidate | New security findings | Verdict |
+|---|---|---|---|---|
+| JDK 21.0.12 to 21.0.13 (CVE patch) | 2660 of 2660 | 9 to 8.7 ms | 0 | READY |
+| JDK 21 to 25.0.5 | 2660 of 2660 | 9.3 to 8.7 ms | 0 | READY |
+| Spring Boot 4.0.9 to 4.1.2 | 2660 of 2660 | 10.8 to 8.9 ms | 0 | READY |
+| MySQL driver 8.2.0 to 9.7.0 | 2660 of 2660 | 10.2 to 9.1 ms | 0 | READY |
+| MySQL driver 8.2.0 to 26.10.0 | 2660 of 2660 | 8.9 to 9.6 ms | 0 | READY |
+| jjwt 0.12.3 to 0.13.0 | 2660 of 2660 | 17.4 to 7.8 ms | 0 | READY |
+| MyBatis starter 4.0.1 to 4.1.0 | 2660 of 2660 | 8 to 7.9 ms | 0 | READY |
+| springdoc 3.0.3 to 3.2.0 | 2660 of 2660 | 8.3 to 8.8 ms | 0 | READY |
+| CVE mitigation flag on the deployed JDK | 2660 of 2660 | 8.6 to 9.6 ms | 0 | READY |
+| Control: default time zone changed | 2560 of 2660 | 9.8 to 9.5 ms | 0 | NOT READY |
+| Control: JIT compiler turned off | 2660 of 2660 | 8.2 to 25.6 ms | 0 | NOT READY |
+| Control: security headers turned off | 2660 of 2660 | 10.2 to 9.1 ms | 3 | NOT READY |
+
+Every real upgrade came back ready. None of them was altered to pass or fail.
+
+The last three rows are controls, deliberate changes aimed at one question each:
+
+- `-Duser.timezone=America/New_York` shifts `expiresAt` in the five `/validate` responses for valid tokens. Regression drops to C, so the gate fails too.
+- `-Xint` turns the JIT compiler off. Responses are identical and p95 triples.
+- Turning off Spring Security's response headers leaves every response body identical and every readiness grade unchanged. The comparison reports three new findings, "Authenticated response is cacheable", on `/user`, `/login` and `/register`.
+
+### Limits
+
+- Latency on a laptop is noisy. The deployed image's p95 ranged from 8 to 17.4 ms across these runs, so the 50% budget only catches a large regression. Tighten `PERF_BUDGET_PCT` on a quiet runner.
+- The replay covers the recorded requests only. An endpoint the recording never calls is not checked.
+- Six recorded responses are 500s (malformed tokens sent to `/validate` and a duplicate registration). The check compares with what the deployed build returned, bugs included.
+- This service never calls `java.util.Base64`. jjwt and Jackson decode Base64 with their own code, and a class-load log (`-Xlog:class+load`) over startup and a full replay shows the JDK class is never loaded. A scanner still flags the JDK and it still has to be patched. The check shows the patch changes nothing.
+
+### Other targets
+
+```bash
+make fast-lane-mitigation  # deployed JDK with -XX:-UseBASE64Intrinsics
+make fast-lane-record      # re-record the traffic against the deployed image
+```
+
+Set `APP_PORT` if something else already uses port 8091. A ten-year `JWT_EXPIRATION` keeps the recorded tokens valid at replay time.
+
 ## Development
 
 ### Make Commands

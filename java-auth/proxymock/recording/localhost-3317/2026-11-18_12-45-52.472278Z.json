@@ -1,0 +1,165 @@
+{
+  "msgType": "rrpair",
+  "resource": "my-app",
+  "ts": "2026-11-18T12:45:52.472278Z",
+  "l7protocol": "mysql",
+  "duration": 3,
+  "elapsed": "0.003081s",
+  "tags": {
+    "captureMode": "proxy",
+    "dbBackendPid": "10",
+    "dbName": "auth_db",
+    "dbTransaction": "idle",
+    "dbUser": "auth_user",
+    "k8sAppLabel": "my-app",
+    "proxyLocation": "out",
+    "proxyProtocol": "tcp:http",
+    "proxyType": "dual",
+    "proxyVersion": "v2.5.1413",
+    "sequence": "66",
+    "source": "goproxy"
+  },
+  "uuid": "1ZBY+I/0TkSlT81qkSwmDA==",
+  "direction": "OUT",
+  "cluster": "undefined",
+  "namespace": "undefined",
+  "service": "my-app",
+  "command": "SELECT",
+  "location": "SELECT SUM(found) FROM ((SELECT 1 as found FROM information_schema.tables WHERE table_schema = 'auth_db') UNION ALL (SELECT 1 as found FROM information_schema.views WHERE table_schema = 'auth_db' LIMIT 1) UNION ALL (SELECT 1 as found FROM information_schema.table_constraints WHERE table_schema = 'auth_db' LIMIT 1) UNION ALL (SELECT 1 as found FROM information_schema.triggers WHERE event_object_schema = 'auth_db' LIMIT 1) UNION ALL (SELECT 1 as found FROM information_schema.routines WHERE routine_schema = 'auth_db' LIMIT 1) UNION ALL (SELECT 1 as found FROM information_schema.events WHERE event_schema = 'auth_db' LIMIT 1)) as all_found",
+  "status": "OK",
+  "mysql": {
+    "request": {
+      "query": {
+        "query": "SELECT SUM(found) FROM ((SELECT 1 as found FROM information_schema.tables WHERE table_schema='auth_db') UNION ALL (SELECT 1 as found FROM information_schema.views WHERE table_schema='auth_db' LIMIT 1) UNION ALL (SELECT 1 as found FROM information_schema.table_constraints WHERE table_schema='auth_db' LIMIT 1) UNION ALL (SELECT 1 as found FROM information_schema.triggers WHERE event_object_schema='auth_db'  LIMIT 1) UNION ALL (SELECT 1 as found FROM information_schema.routines WHERE routine_schema='auth_db' LIMIT 1) UNION ALL (SELECT 1 as found FROM information_schema.events WHERE event_schema='auth_db' LIMIT 1)) as all_found"
+      }
+    },
+    "response": {
+      "textResultsets": {
+        "resultsets": [
+          {
+            "columns": [
+              {
+                "catalog": "def",
+                "name": "SUM(found)",
+                "numFixedLengthFields": 12,
+                "charset": "MYSQL_CHARSET_BINARY",
+                "maxColumnLength": 42,
+                "type": "MYSQL_FIELD_TYPE_NEWDECIMAL",
+                "flags": [
+                  "FLAG_BINARY"
+                ]
+              }
+            ],
+            "rows": [
+              {
+                "fields": [
+                  {
+                    "null": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "handshake": {
+      "request": {
+        "serverVersion": "8.0.46",
+        "threadID": 10,
+        "capabilities": [
+          "MYSQL_CAPABILITY_LONG_PASSWORD",
+          "MYSQL_CAPABILITY_ODBC",
+          "MYSQL_CAPABILITY_LOCAL_FILES",
+          "MYSQL_CAPABILITY_OPTIONAL_RESULTSET_METADATA",
+          "MYSQL_CAPABILITY_FOUND_ROWS",
+          "MYSQL_CAPABILITY_NO_SCHEMA",
+          "MYSQL_CAPABILITY_RESERVED",
+          "MYSQL_CAPABILITY_RESERVED2",
+          "MYSQL_CAPABILITY_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_CONNECT_ATTRS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH_LENENC_CLIENT_DATA",
+          "MYSQL_CAPABILITY_CONNECT_WITH_DB",
+          "MYSQL_CAPABILITY_IGNORE_SPACE",
+          "MYSQL_CAPABILITY_ZSTD_COMPRESSION_ALGORITHM",
+          "MYSQL_CAPABILITY_SSL",
+          "MYSQL_CAPABILITY_IGNORE_SIGPIPE",
+          "MYSQL_CAPABILITY_CAN_HANDLE_EXPIRED_PASSWORDS",
+          "MYSQL_CAPABILITY_LONG_FLAG",
+          "MYSQL_CAPABILITY_PS_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_MULTI_FACTOR_AUTHENTICATION",
+          "MYSQL_CAPABILITY_COMPRESS",
+          "MYSQL_CAPABILITY_INTERACTIVE",
+          "MYSQL_CAPABILITY_TRANSACTIONS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH",
+          "MYSQL_CAPABILITY_SESSION_TRACK",
+          "MYSQL_CAPABILITY_SSL_VERIFY_SERVER_CERT",
+          "MYSQL_CAPABILITY_REMEMBER_OPTIONS",
+          "MYSQL_CAPABILITY_PROTOCOL_41",
+          "MYSQL_CAPABILITY_DEPRECATE_EOF",
+          "MYSQL_CAPABILITY_QUERY_ATTRIBUTES",
+          "MYSQL_CAPABILITY_MULTI_STATEMENTS"
+        ],
+        "serverStatus": [
+          "MYSQL_SERVER_STATUS_AUTOCOMMIT"
+        ],
+        "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+        "authPlugin": "caching_sha2_password"
+      },
+      "response": {
+        "capabilities": [
+          "MYSQL_CAPABILITY_CONNECT_ATTRS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH_LENENC_CLIENT_DATA",
+          "MYSQL_CAPABILITY_CONNECT_WITH_DB",
+          "MYSQL_CAPABILITY_LONG_FLAG",
+          "MYSQL_CAPABILITY_PS_MULTI_RESULTS",
+          "MYSQL_CAPABILITY_MULTI_FACTOR_AUTHENTICATION",
+          "MYSQL_CAPABILITY_TRANSACTIONS",
+          "MYSQL_CAPABILITY_PLUGIN_AUTH",
+          "MYSQL_CAPABILITY_PROTOCOL_41",
+          "MYSQL_CAPABILITY_DEPRECATE_EOF",
+          "MYSQL_CAPABILITY_QUERY_ATTRIBUTES",
+          "MYSQL_CAPABILITY_LONG_PASSWORD",
+          "MYSQL_CAPABILITY_FOUND_ROWS",
+          "MYSQL_CAPABILITY_RESERVED2",
+          "MYSQL_CAPABILITY_MULTI_RESULTS"
+        ],
+        "maxPacketSize": 16777215,
+        "charset": "MYSQL_CHARSET_UTF8MB4_0900_AI_CI",
+        "username": "auth_user",
+        "database": "auth_db",
+        "authPlugin": "caching_sha2_password",
+        "connectAttrs": {
+          "_client_license": "GPL",
+          "_client_name": "MySQL Connector/J",
+          "_client_version": "8.2.0",
+          "_runtime_vendor": "Amazon.com Inc.",
+          "_runtime_version": "21.0.12.1"
+        }
+      }
+    }
+  },
+  "signature": {
+    "mysql:command": "UXVlcnk=",
+    "mysql:phase": "TVlTUUxfUEhBU0VfQ09NTUFORA==",
+    "mysql:query": "U0VMRUNUIFNVTShmb3VuZCkgRlJPTSAoKFNFTEVDVCAxIGFzIGZvdW5kIEZST00gaW5mb3JtYXRpb25fc2NoZW1hLnRhYmxlcyBXSEVSRSB0YWJsZV9zY2hlbWEgPSAnYXV0aF9kYicpIFVOSU9OIEFMTCAoU0VMRUNUIDEgYXMgZm91bmQgRlJPTSBpbmZvcm1hdGlvbl9zY2hlbWEudmlld3MgV0hFUkUgdGFibGVfc2NoZW1hID0gJ2F1dGhfZGInIExJTUlUIDEpIFVOSU9OIEFMTCAoU0VMRUNUIDEgYXMgZm91bmQgRlJPTSBpbmZvcm1hdGlvbl9zY2hlbWEudGFibGVfY29uc3RyYWludHMgV0hFUkUgdGFibGVfc2NoZW1hID0gJ2F1dGhfZGInIExJTUlUIDEpIFVOSU9OIEFMTCAoU0VMRUNUIDEgYXMgZm91bmQgRlJPTSBpbmZvcm1hdGlvbl9zY2hlbWEudHJpZ2dlcnMgV0hFUkUgZXZlbnRfb2JqZWN0X3NjaGVtYSA9ICdhdXRoX2RiJyBMSU1JVCAxKSBVTklPTiBBTEwgKFNFTEVDVCAxIGFzIGZvdW5kIEZST00gaW5mb3JtYXRpb25fc2NoZW1hLnJvdXRpbmVzIFdIRVJFIHJvdXRpbmVfc2NoZW1hID0gJ2F1dGhfZGInIExJTUlUIDEpIFVOSU9OIEFMTCAoU0VMRUNUIDEgYXMgZm91bmQgRlJPTSBpbmZvcm1hdGlvbl9zY2hlbWEuZXZlbnRzIFdIRVJFIGV2ZW50X3NjaGVtYSA9ICdhdXRoX2RiJyBMSU1JVCAxKSkgYXMgYWxsX2ZvdW5k"
+  },
+  "netinfo": {
+    "id": "2",
+    "startTime": "2026-11-18T12:45:52.379258Z",
+    "downstream": {
+      "established": "2026-11-18T12:45:52.378032Z",
+      "ipAddress": "127.0.0.1",
+      "port": 57307,
+      "bytesSent": "4163"
+    },
+    "upstream": {
+      "established": "2026-11-18T12:45:52.378501Z",
+      "ipAddress": "127.0.0.1",
+      "port": 3317,
+      "hostname": "localhost",
+      "bytesSent": "3663"
+    },
+    "direction": "EGRESS"
+  }
+}

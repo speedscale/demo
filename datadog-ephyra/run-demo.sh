@@ -71,7 +71,8 @@ trap 'echo; echo "interrupted" >&2; exit 130' INT TERM
 
 port_in_use() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
 
-# Picks a free local port that no earlier call returned.
+# free_port <var>: sets <var> to a free local port that no earlier call returned.
+# Runs in the current shell so TAKEN persists between calls.
 TAKEN=" "
 free_port() {
   local p
@@ -80,7 +81,7 @@ free_port() {
     case "$TAKEN" in *" $p "*) continue ;; esac
     port_in_use "$p" && continue
     TAKEN="$TAKEN$p "
-    echo "$p"
+    printf -v "$1" '%s' "$p"
     return 0
   done
   die "could not find a free local port"
@@ -111,13 +112,13 @@ with_timeout() {
   return "$rc"
 }
 
-API_PORT=$(free_port)
-SCHEDULE_PORT=$(free_port)
-PRICING_PORT=$(free_port)
-PAYMENTS_PORT=$(free_port)
-REDIS_MOCK_PORT=$(free_port)
-REDIS_PORT=$(free_port)
-PROXY_PORT=$(free_port)
+free_port API_PORT
+free_port SCHEDULE_PORT
+free_port PRICING_PORT
+free_port PAYMENTS_PORT
+free_port REDIS_MOCK_PORT
+free_port REDIS_PORT
+free_port PROXY_PORT
 
 # build <name> [patch]: builds the booking API from dotnet-airline into .build/<name>, with the patch applied.
 # A build whose sources and patch are unchanged is reused, so later runs need no network.

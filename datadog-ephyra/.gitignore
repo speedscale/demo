@@ -1,0 +1,8 @@
+# Run output: logs, the API builds, the cargo build, the regression RRPairs the property test writes,
+# and mock and replay results. Only the partner mocks and their tuning blueprint are kept.
+logs/
+.build/
+property-tests/target/
+proxymock/*
+!proxymock/recorded-partners/
+!proxymock/blueprints/

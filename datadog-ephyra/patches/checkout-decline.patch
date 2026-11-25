@@ -1,0 +1,13 @@
+--- a/src/BookingApi/Program.cs
++++ b/src/BookingApi/Program.cs
+@@ -194,8 +194,9 @@
+ 
+     // Any response shape the app can't act on goes through the same release path as an unreadable body.
+     var status = StringField(auth, "status");
++    // A decline is a definite answer from the gateway, not an uncertain outcome, so return it as is.
+     if (pay.StatusCode == System.Net.HttpStatusCode.PaymentRequired || (status is not null && status != "APPROVED"))
+-        return await Release(Results.Json(new { error = "payment declined", cartId, reason = StringField(auth, "reason") }, statusCode: 402));
++        return Results.Json(new { error = "payment declined", cartId, reason = StringField(auth, "reason") }, statusCode: 402);
+     var authorizationId = StringField(auth, "authorizationId");
+     if (status is null || authorizationId is null)
+         return await Release(Unreadable());

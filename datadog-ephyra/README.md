@@ -1,67 +1,64 @@
-# Mocked partners and ephyra property tests
+# Booking API: recorded replay and an ephyra property test
 
-A small proof of concept of how two tools fit together:
+This folder tests the booking API from [`../dotnet-airline`](../dotnet-airline) two ways against the same mocked dependencies. It replays the recorded traffic with [proxymock](https://docs.speedscale.com/proxymock/), and it runs a property test written with [ephyra](https://crates.io/crates/ephyra), Datadog's property-testing library for Rust. It does both on the API as it is and on a copy with one change applied, `patches/checkout-decline.patch`.
 
-- **Speedscale proxymock** captures real traffic and turns it into mock backends, so a service runs and is replayed without its dependencies.
-- **Datadog ephyra** is an open-source property-testing library. Here it generates bookings seeded from the recorded traffic and looks for a counterexample.
-
-ephyra does the testing. The mocks give it a safe place to run, and the recording gives it real bookings to start from.
-
-The service under test is the booking API from [`../dotnet-airline`](../dotnet-airline): it shops flights from a schedule partner, prices a cart with a pricing partner, authorizes payment with a payment gateway, and keeps carts and orders in Redis. Nothing here changes that demo; this folder builds the API from its source and reads its committed recording.
+The booking API searches flights with a schedule partner, prices cart lines with a pricing partner, authorizes payment with a payment gateway, and keeps carts and orders in Redis. `dotnet-airline` is not modified: the script copies its source into `.build/`, applies the patch to the copy, and reads the committed recording.
 
 ## Prerequisites
 
-- .NET 8 SDK, to build and run the booking API. A user-local install in `~/.dotnet` is picked up automatically.
-- Docker, to run a throwaway Redis for the property test. The `redis:7-alpine` image is pulled on first run.
-- Rust with cargo, to build and run the property test. ephyra is fetched from crates.io on first build.
-- proxymock, at `~/.speedscale/proxymock` or on `PATH`. See the [proxymock install guide](https://docs.speedscale.com/proxymock/getting-started/installation/).
-- `curl` and `nc`.
+- .NET 8 SDK. A user-local install in `~/.dotnet` is picked up.
+- Docker, for a Redis container used by the property test. The `redis:7-alpine` image is pulled on the first run.
+- Rust with cargo. ephyra and the other crates are fetched on the first build.
+- proxymock, at `~/.speedscale/proxymock` or on `PATH` ([install guide](https://docs.speedscale.com/proxymock/getting-started/installation/)).
+- `curl` and `patch`.
 
-The partner simulator, a local Redis and a Datadog account are not needed.
+No Datadog or Speedscale account is used. The script checks these first and lists anything missing.
 
 ## Run it
-
-From this folder:
 
 ```bash
 make demo
 ```
 
-or `./run-demo.sh`. It uses ports 18090, 25051 to 25053, 26390 and 26391, and stops if any of them is taken.
+or `./run-demo.sh`. It picks free local ports, stops everything it started when it exits (including on Ctrl-C), and prints a summary. The first run downloads the .NET packages, the crates and the Redis image; later runs reuse the builds, the crates and the image without the network. proxymock itself checks in with Speedscale at startup when its configuration has a Speedscale tenant, so whether it runs offline depends on that configuration. With the builds in place a run takes about 30 seconds.
 
-## What it shows
+Settings, all optional: `EPHYRA_SEED` (default 1) and `EPHYRA_TESTS` (default 200) for the property test, `STARTUP_TIMEOUT` (default 90 seconds) for each process to come up, and `STEP_TIMEOUT` (default 600 seconds) for each build, replay or test.
 
-1. **Capture.** `../dotnet-airline/proxymock/recording/` holds 27 inbound requests (searches, carts, checkouts, orders) and everything the API sent while serving them: 3 schedule searches, 4 pricing quotes, 4 payment authorizations and 62 Redis commands.
-2. **Mock backends and replay.** proxymock serves all three partners and Redis from the recording, and `proxymock replay` sends the recorded requests to the API and passes 27 of 27 with `--fail-if "requests.response-match-pct<100"`.
-3. **ephyra checks a property.** `property-tests/tests/pricing.rs` states one rule: an order costs its passengers times the per-passenger fare (base fare, taxes and the $4.50 booking fee), on the cart line and on the order. Each case picks a route from the recorded searches, books one of the flights the mocked schedule returns, and chooses 1 to 9 passengers and a fare. ephyra plays the pricing partner, so the fare is whatever it generated, and proxymock mocks the schedule and the payment gateway. On the API as it is, 200 bookings pass.
-4. **ephyra finds a bug.** `../dotnet-airline/demo/regression.patch` moves the booking fee outside the per-passenger price, so it is charged once per booking. Against that build ephyra fails and shrinks the booking to 2 passengers on the first recorded flight with a zero fare: expected 9.00, charged 4.50.
-5. **Back into Speedscale.** The test writes the shrunk booking as RRPairs under `proxymock/regressions-ephyra/`: the inbound create-cart and add-item requests with the totals the property expects, and the pricing partner's quote as an outbound mock. `proxymock replay` passes them on the current build and fails them on the patched one (recorded 9.00, observed 4.50), so the finding becomes a regression test.
+## What runs
 
-## Why Redis is real in the property test
+1. **Recorded replay.** proxymock serves the schedule partner, the pricing partner, the payment gateway and Redis from `../dotnet-airline/proxymock/recording`, and replays the 27 recorded requests (searches, carts, checkouts, orders, and a few error cases) against the API. This runs on both builds.
+2. **Property test.** `property-tests/tests/booking.rs` generates bookings: an itinerary of one to four legs, each a recorded route on a date up to 30 days after the recorded one, a flight from the schedule and a fare class; one to nine passengers; and one to three checkout attempts using the card tokens from the recording, one of which the gateway declines. For each booking it searches, creates a cart, adds the legs and checks out, and compares every response with what the recording implies: each line costs the passengers times the recorded fare for its class plus the $4.50 booking fee, the order charges the sum of its lines, a declined card leaves the cart open for the next attempt, and a ticketed cart answers later attempts with its record locator. The partners are the same recorded mocks as in step 1; Redis is a fresh container, because the generated bookings write keys and values the recording does not contain. This also runs on both builds.
+3. **Written RRPairs.** When the property fails, the test writes the shrunk booking as inbound RRPairs in `proxymock/regressions-ephyra/`, with the responses the property expects. The script replays them on both builds against an empty Redis and the same partner mocks.
 
-The API writes each partner quote into Redis. A generated fare changes that write, and proxymock's Redis mock answers only the commands it recorded, so the property test runs a throwaway Redis container instead. The replay in step 2 still mocks Redis from the recording.
+## The mocks
 
-## The payment mock
+`proxymock/recorded-partners/` holds the schedule, pricing and payment exchanges copied from the airline recording without edits. The generated bookings send requests the recording does not contain exactly, so two blueprints in `proxymock/blueprints/` adjust how the mock matches and answers them:
 
-`proxymock/recorded-partners/` holds the schedule responses and one approved payment from the airline recording. The payment request carries the order amount and the cart ID, which change with every generated booking. `proxymock/blueprints/` holds the transform that masks those two fields so the recorded approval answers any amount. It was produced by proxymock's mock match analysis (`mocks` analyze, then accept) from a run whose payment calls missed.
+- Payment authorizations match on the card token. The amount and the cart reference are masked, since they change with every booking. This transform came from proxymock's mock match analysis of a run whose payment calls missed.
+- Pricing quotes match on fare class, and the response carries the flight number and passenger count from the request. Schedule searches match on route, and every flight in the response carries the requested date. These use `var_store` on the request and `var_load` on the response.
 
-## Layout
+The script reports the mock's hits and misses for every step from `proxymock/results/mock-*/responder-counts.json`.
 
-| Path | Purpose |
-|---|---|
-| `run-demo.sh` | Builds the API twice, replays, runs the property on both builds, replays the regression |
-| `property-tests/src/lib.rs` | Reads routes, fare bases and a card token from the recording, plays the pricing partner, calls the API, writes the regression RRPairs |
-| `property-tests/tests/pricing.rs` | The ephyra property |
-| `proxymock/recorded-partners/` | Schedule and payment mocks for the property test, copied from the airline recording |
-| `proxymock/blueprints/` | The transform that lets the payment mock answer any amount |
-| `proxymock/regressions-ephyra/` | Written by the property test; ignored by git |
+## Results from a run
 
-## Running the pieces by hand
+From a run with the default seed on macOS:
 
-Start the partner mocks from this folder, a Redis on 26391, and the API from `../dotnet-airline` with `SCHEDULE_URL=http://127.0.0.1:25051 PRICING_URL=http://127.0.0.1:25052 PAYMENTS_URL=http://127.0.0.1:25053 REDIS_ADDR=127.0.0.1:26391 PORT=18090` (see `run-demo.sh`), then:
+| Step | Current build | Changed build |
+|---|---|---|
+| Recorded replay | 27 of 27 matched; mock 73 hits, 0 misses | 27 of 27 matched; mock 72 hits, 0 misses |
+| Property test | 200 bookings passed; mock 1051 hits, 0 misses | first failure at generated case 7; mock 49 hits, 0 misses |
+| Written RRPairs | 4 of 4 matched; mock 3 hits, 0 misses | 3 of 4 matched; mock 2 hits, 0 misses |
+
+The change in `patches/checkout-decline.patch` returns a declined payment without releasing the cart's checkout claim. The recording has one declined checkout and nothing after it on that cart, so the recorded replay matches on both builds. On the changed build ephyra's first failing booking had two legs, four passengers and a declined card followed by an approved one, and it shrank that to one leg, one passenger, `tok_decline` and then `tok_mc_4444`. The second attempt got `409 checkout already in progress` where the property expected a ticketed order. The four RRPairs written from that booking are the create-cart, add-item and two checkout requests, and the last one is the response that differs on the changed build.
+
+Over seeds 1 to 10 the first failing case on the changed build was 7, 7, 22, 4, 4, 8, 15, 4, 8 and 4, and each shrank to the same one-leg, one-passenger booking. The current build passed 200 bookings for each of those seeds. Itineraries and checkout attempts start at one entry and grow with ephyra's size parameter, so the earliest a booking can try a second card is case 4.
+
+## Running the property test by hand
+
+Start the partner mocks from this folder, a Redis, and the API from `../dotnet-airline` pointed at them (see `start_mock` and `start_app` in `run-demo.sh`), then:
 
 ```bash
-cargo test --manifest-path property-tests/Cargo.toml --test pricing -- --nocapture
+API_URL=http://127.0.0.1:18090 cargo test --manifest-path property-tests/Cargo.toml --test booking -- --nocapture
 ```
 
-`API_URL`, `PRICING_ADDR`, `AIRLINE_RECORDING` and `REGRESSIONS_DIR` override the defaults the test uses.
+`EPHYRA_SEED`, `EPHYRA_TESTS` and `EPHYRA_REPLAY` work as described in ephyra's documentation. `AIRLINE_RECORDING` and `REGRESSIONS_DIR` override where the test reads the recording and writes RRPairs.

@@ -1,6 +1,6 @@
 .PHONY: demo test-build clean
 
-demo: ## Replay with everything mocked, run the ephyra property on both builds, replay the regression
+demo: ## Replay the recording and run the property test on the current and changed builds
 	./run-demo.sh
 
 test-build: ## Compile the property tests without running them

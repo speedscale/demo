@@ -97,17 +97,29 @@ wait_for() {
   done
 }
 
-# with_timeout <seconds> <command...>: runs the command, stopping it if it runs longer.
+# kill_tree <signal> <pid>: signals a process and every process it started, children first.
+kill_tree() {
+  local child
+  for child in $(pgrep -P "$2" 2>/dev/null); do kill_tree "$1" "$child"; done
+  kill "-$1" "$2" 2>/dev/null
+}
+
+# with_timeout <seconds> <command...>: runs the command, stopping it and everything it started
+# (cargo's test binary, MSBuild workers) if it runs longer.
 with_timeout() {
   local limit="$1"
   shift
   "$@" &
   local pid=$!
-  ( sleep "$limit" && kill "$pid" 2>/dev/null && echo "stopped after ${limit}s" >&2 ) &
+  ( sleep "$limit"
+    echo "stopped after ${limit}s: $*" >&2
+    kill_tree TERM "$pid"
+    sleep 5
+    kill_tree KILL "$pid" ) &
   local watchdog=$!
   wait "$pid"
   local rc=$?
-  kill "$watchdog" 2>/dev/null
+  kill_tree TERM "$watchdog"
   wait "$watchdog" 2>/dev/null
   return "$rc"
 }
@@ -134,7 +146,7 @@ build() {
   cp -R "$AIRLINE/src/BookingApi" "$src/src/"
   rm -rf "$src/src/BookingApi/bin" "$src/src/BookingApi/obj"
   if [ -n "$patchfile" ]; then patch -s -p1 -d "$src" <"$patchfile" || die "could not apply $patchfile"; fi
-  with_timeout "$STEP_TIMEOUT" dotnet build "$src/src/BookingApi/BookingApi.csproj" -c Release -v quiet -nologo -o "$BUILD/$name" \
+  with_timeout "$STEP_TIMEOUT" dotnet build "$src/src/BookingApi/BookingApi.csproj" -c Release -v quiet -nologo -nodeReuse:false --disable-build-servers -o "$BUILD/$name" \
     >"$LOG_DIR/build-$name.log" 2>&1 || { tail -20 "$LOG_DIR/build-$name.log" >&2; die "build of $name failed (log: logs/build-$name.log)"; }
   echo "$stamp" >"$BUILD/$name.stamp"
   say "$name: built"

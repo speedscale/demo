@@ -1,0 +1,94 @@
+{
+  "id": "7eb5e5c4-5b72-4a04-9603-44f70a27e7d6",
+  "name": "responder Mocks",
+  "description": "Auto-managed blueprint built from accepted tuning recommendations. Edit the recommendations tab to add or remove rules.",
+  "createdAt": "2026-11-25T20:37:13.293193Z",
+  "services": [
+    "responder"
+  ],
+  "iterationCount": 0,
+  "finalMatchRate": 0,
+  "tokenizeConfig": {
+    "name": "responder Mocks",
+    "id": "7eb5e5c4-5b72-4a04-9603-44f70a27e7d6",
+    "responder": [
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/payments/v1/authorize$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "amount"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "responder|body:amount",
+          "source": "mocks"
+        }
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/payments/v1/authorize$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "reference"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ],
+        "tags": {
+          "mocks_fix_id": "responder|body:reference",
+          "source": "mocks"
+        }
+      }
+    ],
+    "services": [
+      "responder"
+    ]
+  },
+  "active": true,
+  "source": "tuning"
+}

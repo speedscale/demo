@@ -1,0 +1,16 @@
+[package]
+name = "airline-properties"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+serde_json = "1"
+ureq = { version = "2", default-features = false }
+
+[dev-dependencies]
+ephyra = "0.0.1"
+
+[profile.test]
+debug-assertions = true
+overflow-checks = true

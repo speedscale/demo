@@ -1,0 +1,365 @@
+{
+  "id": "b3f0c6de-2a51-4c7e-9a0e-6d1c8f4e2b17",
+  "name": "responder partner echo",
+  "description": "Matches pricing quotes on fare class and schedule searches on route, and answers with the flight, passenger count and date the request asked for.",
+  "services": [
+    "responder"
+  ],
+  "tokenizeConfig": {
+    "name": "responder partner echo",
+    "id": "b3f0c6de-2a51-4c7e-9a0e-6d1c8f4e2b17",
+    "responder": [
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/pricing/v1/quote$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "flightNumber"
+            }
+          },
+          {
+            "type": "var_store",
+            "config": {
+              "name": "quote_flightNumber"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/pricing/v1/quote$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "passengers"
+            }
+          },
+          {
+            "type": "var_store",
+            "config": {
+              "name": "quote_passengers"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/pricing/v1/quote$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "flightNumber"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/pricing/v1/quote$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "req_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "passengers"
+            }
+          },
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/pricing/v1/quote$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "flightNumber"
+            }
+          },
+          {
+            "type": "var_load",
+            "config": {
+              "name": "quote_flightNumber"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/pricing/v1/quote$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "POST"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "passengers"
+            }
+          },
+          {
+            "type": "var_load",
+            "config": {
+              "name": "quote_passengers"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/schedule/v1/flights$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_queryparam",
+          "config": {
+            "name": "date"
+          }
+        },
+        "transforms": [
+          {
+            "type": "var_store",
+            "config": {
+              "name": "schedule_date"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/schedule/v1/flights$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "http_queryparam",
+          "config": {
+            "name": "date"
+          }
+        },
+        "transforms": [
+          {
+            "type": "constant",
+            "config": {
+              "new": "*"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/schedule/v1/flights$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "flights.0.date"
+            }
+          },
+          {
+            "type": "var_load",
+            "config": {
+              "name": "schedule_date"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/schedule/v1/flights$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "flights.1.date"
+            }
+          },
+          {
+            "type": "var_load",
+            "config": {
+              "name": "schedule_date"
+            }
+          }
+        ]
+      },
+      {
+        "filters": {
+          "filters": [
+            {
+              "include": true,
+              "operator": "REGEX",
+              "detectedLocation": "^/schedule/v1/flights$"
+            },
+            {
+              "include": true,
+              "detectedCommand": "GET"
+            }
+          ]
+        },
+        "extractor": {
+          "type": "res_body"
+        },
+        "transforms": [
+          {
+            "type": "json_path",
+            "config": {
+              "path": "flights.2.date"
+            }
+          },
+          {
+            "type": "var_load",
+            "config": {
+              "name": "schedule_date"
+            }
+          }
+        ]
+      }
+    ],
+    "services": [
+      "responder"
+    ]
+  },
+  "active": true,
+  "source": "tuning"
+}
